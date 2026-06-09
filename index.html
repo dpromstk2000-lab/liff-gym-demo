@@ -103,6 +103,9 @@
 
         async function submitData() {
             const time = document.getElementById('time-picker').value;
+            const fullDate = answers.date + ' ' + time;
+            
+            // 1. Supabaseへ保存
             await supabaseClient.from('gym_profiles').insert([{
                 display_name: displayName,
                 age_group: answers.age_group,
@@ -110,9 +113,18 @@
                 purpose: answers.purpose,
                 target_goal: answers.target_goal,
                 status: answers.status,
-                preferred_datetime: answers.date + ' ' + time
+                preferred_datetime: fullDate
             }]);
-            alert(displayName + "様、ご予約ありがとうございます！");
+            
+            // 2. LINEへの自動返信
+            try {
+                await liff.sendMessages([{
+                    type: 'text',
+                    text: `【予約完了】\n${displayName}様、ご予約ありがとうございます。\n日時：${fullDate}\n目標：${answers.target_goal}\n内容を確認し、追ってご連絡いたします。`
+                }]);
+            } catch(e) { console.error("メッセージ送信失敗", e); }
+            
+            alert("予約が完了しました！");
             liff.closeWindow();
         }
     </script>
