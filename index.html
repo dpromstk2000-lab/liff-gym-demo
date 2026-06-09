@@ -11,13 +11,11 @@
 <body class="bg-gray-900 font-sans antialiased text-white">
 
     <div class="max-w-md mx-auto bg-gray-800 min-h-screen flex flex-col justify-between shadow-2xl">
-        
         <div class="bg-black text-yellow-500 text-center py-4 font-black tracking-widest border-b border-yellow-500">
             DPRO GYM × DEMO
         </div>
 
         <div class="p-6 flex-grow">
-            
             <div class="w-full bg-gray-700 h-2 rounded-full mb-6">
                 <div id="progress-bar" class="bg-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 33%"></div>
             </div>
@@ -51,48 +49,42 @@
                     <button onclick="selectQ3('まずは週2回の運動習慣をつける')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">📅 まずは週2回の運動習慣</button>
                 </div>
             </div>
-
         </div>
 
         <div class="p-4 bg-gray-900 border-t border-gray-700">
             <button id="submit-btn" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-4 rounded-xl cursor-not-allowed transition">
-                LINE認証中...
+                質問に回答してください
             </button>
         </div>
-
     </div>
 
     <script>
-        // メモからいただいた各種ID・URLを完全に組み込み済み
         const MY_LIFF_ID = '2010341851-Qez3SffP'; 
         const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_cT4vjOFoU1MtjFayuk7HVw_YcuSMR5J'; 
 
-        // Supabaseクライアントの初期化
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let answers = { age_group: '', gender: '', purpose: '', target_goal: '' };
-        let lineUserId = '';
-        let displayName = '';
+        // 万が一LINE側で詰まっても、デモ用の名前で動くように初期値を設定
+        let lineUserId = 'demo_user_' + Math.floor(Math.random() * 100000);
+        let displayName = '体験デモ ゲスト様';
 
-        // 起動時にLINEのプロフィールを読み込む
         document.addEventListener("DOMContentLoaded", async () => {
             const btn = document.getElementById('submit-btn');
             try {
-                await liff.init({ liffId: MY_LIFF_ID });
-                if (!liff.isLoggedIn()) {
-                    liff.login();
-                } else {
+                // LINEアプリ以外でもエラーで止まらないように非同期処理を包む
+                await liff.init({ liffId: MY_LIFF_ID }).catch(e => console.log("LIFF初期化スキップ"));
+                
+                if (liff.isLoggedIn()) {
                     const profile = await liff.getProfile();
                     lineUserId = profile.userId;
                     displayName = profile.displayName;
-                    
-                    // ログインできたらボタンの文字を待機状態にする
-                    btn.innerHTML = "質問に回答してください";
                 }
+                btn.innerHTML = "質問に回答してください";
             } catch (error) {
-                console.error("LIFF初期化エラー:", error);
-                btn.innerHTML = "エラーが発生しました";
+                console.log("LINE認証はスキップし、デモモードで稼働します");
+                btn.innerHTML = "質問に回答してください";
             }
         });
 
@@ -121,7 +113,6 @@
             btn.onclick = submitData;
         }
 
-        // 送信ボタンを押したときの処理（Supabaseのgym_profilesテーブルへ保存）
         async function submitData() {
             const btn = document.getElementById('submit-btn');
             const statusMsg = document.getElementById('status-message');
@@ -132,7 +123,6 @@
             statusMsg.innerHTML = "データベースに書き込んでいます...";
 
             try {
-                // 作成した「gym_profiles」へ保存（過去にデータがあれば自動上書き）
                 const { data, error } = await supabase
                     .from('gym_profiles')
                     .upsert({
@@ -147,9 +137,12 @@
 
                 if (error) throw error;
 
-                statusMsg.innerHTML = "送信成功！画面を閉じます。";
+                statusMsg.innerHTML = "送信成功！";
                 alert(displayName + "様、体験予約アンケートが完了しました！\nこの内容がSupabaseに即時書き込まれました。");
-                liff.closeWindow();
+                
+                if (liff.isInClient()) {
+                    liff.closeWindow();
+                }
 
             } catch (error) {
                 console.error("Supabase送信エラー:", error);
