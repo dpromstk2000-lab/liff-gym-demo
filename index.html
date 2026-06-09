@@ -11,11 +11,13 @@
 <body class="bg-gray-900 font-sans antialiased text-white">
 
     <div class="max-w-md mx-auto bg-gray-800 min-h-screen flex flex-col justify-between shadow-2xl">
+        
         <div class="bg-black text-yellow-500 text-center py-4 font-black tracking-widest border-b border-yellow-500">
             DPRO GYM × DEMO
         </div>
 
         <div class="p-6 flex-grow">
+            
             <div class="w-full bg-gray-700 h-2 rounded-full mb-6">
                 <div id="progress-bar" class="bg-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 33%"></div>
             </div>
@@ -25,70 +27,88 @@
             <div id="step1" class="space-y-4">
                 <h3 class="text-lg font-bold text-yellow-400">Q1. あなたの年齢層と性別を教えてください</h3>
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="selectQ1('30代', '男性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">30代 男性</button>
-                    <button onclick="selectQ1('40代', '男性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">40代 男性</button>
-                    <button onclick="selectQ1('30代', '女性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">30代 女性</button>
-                    <button onclick="selectQ1('40代', '女性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">40代 女性</button>
+                    <button type="button" onclick="selectQ1('30代', '男性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition block text-center w-full">30代 男性</button>
+                    <button type="button" onclick="selectQ1('40代', '男性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition block text-center w-full">40代 男性</button>
+                    <button type="button" onclick="selectQ1('30代', '女性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition block text-center w-full">30代 女性</button>
+                    <button type="button" onclick="selectQ1('40代', '女性')" class="bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition block text-center w-full">40代 女性</button>
                 </div>
             </div>
 
             <div id="step2" class="space-y-4 hidden">
                 <h3 class="text-lg font-bold text-yellow-400">Q2. ご希望の体験コースはどちらですか？</h3>
                 <div class="space-y-3">
-                    <button onclick="selectQ2('ダイエット・減量コース')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">🔥 ダイエット・減量コース</button>
-                    <button onclick="selectQ2('筋力アップ・ボディメイク')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">💪 筋力アップ・ボディメイク</button>
-                    <button onclick="selectQ2('健康維持・体力向上')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">🏃‍♂️ 健康維持・体力向上</button>
+                    <button type="button" onclick="selectQ2('ダイエット・減量コース')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition block">🔥 ダイエット・減量コース</button>
+                    <button type="button" onclick="selectQ2('筋力アップ・ボディメイク')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition block">💪 筋力アップ・ボディメイク</button>
+                    <button type="button" onclick="selectQ2('健康維持・体力向上')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition block">🏃‍♂️ 健康維持・体力向上</button>
                 </div>
             </div>
 
             <div id="step3" class="space-y-4 hidden">
                 <h3 class="text-lg font-bold text-yellow-400">Q3. 目指したい目標を選択してください</h3>
                 <div class="space-y-3">
-                    <button onclick="selectQ3('3ヶ月以内にマイナス5kg')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">🎯 3ヶ月以内にマイナス5kg</button>
-                    <button onclick="selectQ3('半年で服のサイズを1サイズ落とす')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">👗 半年で服のサイズを落とす</button>
-                    <button onclick="selectQ3('まずは週2回の運動習慣をつける')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">📅 まずは週2回の運動習慣</button>
+                    <button type="button" onclick="selectQ3('3ヶ月以内にマイナス5kg')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition block">🎯 3ヶ月以内にマイナス5kg</button>
+                    <button type="button" onclick="selectQ3('半年で服のサイズを1サイズ落とす')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition block">👗 半年で服のサイズを落とす</button>
+                    <button type="button" onclick="selectQ3('まずは週2回の運動習慣をつける')" class="w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition block">📅 まずは週2回の運動習慣</button>
                 </div>
             </div>
+
         </div>
 
         <div class="p-4 bg-gray-900 border-t border-gray-700">
-            <button id="submit-btn" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-4 rounded-xl cursor-not-allowed transition">
+            <button id="submit-btn" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-4 rounded-xl cursor-not-allowed transition block text-center">
                 質問に回答してください
             </button>
         </div>
+
     </div>
 
     <script>
+        // 画像情報を100%固定組み込み
         const MY_LIFF_ID = '2010341851-Qez3SffP'; 
         const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_cT4vjOFoU1MtjFayuk7HVw_YcuSMR5J'; 
 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+        // 初期値（エラー対策のダミーデータ）
         let answers = { age_group: '', gender: '', purpose: '', target_goal: '' };
-        // 万が一LINE側で詰まっても、デモ用の名前で動くように初期値を設定
-        let lineUserId = 'demo_user_' + Math.floor(Math.random() * 100000);
+        let lineUserId = 'demo_' + Math.floor(Math.random() * 100000);
         let displayName = '体験デモ ゲスト様';
+        let supabaseClient = null;
 
-        document.addEventListener("DOMContentLoaded", async () => {
-            const btn = document.getElementById('submit-btn');
+        // ページ読み込み時に即実行
+        window.onload = async function() {
+            console.log("システム開始");
+            
+            // 1. まず先にSupabaseを確実に初期化してボタンの硬直を防ぐ
             try {
-                // LINEアプリ以外でもエラーで止まらないように非同期処理を包む
-                await liff.init({ liffId: MY_LIFF_ID }).catch(e => console.log("LIFF初期化スキップ"));
-                
+                if (typeof supabase !== 'undefined') {
+                    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                }
+            } catch (e) {
+                console.error("Supabase初期化失敗:", e);
+            }
+
+            // 2. LINE初期化（成否に関わらず、画面のクリック機能は殺さない）
+            try {
+                await liff.init({ liffId: MY_LIFF_ID });
                 if (liff.isLoggedIn()) {
                     const profile = await liff.getProfile();
                     lineUserId = profile.userId;
                     displayName = profile.displayName;
+                } else {
+                    console.log("LINE未ログインのためデモモード稼働");
                 }
-                btn.innerHTML = "質問に回答してください";
             } catch (error) {
-                console.log("LINE認証はスキップし、デモモードで稼働します");
-                btn.innerHTML = "質問に回答してください";
+                console.log("LINE認証をスキップし、スタンドアロンモードで画面を動かします");
             }
-        });
 
+            // 最下部のメッセージを待機状態へ変更
+            const btn = document.getElementById('submit-btn');
+            if (btn) btn.innerHTML = "質問に回答してください";
+        };
+
+        // ボタンのクリックイベント処理群
         function selectQ1(age, gender) {
+            console.log("Q1選択:", age, gender);
             answers.age_group = age;
             answers.gender = gender;
             document.getElementById('step1').classList.add('hidden');
@@ -97,6 +117,7 @@
         }
 
         function selectQ2(value) {
+            console.log("Q2選択:", value);
             answers.purpose = value;
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step3').classList.remove('hidden');
@@ -104,26 +125,40 @@
         }
 
         function selectQ3(value) {
+            console.log("Q3選択:", value);
             answers.target_goal = value;
+            
             const btn = document.getElementById('submit-btn');
-            btn.disabled = false;
-            btn.innerHTML = "回答を送信して予約を確定する";
-            btn.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
-            btn.classList.add('bg-yellow-500', 'text-black', 'hover:bg-yellow-600');
-            btn.onclick = submitData;
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = "回答を送信して予約を確定する";
+                btn.classList.remove('bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+                btn.classList.add('bg-yellow-500', 'text-black', 'hover:bg-yellow-600');
+                btn.onclick = submitData;
+            }
         }
 
+        // Supabaseへのデータ送信処理
         async function submitData() {
             const btn = document.getElementById('submit-btn');
             const statusMsg = document.getElementById('status-message');
             
-            btn.disabled = true;
-            btn.innerHTML = "データを送信中...";
-            statusMsg.classList.remove('hidden');
-            statusMsg.innerHTML = "データベースに書き込んでいます...";
+            if(btn) {
+                btn.disabled = true;
+                btn.innerHTML = "データを送信中...";
+            }
+            if(statusMsg) {
+                statusMsg.classList.remove('hidden');
+                statusMsg.innerHTML = "データベースに書き込んでいます...";
+            }
 
             try {
-                const { data, error } = await supabase
+                if (!supabaseClient) {
+                    throw new Error("データベースへの接続が確立されていません");
+                }
+
+                // 作成したgym_profilesテーブルへUPSERT
+                const { data, error } = await supabaseClient
                     .from('gym_profiles')
                     .upsert({
                         line_user_id: lineUserId,
@@ -137,18 +172,20 @@
 
                 if (error) throw error;
 
-                statusMsg.innerHTML = "送信成功！";
-                alert(displayName + "様、体験予約アンケートが完了しました！\nこの内容がSupabaseに即時書き込まれました。");
+                if(statusMsg) statusMsg.innerHTML = "送信成功！";
+                alert(displayName + "様、体験予約アンケートが完了しました！\nSupabaseへのリアルタイム書き込みに成功しました。");
                 
-                if (liff.isInClient()) {
+                if (typeof liff !== 'undefined' && liff.isInClient()) {
                     liff.closeWindow();
                 }
 
             } catch (error) {
-                console.error("Supabase送信エラー:", error);
-                statusMsg.innerHTML = "エラー: " + error.message;
-                btn.disabled = false;
-                btn.innerHTML = "再試行する";
+                console.error("送信エラー:", error);
+                if(statusMsg) statusMsg.innerHTML = "エラー: " + error.message;
+                if(btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = "再試行する";
+                }
             }
         }
     </script>
