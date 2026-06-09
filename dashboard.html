@@ -2,72 +2,59 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DPRO GYM オーナーダッシュボード</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-900 text-white min-h-screen p-4 md:p-8">
-    <div class="max-w-4xl mx-auto">
-        <header class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl font-bold text-yellow-500">予約状況一覧</h1>
-            <button onclick="fetchReservations()" class="bg-gray-700 px-4 py-2 rounded-lg text-sm hover:bg-gray-600">最新情報を取得</button>
-        </header>
-
-        <div id="data-container" class="grid gap-4">
-            <div class="text-center py-10 text-gray-400">データを読み込み中...</div>
-        </div>
-    </div>
+<body class="bg-gray-900 text-white p-6">
+    <h1 class="text-2xl font-bold text-yellow-500 mb-6">予約状況一覧</h1>
+    <div id="data-container" class="grid gap-4">読み込み中...</div>
 
     <script>
+        // Supabaseクライアントの初期化（一度だけ行う）
         const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J'; 
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchReservations() {
             const container = document.getElementById('data-container');
             
-            // created_atの降順（新しい順）で取得
-            const { data, error } = await supabase
+            // データを取得
+            const { data, error } = await sbClient
                 .from('gym_profiles')
                 .select('*')
                 .order('created_at', { ascending: false });
             
             if (error) {
-                container.innerHTML = `<div class="bg-red-900 p-4 rounded-xl text-center">エラー: ${error.message}</div>`;
+                container.innerHTML = 'エラー: ' + error.message;
                 return;
             }
 
             if (!data || data.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 text-gray-500">現在、予約データはありません。</div>';
+                container.innerHTML = '予約データはありません。';
                 return;
             }
 
             let html = '';
             data.forEach(row => {
                 html += `
-                <div class="bg-gray-800 p-5 rounded-xl border border-gray-700 shadow-xl hover:border-yellow-500 transition-all">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h2 class="text-lg font-bold text-yellow-400">${row.display_name || 'ゲスト様'}</h2>
-                            <p class="text-sm text-gray-400">予約日時: ${row.preferred_datetime || '未設定'}</p>
-                        </div>
-                        <span class="bg-gray-700 text-xs px-2 py-1 rounded">${new Date(row.created_at).toLocaleDateString()}</span>
+                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="font-bold text-yellow-400">${row.display_name || 'ゲスト様'}</span>
+                        <span class="text-xs text-gray-500">${row.preferred_datetime || '日時未設定'}</span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm border-t border-gray-700 pt-3">
-                        <p><span class="text-gray-500">属性:</span> ${row.age_group} / ${row.gender}</p>
-                        <p><span class="text-gray-500">目的:</span> ${row.purpose}</p>
-                        <p><span class="text-gray-500">目標:</span> ${row.target_goal}</p>
-                        <p class="md:col-span-2"><span class="text-gray-500">お悩み:</span> ${row.status}</p>
+                    <div class="text-sm space-y-1 text-gray-300">
+                        <p>👤 ${row.age_group || '-'} / ${row.gender || '-'}</p>
+                        <p>🎯 目的: ${row.purpose || '-'} / 目標: ${row.target_goal || '-'}</p>
+                        <p>📝 悩み: ${row.status || '-'}</p>
                     </div>
                 </div>`;
             });
             container.innerHTML = html;
         }
 
-        // 初回読み込みと自動更新
+        // 実行
         fetchReservations();
-        setInterval(fetchReservations, 30000); // 30秒ごとに更新
     </script>
 </body>
 </html>
