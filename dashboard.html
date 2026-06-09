@@ -20,12 +20,11 @@
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchReservations() {
-            document.getElementById('data-container').innerHTML = '読み込み中...';
-            
+            // 全ての項目を読み込むように調整
             const { data, error } = await sbClient
                 .from('gym_profiles')
                 .select('*')
-                .order('created_at', { ascending: false }); // 新しい順
+                .order('created_at', { ascending: false });
             
             if (error) {
                 document.getElementById('data-container').innerHTML = 'エラー: ' + error.message;
@@ -34,14 +33,17 @@
 
             let html = '';
             data.forEach(row => {
+                // preferred_datetime を明示的に表示
+                const dateTime = row.preferred_datetime || '日時未設定';
+                
                 html += `
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
                     <div class="flex justify-between items-center mb-2">
                         <span class="font-bold text-yellow-400">${row.display_name || 'ゲスト様'}</span>
-                        <span class="text-xs text-gray-500">${row.preferred_datetime || '日時未設定'}</span>
+                        <span class="font-bold text-white bg-gray-700 px-2 py-1 rounded text-sm">${dateTime}</span>
                     </div>
-                    <div class="text-sm space-y-1 text-gray-300">
-                        <p>👤 ${row.age_group || '-'} / ${row.gender || '-'}</p>
+                    <div class="text-sm space-y-1 text-gray-300 border-t border-gray-700 pt-2">
+                        <p>👤 属性: ${row.age_group || '-'} / ${row.gender || '-'}</p>
                         <p>🎯 目的: ${row.purpose || '-'} / 目標: ${row.target_goal || '-'}</p>
                         <p>📝 悩み: ${row.status || '-'}</p>
                     </div>
@@ -51,7 +53,6 @@
         }
 
         fetchReservations();
-        // 60秒ごとに自動更新
         setInterval(fetchReservations, 60000);
     </script>
 </body>
