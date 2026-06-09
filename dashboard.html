@@ -7,31 +7,28 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-900 text-white p-6">
-    <h1 class="text-2xl font-bold text-yellow-500 mb-6">予約状況一覧</h1>
+    <header class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-yellow-500">予約状況一覧</h1>
+        <button onclick="fetchReservations()" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-lg text-sm">最新情報を取得</button>
+    </header>
+
     <div id="data-container" class="grid gap-4">読み込み中...</div>
 
     <script>
-        // Supabaseクライアントの初期化（一度だけ行う）
         const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J'; 
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function fetchReservations() {
-            const container = document.getElementById('data-container');
+            document.getElementById('data-container').innerHTML = '読み込み中...';
             
-            // データを取得
             const { data, error } = await sbClient
                 .from('gym_profiles')
                 .select('*')
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false }); // 新しい順
             
             if (error) {
-                container.innerHTML = 'エラー: ' + error.message;
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                container.innerHTML = '予約データはありません。';
+                document.getElementById('data-container').innerHTML = 'エラー: ' + error.message;
                 return;
             }
 
@@ -50,11 +47,12 @@
                     </div>
                 </div>`;
             });
-            container.innerHTML = html;
+            document.getElementById('data-container').innerHTML = html || '予約はありません。';
         }
 
-        // 実行
         fetchReservations();
+        // 60秒ごとに自動更新
+        setInterval(fetchReservations, 60000);
     </script>
 </body>
 </html>
