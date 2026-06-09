@@ -9,13 +9,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-900 font-sans antialiased text-white">
+
     <div class="max-w-md mx-auto bg-gray-800 min-h-screen flex flex-col shadow-2xl">
         <div class="bg-black text-yellow-500 text-center py-4 font-black tracking-widest border-b border-yellow-500">DPRO GYM × DEMO</div>
         <div class="p-6 flex-grow">
-            <div class="w-full bg-gray-700 h-2 rounded-full mb-6"><div id="progress-bar" class="bg-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 20%"></div></div>
-            <div id="status-message" class="text-center text-yellow-400 font-bold my-2 hidden"></div>
-
-            <!-- ステップ1~5（そのまま） -->
+            <div class="w-full bg-gray-700 h-2 rounded-full mb-6"><div id="progress-bar" class="bg-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 15%"></div></div>
+            
             <div id="step1" class="space-y-4">
                 <h3 class="text-lg font-bold text-yellow-400">Q1. 年齢層と性別</h3>
                 <div class="grid grid-cols-2 gap-3">
@@ -23,38 +22,31 @@
                     <button type="button" onclick="selectQ1('20代', '女性')" class="bg-gray-700 py-3 rounded-xl font-bold text-sm">20代 女性</button>
                     <button type="button" onclick="selectQ1('30代', '男性')" class="bg-gray-700 py-3 rounded-xl font-bold text-sm">30代 男性</button>
                     <button type="button" onclick="selectQ1('30代', '女性')" class="bg-gray-700 py-3 rounded-xl font-bold text-sm">30代 女性</button>
-                    <button type="button" onclick="selectQ1('40代', '男性')" class="bg-gray-700 py-3 rounded-xl font-bold text-sm">40代 男性</button>
-                    <button type="button" onclick="selectQ1('40代', '女性')" class="bg-gray-700 py-3 rounded-xl font-bold text-sm">40代 女性</button>
-                    <button type="button" onclick="selectQ1('50代', '男性')" class="bg-gray-700 py-3 rounded-xl font-bold text-sm">50代 男性</button>
-                    <button type="button" onclick="selectQ1('50代', '女性')" class="bg-gray-700 py-3 rounded-xl font-bold text-sm">50代 女性</button>
                 </div>
             </div>
 
             <div id="step2" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q2. 目的</h3>
-                <button type="button" onclick="selectQ2('ダイエット')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">🔥 ダイエット</button>
-                <button type="button" onclick="selectQ2('筋力アップ')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">💪 筋力アップ</button>
-                <button type="button" onclick="selectQ2('健康維持')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">🏃‍♂️ 健康維持</button>
+                <button type="button" onclick="selectQ2('ダイエット')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">🔥 ダイエット・シェイプアップ</button>
+                <button type="button" onclick="selectQ2('筋力アップ')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">💪 筋力アップ・ボディメイク</button>
             </div>
 
             <div id="step3" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q3. 目標</h3>
                 <button type="button" onclick="selectQ3('3ヶ月で-5kg')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">🎯 3ヶ月で-5kg</button>
-                <button type="button" onclick="selectQ3('サイズダウン')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">👗 サイズダウン</button>
+                <button type="button" onclick="selectQ3('習慣定着')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">📅 運動習慣を定着させたい</button>
             </div>
 
             <div id="step4" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q4. お悩み</h3>
-                <textarea id="custom-memo" rows="2" class="w-full bg-gray-700 rounded-xl p-3"></textarea>
+                <textarea id="custom-memo" rows="2" class="w-full bg-gray-700 rounded-xl p-3 text-white border border-gray-600"></textarea>
                 <button type="button" onclick="selectQ4()" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-xl">次へ</button>
             </div>
 
-            <div id="step5" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q5. 検討時期</h3>
-                <button type="button" onclick="selectQ5('すぐ入会')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">✨ すぐ入会</button>
-                <button type="button" onclick="selectQ5('じっくり考えたい')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">🔍 じっくり考えたい</button>
+            <div id="step5" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q5. 希望日</h3>
+                <input type="date" id="date-picker" class="w-full bg-gray-700 p-4 rounded-xl border border-gray-600">
+                <button type="button" onclick="confirmDate()" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-xl">次へ</button>
             </div>
 
-            <!-- ★追加：希望日時選択ステップ -->
-            <div id="step6" class="space-y-4 hidden">
-                <h3 class="text-lg font-bold text-yellow-400">Q6. 希望日時</h3>
-                <input type="datetime-local" id="preferred_datetime" class="w-full bg-gray-700 text-white p-4 rounded-xl border border-gray-600">
+            <div id="step6" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q6. 希望時間</h3>
+                <select id="time-picker" class="w-full bg-gray-700 p-4 rounded-xl border border-gray-600"></select>
                 <button id="submit-btn" onclick="submitData()" class="w-full bg-yellow-500 text-black font-bold py-4 rounded-xl">予約を確定する</button>
             </div>
         </div>
@@ -64,32 +56,52 @@
         const MY_LIFF_ID = '2010341851-Qez3SffP'; 
         const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J'; 
-        const WORKERS_URL = 'https://dpro-gym-webhook.dpromstk2000.workers.dev'; 
-
-        let answers = { age_group: '', gender: '', purpose: '', target_goal: '', status: '', preferred_datetime: '' };
-        let lineUserId = 'demo_' + Math.floor(Math.random() * 100000);
-        let displayName = '体験デモ ゲスト様';
+        
+        let answers = { age_group: '', gender: '', purpose: '', target_goal: '', status: '', date: '' };
+        let displayName = 'ゲスト様';
         let supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        function selectQ1(age, gender) { answers.age_group = age; answers.gender = gender; document.getElementById('step1').classList.add('hidden'); document.getElementById('step2').classList.remove('hidden'); }
-        function selectQ2(val) { answers.purpose = val; document.getElementById('step2').classList.add('hidden'); document.getElementById('step3').classList.remove('hidden'); }
-        function selectQ3(val) { answers.target_goal = val; document.getElementById('step3').classList.add('hidden'); document.getElementById('step4').classList.remove('hidden'); }
-        function selectQ4() { answers.status = document.getElementById('custom-memo').value; document.getElementById('step4').classList.add('hidden'); document.getElementById('step5').classList.remove('hidden'); }
-        function selectQ5(val) { answers.target_goal += " / 時期: " + val; document.getElementById('step5').classList.add('hidden'); document.getElementById('step6').classList.remove('hidden'); }
+        window.onload = async () => {
+            // 日付制御
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('date-picker').setAttribute('min', today);
+            // 時間生成
+            const select = document.getElementById('time-picker');
+            for (let h = 10; h <= 19; h++) {
+                for (let m = 0; m < 60; m += 30) {
+                    if (h === 19 && m > 0) break;
+                    let time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                    select.innerHTML += `<option value="${time}">${time}</option>`;
+                }
+            }
+            // LINE取得
+            try { await liff.init({ liffId: MY_LIFF_ID }); if (liff.isLoggedIn()) { const p = await liff.getProfile(); displayName = p.displayName; } } catch(e){}
+        };
+
+        function selectQ1(a, g) { answers.age_group = a; answers.gender = g; move(1, 2); }
+        function selectQ2(v) { answers.purpose = v; move(2, 3); }
+        function selectQ3(v) { answers.target_goal = v; move(3, 4); }
+        function selectQ4() { answers.status = document.getElementById('custom-memo').value || 'なし'; move(4, 5); }
+        function confirmDate() { answers.date = document.getElementById('date-picker').value; if(!answers.date) return alert('日付を選択してください'); move(5, 6); }
+        
+        function move(from, to) {
+            document.getElementById('step'+from).classList.add('hidden');
+            document.getElementById('step'+to).classList.remove('hidden');
+            document.getElementById('progress-bar').style.width = (to * 16) + '%';
+        }
 
         async function submitData() {
-            answers.preferred_datetime = document.getElementById('preferred_datetime').value;
-            await supabaseClient.from('gym_profiles').upsert({
-                line_user_id: lineUserId,
+            const time = document.getElementById('time-picker').value;
+            await supabaseClient.from('gym_profiles').insert([{
                 display_name: displayName,
                 age_group: answers.age_group,
                 gender: answers.gender,
                 purpose: answers.purpose,
                 target_goal: answers.target_goal,
                 status: answers.status,
-                preferred_datetime: answers.preferred_datetime // 新規列に保存
-            });
-            alert("予約完了しました！");
+                preferred_datetime: answers.date + ' ' + time
+            }]);
+            alert(displayName + "様、ご予約ありがとうございます！");
             liff.closeWindow();
         }
     </script>
