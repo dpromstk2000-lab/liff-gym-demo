@@ -19,8 +19,19 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J'; 
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // ステータス更新用関数
+        async function updateStatus(id, newStatus) {
+            const { error } = await sbClient
+                .from('gym_profiles')
+                .update({ reservation_status: newStatus })
+                .eq('id', id);
+            
+            if (error) return alert("更新失敗: " + error.message);
+            alert("ステータスを更新しました");
+            fetchReservations(); // 画面を再読み込み
+        }
+
         async function fetchReservations() {
-            // 全ての項目を読み込むように調整
             const { data, error } = await sbClient
                 .from('gym_profiles')
                 .select('*')
@@ -33,19 +44,23 @@
 
             let html = '';
             data.forEach(row => {
-                // preferred_datetime を明示的に表示
-                const dateTime = row.preferred_datetime || '日時未設定';
+                const status = row.reservation_status || 'pending';
+                const statusColor = status === 'confirmed' ? 'bg-green-700' : (status === 'cancelled' ? 'bg-red-700' : 'bg-gray-700');
                 
                 html += `
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
                     <div class="flex justify-between items-center mb-2">
                         <span class="font-bold text-yellow-400">${row.display_name || 'ゲスト様'}</span>
-                        <span class="font-bold text-white bg-gray-700 px-2 py-1 rounded text-sm">${dateTime}</span>
+                        <span class="${statusColor} px-2 py-1 rounded text-xs">${status}</span>
                     </div>
                     <div class="text-sm space-y-1 text-gray-300 border-t border-gray-700 pt-2">
+                        <p>🗓 日時: ${row.preferred_datetime || '未設定'}</p>
                         <p>👤 属性: ${row.age_group || '-'} / ${row.gender || '-'}</p>
                         <p>🎯 目的: ${row.purpose || '-'} / 目標: ${row.target_goal || '-'}</p>
-                        <p>📝 悩み: ${row.status || '-'}</p>
+                        <div class="mt-3 flex gap-2">
+                            <button onclick="updateStatus('${row.id}', 'confirmed')" class="bg-green-600 hover:bg-green-500 px-3 py-1 rounded text-xs font-bold">OK(承認)</button>
+                            <button onclick="updateStatus('${row.id}', 'cancelled')" class="bg-red-600 hover:bg-red-500 px-3 py-1 rounded text-xs font-bold">NO(却下)</button>
+                        </div>
                     </div>
                 </div>`;
             });
@@ -53,7 +68,6 @@
         }
 
         fetchReservations();
-        setInterval(fetchReservations, 60000);
     </script>
 </body>
 </html>
