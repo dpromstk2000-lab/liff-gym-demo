@@ -4,35 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DPRO GYM 無料体験予約</title>
-    <!-- スマホ用UIデザイン部品（Tailwind CSS） -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- LINE LIFF SDK -->
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <!-- Supabase CDN（JavaScript用ライブラリ） -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-900 font-sans antialiased text-white">
 
-    <!-- 全体を包むボックス（スマホ幅最適化） -->
     <div class="max-w-md mx-auto bg-gray-800 min-h-screen flex flex-col justify-between shadow-2xl">
         
-        <!-- ヘッダー -->
         <div class="bg-black text-yellow-500 text-center py-4 font-black tracking-widest border-b border-yellow-500">
             DPRO GYM × DEMO
         </div>
 
-        <!-- メインコンテンツエリア -->
         <div class="p-6 flex-grow">
             
-            <!-- 進行度バー -->
             <div class="w-full bg-gray-700 h-2 rounded-full mb-6">
                 <div id="progress-bar" class="bg-yellow-500 h-2 rounded-full transition-all duration-300" style="width: 33%"></div>
             </div>
 
-            <!-- 状態表示用アナウンスエリア -->
             <div id="status-message" class="text-center text-yellow-400 font-bold my-2 hidden"></div>
 
-            <!-- 質問1：属性入力 -->
             <div id="step1" class="space-y-4">
                 <h3 class="text-lg font-bold text-yellow-400">Q1. あなたの年齢層と性別を教えてください</h3>
                 <div class="grid grid-cols-2 gap-3">
@@ -43,7 +34,6 @@
                 </div>
             </div>
 
-            <!-- 質問2：目的の刈り取り -->
             <div id="step2" class="space-y-4 hidden">
                 <h3 class="text-lg font-bold text-yellow-400">Q2. ご希望の体験コースはどちらですか？</h3>
                 <div class="space-y-3">
@@ -53,7 +43,6 @@
                 </div>
             </div>
 
-            <!-- 質問3：未来のトリガー -->
             <div id="step3" class="space-y-4 hidden">
                 <h3 class="text-lg font-bold text-yellow-400">Q3. 目指したい目標を選択してください</h3>
                 <div class="space-y-3">
@@ -65,7 +54,6 @@
 
         </div>
 
-        <!-- 下部の送信ボタンエリア -->
         <div class="p-4 bg-gray-900 border-t border-gray-700">
             <button id="submit-btn" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-4 rounded-xl cursor-not-allowed transition">
                 LINE認証中...
@@ -74,14 +62,11 @@
 
     </div>
 
-    <!-- システム制御スクリプト -->
     <script>
-        // 画像2026-06-09_13h57_12.png のLIFF IDをセット
+        // メモからいただいた各種ID・URLを完全に組み込み済み
         const MY_LIFF_ID = '2010341851-Qez3SffP'; 
-
-        // 【相乗り設定】既存のプロジェクト（liff-salon-reserve）の「URL」と「Anon Key」をここに貼り付けてください
-        const SUPABASE_URL = 'https://xxxxxxxxxxxxxxxxxxxx.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.xxxxxxxxxxxxxxx'; 
+        const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_cT4vjOFoU1MtjFayuk7HVw_YcuSMR5J'; 
 
         // Supabaseクライアントの初期化
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -136,7 +121,7 @@
             btn.onclick = submitData;
         }
 
-        // 送信ボタンを押したときの処理（Supabaseのgym_profilesテーブルへUPSERT）
+        // 送信ボタンを押したときの処理（Supabaseのgym_profilesテーブルへ保存）
         async function submitData() {
             const btn = document.getElementById('submit-btn');
             const statusMsg = document.getElementById('status-message');
@@ -147,7 +132,7 @@
             statusMsg.innerHTML = "データベースに書き込んでいます...";
 
             try {
-                // 画像2026-06-09_14h00_21.png で作成した「gym_profiles」へ保存（過去にデータがあれば自動上書き）
+                // 作成した「gym_profiles」へ保存（過去にデータがあれば自動上書き）
                 const { data, error } = await supabase
                     .from('gym_profiles')
                     .upsert({
@@ -157,7 +142,7 @@
                         gender: answers.gender,
                         purpose: answers.purpose,
                         target_goal: answers.target_goal,
-                        status: 'visited' // 初期ステータス（体験予約済み）
+                        status: 'visited'
                     }, { onConflict: 'line_user_id' });
 
                 if (error) throw error;
