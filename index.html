@@ -106,26 +106,36 @@
         async function submitData() {
             const time = document.getElementById('time-picker').value;
             const fullDate = answers.date + ' ' + time;
-            
-            await supabaseClient.from('gym_profiles').insert([{
-                display_name: displayName,
-                age_group: answers.age_group,
-                gender: answers.gender,
-                purpose: answers.purpose,
-                target_goal: answers.target_goal,
-                status: answers.status,
-                preferred_datetime: fullDate
-            }]);
+            const btn = document.getElementById('submit-btn');
+            btn.innerText = "送信中...";
+            btn.disabled = true;
             
             try {
+                const { error } = await supabaseClient.from('gym_profiles').insert([{
+                    display_name: displayName,
+                    age_group: answers.age_group,
+                    gender: answers.gender,
+                    purpose: answers.purpose,
+                    target_goal: answers.target_goal,
+                    status: answers.status,
+                    preferred_datetime: fullDate
+                }]);
+                
+                if (error) throw error;
+                
                 await liff.sendMessages([{
                     type: 'text',
-                    text: `【予約完了】\n${displayName}様、ご予約ありがとうございます。\n日時：${fullDate}\n目標：${answers.target_goal}\n内容を確認し、追ってご連絡いたします。`
+                    text: `【予約完了】\n${displayName}様、ご予約ありがとうございます。\n日時：${fullDate}\n目標：${answers.target_goal}`
                 }]);
-            } catch(e) { console.error("メッセージ送信失敗", e); }
-            
-            alert("予約が完了しました！");
-            liff.closeWindow();
+                
+                alert("予約が完了しました！");
+                liff.closeWindow();
+            } catch(e) {
+                console.error("保存失敗:", e);
+                alert("送信に失敗しました。もう一度お試しください。\nエラー: " + e.message);
+                btn.innerText = "予約を確定する";
+                btn.disabled = false;
+            }
         }
     </script>
 </body>
