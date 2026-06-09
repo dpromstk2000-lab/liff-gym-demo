@@ -35,17 +35,20 @@
 
             <div id="step2" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q2. 目的</h3>
                 <button type="button" onclick="selectQ2('ダイエット')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">🔥 ダイエット・シェイプアップ</button>
-                <button type="button" onclick="selectQ2('筋力アップ')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">💪 筋力アップ・ボディメイク</button>
+                <button type="button" onclick="selectQ2('筋力アップ')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">💪 筋力アップ・ボディメイク</button>
+                <button type="button" onclick="selectQ2('健康維持')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">🏃‍♂️ 運動不足の解消・健康維持</button>
             </div>
 
             <div id="step3" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q3. 目標</h3>
-                <button type="button" onclick="selectQ3('3ヶ月で-5kg')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">🎯 3ヶ月で-5kg</button>
-                <button type="button" onclick="selectQ3('習慣定着')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">📅 運動習慣を定着させたい</button>
+                <button type="button" onclick="selectQ3('3ヶ月で-5kg')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">🎯 3ヶ月以内に-5kg達成したい</button>
+                <button type="button" onclick="selectQ3('サイズダウン')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">👗 半年以内にサイズダウンしたい</button>
+                <button type="button" onclick="selectQ3('運動習慣')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">📅 1ヶ月で運動習慣を定着させたい</button>
             </div>
 
             <div id="step4" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q4. お悩み</h3>
-                <textarea id="custom-memo" rows="2" class="w-full bg-gray-700 rounded-xl p-3 text-white border border-gray-600"></textarea>
-                <button type="button" onclick="selectQ4()" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-xl">次へ</button>
+                <button type="button" onclick="selectQ4('続かない')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">❌ 過去にジムに通ったが続かなかった</button>
+                <button type="button" onclick="selectQ4('使い方不明')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4 mb-2">❌ マシンの使い方が分からず不安</button>
+                <button type="button" onclick="selectQ4('リバウンド')" class="w-full bg-gray-700 py-4 rounded-xl font-bold text-left px-4">❌ リバウンドを繰り返してしまう</button>
             </div>
 
             <div id="step5" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q5. 希望日</h3>
@@ -53,7 +56,7 @@
                 <button type="button" onclick="confirmDate()" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-xl mt-4">次へ</button>
             </div>
 
-            <div id="step6" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q6. 希望時間</h3>
+            <div id="step6" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q6. 希望時間（10:00 - 19:00）</h3>
                 <select id="time-picker" class="w-full bg-gray-700 p-4 rounded-xl border border-gray-600 text-white"></select>
                 <button id="submit-btn" onclick="submitData()" class="w-full bg-yellow-500 text-black font-bold py-4 rounded-xl mt-4">予約を確定する</button>
             </div>
@@ -72,21 +75,22 @@
         window.onload = async () => {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('date-picker').setAttribute('min', today);
+            
+            // 30分刻みの時間生成（10:00から19:00まで）
             const select = document.getElementById('time-picker');
-            for (let h = 10; h <= 19; h++) {
-                for (let m = 0; m < 60; m += 30) {
-                    if (h === 19 && m > 0) break;
-                    let time = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
-                    select.innerHTML += `<option value="${time}">${time}</option>`;
-                }
+            for (let h = 10; h < 19; h++) {
+                select.innerHTML += `<option value="${h}:00">${h}:00</option>`;
+                select.innerHTML += `<option value="${h}:30">${h}:30</option>`;
             }
+            select.innerHTML += `<option value="19:00">19:00</option>`;
+
             try { await liff.init({ liffId: MY_LIFF_ID }); if (liff.isLoggedIn()) { const p = await liff.getProfile(); displayName = p.displayName; } } catch(e){}
         };
 
         function selectQ1(a, g) { answers.age_group = a; answers.gender = g; move(1, 2); }
         function selectQ2(v) { answers.purpose = v; move(2, 3); }
         function selectQ3(v) { answers.target_goal = v; move(3, 4); }
-        function selectQ4() { answers.status = document.getElementById('custom-memo').value || 'なし'; move(4, 5); }
+        function selectQ4(v) { answers.status = v; move(4, 5); }
         function confirmDate() { answers.date = document.getElementById('date-picker').value; if(!answers.date) return alert('日付を選択してください'); move(5, 6); }
         
         function move(from, to) {
