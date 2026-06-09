@@ -63,7 +63,7 @@
                 <button type="button" onclick="confirmDate()" class="w-full bg-yellow-500 text-black font-bold py-3 rounded-xl mt-4">次へ</button>
             </div>
 
-            <div id="step6" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q6. 希望時間（10:00 - 19:00）</h3>
+            <div id="step6" class="space-y-4 hidden"><h3 class="text-lg font-bold text-yellow-400">Q6. 希望時間</h3>
                 <select id="time-picker" class="w-full bg-gray-700 p-4 rounded-xl border border-gray-600 text-white"></select>
                 <button id="submit-btn" onclick="submitData()" class="w-full bg-yellow-500 text-black font-bold py-4 rounded-xl mt-4">予約を確定する</button>
             </div>
@@ -77,6 +77,7 @@
         
         let answers = { age_group: '', gender: '', purpose: '', target_goal: '', status: '', date: '' };
         let displayName = 'ゲスト様';
+        let userId = 'none'; // 追加
         let supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         window.onload = async () => {
@@ -87,7 +88,15 @@
                 select.innerHTML += `<option value="${h}:00">${h}:00</option><option value="${h}:30">${h}:30</option>`;
             }
             select.innerHTML += `<option value="19:00">19:00</option>`;
-            try { await liff.init({ liffId: MY_LIFF_ID }); if (liff.isLoggedIn()) { const p = await liff.getProfile(); displayName = p.displayName; } } catch(e){}
+            
+            try { 
+                await liff.init({ liffId: MY_LIFF_ID }); 
+                if (liff.isLoggedIn()) { 
+                    const p = await liff.getProfile(); 
+                    displayName = p.displayName; 
+                    userId = p.userId; // LINE ID取得
+                } 
+            } catch(e){}
         };
 
         function selectQ1(a, g) { answers.age_group = a; answers.gender = g; move(1, 2); }
@@ -112,6 +121,7 @@
             
             try {
                 const { error } = await supabaseClient.from('gym_profiles').insert([{
+                    line_user_id: userId,
                     display_name: displayName,
                     age_group: answers.age_group,
                     gender: answers.gender,
@@ -132,7 +142,7 @@
                 liff.closeWindow();
             } catch(e) {
                 console.error("保存失敗:", e);
-                alert("送信に失敗しました。もう一度お試しください。\nエラー: " + e.message);
+                alert("送信に失敗しました: " + e.message);
                 btn.innerText = "予約を確定する";
                 btn.disabled = false;
             }
