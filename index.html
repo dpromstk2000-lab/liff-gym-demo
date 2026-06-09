@@ -4,37 +4,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DPRO GYM 無料体験予約</title>
-    <!-- 画面をスマホ風に綺麗に整えるためのデザイン部品をお借りします -->
+    <!-- 画面をスマホ風に綺麗に整えるためのデザイン部品 -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- LINE LIFFのプログラムを動かすための部品 -->
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
+<body class="bg-gray-900 font-sans antialiased text-white">
 
-    <!-- 全体を包むボックス -->
-    <div class="max-w-md mx-auto bg-white min-h-screen shadow-md flex flex-col justify-between">
+    <!-- 全体を包むボックス（スマホ幅に最適化） -->
+    <div class="max-w-md mx-auto bg-gray-800 min-h-screen flex flex-col justify-between shadow-2xl">
         
-        <!-- ヘッダー部分 -->
-        <div class="bg-black text-white text-center py-4 font-bold tracking-wider">
-            DPRO GYM（ディープロ・ジム）
+        <!-- ヘッダー -->
+        <div class="bg-black text-yellow-500 text-center py-4 font-black tracking-widest border-b border-yellow-500">
+            DPRO GYM × DEMO
         </div>
 
-        <!-- メインの質問エリア -->
+        <!-- メインコンテンツエリア -->
         <div class="p-6 flex-grow">
-            <h2 class="text-xl font-bold text-center text-gray-800 mb-6">1分で完了！無料体験予約フォーム</h2>
             
-            <!-- ここに後で、年齢・性別・目的などの質問ボタンを作っていきます -->
-            <p class="text-gray-600 text-center py-10">
-                ここにアンケートの質問が順番に表示されます。
-            </p>
+            <!-- 進行度バー -->
+            <div class="w-full bg-gray-700 h-2 rounded-full mb-6">
+                <div class="bg-yellow-500 h-2 rounded-full" style="width: 33%"></div>
+            </div>
+
+            <!-- 質問1：属性入力 -->
+            <div id="step1" class="space-y-4">
+                <h3 class="text-lg font-bold text-yellow-400">Q1. あなたの年齢層と性別を教えてください</h3>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="selectQ1('30代男性')" class="q1-btn bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">30代 男性</button>
+                    <button onclick="selectQ1('40代男性')" class="q1-btn bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">40代 男性</button>
+                    <button onclick="selectQ1('30代女性')" class="q1-btn bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">30代 女性</button>
+                    <button onclick="selectQ1('40代女性')" class="q1-btn bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold transition">40代 女性</button>
+                </div>
+            </div>
+
+            <!-- 質問2：目的の刈り取り（最初は非表示） -->
+            <div id="step2" class="space-y-4 hidden">
+                <h3 class="text-lg font-bold text-yellow-400">Q2. ご希望の体験コースはどちらですか？</h3>
+                <div class="space-y-3">
+                    <button onclick="selectQ2('ダイエット・減量コース')" class="q2-btn w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">🔥 ダイエット・減量コース</button>
+                    <button onclick="selectQ2('筋力アップ・ボディメイク')" class="q2-btn w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">💪 筋力アップ・ボディメイク</button>
+                    <button onclick="selectQ2('健康維持・体力向上')" class="q2-btn w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">🏃‍♂️ 健康維持・体力向上</button>
+                </div>
+            </div>
+
+            <!-- 質問3：未来のトリガー（最初は非表示） -->
+            <div id="step3" class="space-y-4 hidden">
+                <h3 class="text-lg font-bold text-yellow-400">Q3. 目指したい目標を選択してください</h3>
+                <div class="space-y-3">
+                    <button onclick="selectQ3('3ヶ月以内にマイナス5kg')" class="q3-btn w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">🎯 3ヶ月以内にマイナス5kg</button>
+                    <button onclick="selectQ3('半年で服のサイズを1サイズ落とす')" class="q3-btn w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">👗 半年で服のサイズを落とす</button>
+                    <button onclick="selectQ3('まずは週2回の運動習慣をつける')" class="q3-btn w-full bg-gray-700 hover:bg-yellow-500 hover:text-black py-4 rounded-xl font-bold text-left px-4 transition">📅 まずは週2回の運動習慣</button>
+                </div>
+            </div>
+
         </div>
 
-        <!-- 下部のボタンエリア -->
-        <div class="p-4 bg-gray-50 border-t border-gray-200">
-            <button class="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-4 rounded-lg shadow transition duration-200">
-                次へ進む
+        <!-- 下部の送信ボタンエリア -->
+        <div class="p-4 bg-gray-900 border-t border-gray-700">
+            <button id="submit-btn" disabled class="w-full bg-gray-600 text-gray-400 font-bold py-4 rounded-xl cursor-not-allowed transition">
+                回答を送信して予約へ
             </button>
         </div>
 
     </div>
 
+    <!-- 画面を動かすJavaScriptプログラム -->
+    <script>
+        let answers = { q1: '', q2: '', q3: '' };
+
+        function selectQ1(value) {
+            answers.q1 = value;
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
+            document.querySelector('.bg-yellow-500').style.width = '66%';
+        }
+
+        function selectQ2(value) {
+            answers.q2 = value;
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.remove('hidden');
+            document.querySelector('.bg-yellow-500').style.width = '100%';
+        }
+
+        function selectQ3(value) {
+            answers.q3 = value;
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = false;
+            btn.classList.remove('blue-600', 'bg-gray-600', 'text-gray-400', 'cursor-not-allowed');
+            btn.classList.add('bg-yellow-500', 'text-black', 'hover:bg-yellow-600');
+        }
+    </script>
 </body>
 </html>
