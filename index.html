@@ -63,52 +63,52 @@
     </div>
 
     <script>
-        // 画像情報を100%固定組み込み
+        // お手元の情報を100%そのまま指定
         const MY_LIFF_ID = '2010341851-Qez3SffP'; 
         const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
-        const SUPABASE_ANON_KEY = 'sb_publishable_cT4vjOFoU1MtjFayuk7HVw_YcuSMR5J'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J'; 
 
-        // 初期値（エラー対策のダミーデータ）
         let answers = { age_group: '', gender: '', purpose: '', target_goal: '' };
         let lineUserId = 'demo_' + Math.floor(Math.random() * 100000);
         let displayName = '体験デモ ゲスト様';
         let supabaseClient = null;
 
-        // ページ読み込み時に即実行
+        // ページ読み込み時に初期化を実行
         window.onload = async function() {
             console.log("システム開始");
             
-            // 1. まず先にSupabaseを確実に初期化してボタンの硬直を防ぐ
+            // 1. 新しい仕様のPublishable key（sb_publishable_...）を正しく機能させる初期化設定
             try {
                 if (typeof supabase !== 'undefined') {
-                    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                        auth: {
+                            persistSession: false,
+                            autoRefreshToken: false
+                        }
+                    });
                 }
             } catch (e) {
                 console.error("Supabase初期化失敗:", e);
             }
 
-            // 2. LINE初期化（成否に関わらず、画面のクリック機能は殺さない）
+            // 2. LINE初期化（認証エラーが起きても画面は止めない）
             try {
                 await liff.init({ liffId: MY_LIFF_ID });
                 if (liff.isLoggedIn()) {
                     const profile = await liff.getProfile();
                     lineUserId = profile.userId;
                     displayName = profile.displayName;
-                } else {
-                    console.log("LINE未ログインのためデモモード稼働");
                 }
             } catch (error) {
-                console.log("LINE認証をスキップし、スタンドアロンモードで画面を動かします");
+                console.log("スタンドアロン・デモモードで稼働中");
             }
 
-            // 最下部のメッセージを待機状態へ変更
             const btn = document.getElementById('submit-btn');
             if (btn) btn.innerHTML = "質問に回答してください";
         };
 
-        // ボタンのクリックイベント処理群
+        // ボタンのクリックイベント処理
         function selectQ1(age, gender) {
-            console.log("Q1選択:", age, gender);
             answers.age_group = age;
             answers.gender = gender;
             document.getElementById('step1').classList.add('hidden');
@@ -117,7 +117,6 @@
         }
 
         function selectQ2(value) {
-            console.log("Q2選択:", value);
             answers.purpose = value;
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step3').classList.remove('hidden');
@@ -125,9 +124,7 @@
         }
 
         function selectQ3(value) {
-            console.log("Q3選択:", value);
             answers.target_goal = value;
-            
             const btn = document.getElementById('submit-btn');
             if (btn) {
                 btn.disabled = false;
@@ -154,10 +151,10 @@
 
             try {
                 if (!supabaseClient) {
-                    throw new Error("データベースへの接続が確立されていません");
+                    throw new Error("データベース接続が準備できていません");
                 }
 
-                // 作成したgym_profilesテーブルへUPSERT
+                // 新しいキーの通信ヘッダー制限をクリアしてupsertを実行
                 const { data, error } = await supabaseClient
                     .from('gym_profiles')
                     .upsert({
@@ -173,7 +170,7 @@
                 if (error) throw error;
 
                 if(statusMsg) statusMsg.innerHTML = "送信成功！";
-                alert(displayName + "様、体験予約アンケートが完了しました！\nSupabaseへのリアルタイム書き込みに成功しました。");
+                alert(displayName + "様、体験予約アンケートが完了しました！\nSupabaseにリアルタイム保存されました。");
                 
                 if (typeof liff !== 'undefined' && liff.isInClient()) {
                     liff.closeWindow();
@@ -181,7 +178,7 @@
 
             } catch (error) {
                 console.error("送信エラー:", error);
-                if(statusMsg) statusMsg.innerHTML = "エラー: " + error.message;
+                if(statusMsg) statusMsg.innerHTML = "エラー: " + (error.message || "接続失敗");
                 if(btn) {
                     btn.disabled = false;
                     btn.innerHTML = "再試行する";
