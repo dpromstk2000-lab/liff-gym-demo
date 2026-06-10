@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会員マイページ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
+        .title { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #333; }
+        .info { margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 8px; }
+        .count { font-size: 2rem; font-weight: bold; color: #007bff; }
+        #qrcode { margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="title">会員マイページ</div>
+    <div id="userInfo" class="info">読込中...</div>
+    <div id="memberStatus" class="info">
+        <div>残り回数</div>
+        <div id="countDisplay" class="count">-</div>
+    </div>
+    <div id="qrcode">
+        <img id="qrImg" src="" alt="QRコード">
+    </div>
+</div>
+
+<script>
+    // Supabaseの設定（ここに各店舗のURLとキーを入れてください）
+    const supabaseUrl = 'YOUR_SUPABASE_URL';
+    const supabaseKey = 'YOUR_SUPABASE_KEY';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function init() {
+        await liff.init({ liffId: "YOUR_LIFF_ID" });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        
+        const profile = await liff.getProfile();
+        fetchMemberData(profile.userId);
+    }
+
+    async function fetchMemberData(lineId) {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('LINE_ID', lineId)
+            .single();
+
+        if (data) {
+            document.getElementById('userInfo').innerText = `${data.name} 様`;
+            document.getElementById('countDisplay').innerText = `${data.remaining_count} 回`;
+            // QRコード生成（LINE_IDをQR化）
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${lineId}`;
+        } else {
+            document.getElementById('userInfo').innerText = "登録情報が見つかりません";
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>
