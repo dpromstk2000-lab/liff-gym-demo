@@ -31,12 +31,12 @@
 
 <script>
     // Supabaseの設定（ここに各店舗のURLとキーを入れてください）
-    const supabaseUrl = 'YOUR_SUPABASE_URL';
-    const supabaseKey = 'YOUR_SUPABASE_KEY';
+    const supabaseUrl = 'https://cbknucemarcpbscirzyv.supabase.co/rest/v1/';
+    const supabaseKey = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     async function init() {
-        await liff.init({ liffId: "YOUR_LIFF_ID" });
+        await liff.init({ liffId: "2010341851-Qez3SffP" });
         if (!liff.isLoggedIn()) { liff.login(); return; }
         
         const profile = await liff.getProfile();
