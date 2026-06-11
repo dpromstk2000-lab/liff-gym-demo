@@ -7,21 +7,40 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
-        .card { background: white; width: 100%; max-width: 400px; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); text-align: center; }
-        .title { font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; color: #333; }
-        .info { margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 8px; }
-        .count { font-size: 2rem; font-weight: bold; color: #007bff; }
-        #qrcode { margin-top: 20px; }
+        body { 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            background: #f8f9fa; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0;
+        }
+        .card { 
+            background: #ffffff; 
+            width: 90%; 
+            max-width: 400px; 
+            padding: 30px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+            text-align: center; 
+            border: 1px solid #eee;
+        }
+        .title { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: #1a1a1a; letter-spacing: 0.05em; }
+        .info { margin: 20px 0; padding: 20px; background: #fdfdfd; border: 1px solid #f0f0f0; border-radius: 16px; }
+        .label { font-size: 0.9rem; color: #666; margin-bottom: 8px; }
+        .count { font-size: 3rem; font-weight: 800; color: #2d3436; line-height: 1; }
+        #qrcode { margin-top: 30px; padding-top: 20px; border-top: 1px solid #f0f0f0; }
+        #qrImg { width: 180px; height: 180px; border-radius: 12px; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <div class="title">会員マイページ</div>
+    <div class="title">MY PAGE</div>
     <div id="userInfo" class="info">読込中...</div>
     <div id="memberStatus" class="info">
-        <div>残り回数</div>
+        <div class="label">残りセッション回数</div>
         <div id="countDisplay" class="count">-</div>
     </div>
     <div id="qrcode">
@@ -37,26 +56,28 @@
     async function init() {
         await liff.init({ liffId: "2010362463-80AFWCcm" });
         if (!liff.isLoggedIn()) { liff.login(); return; }
+        
         const profile = await liff.getProfile();
         fetchMemberData(profile.userId);
     }
 
     async function fetchMemberData(lineId) {
-        // 【修正箇所】ここを line_user_id にしました
         const { data, error } = await supabaseClient
-            .from('gym_profiles') // テーブル名が gym_profiles であることも確認しました
+            .from('gym_profiles')
             .select('*')
             .eq('line_user_id', lineId)
             .single();
 
         if (data) {
             document.getElementById('userInfo').innerText = `${data.display_name} 様`;
-            document.getElementById('countDisplay').innerText = `${data.remaining_count} 回`;
-            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${lineId}`;
+            document.getElementById('countDisplay').innerText = `${data.remaining_count}`;
+            document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${lineId}`;
         } else {
             document.getElementById('userInfo').innerText = "登録情報が見つかりません";
+            document.getElementById('countDisplay').innerText = "0";
         }
     }
+
     init();
 </script>
 </body>
