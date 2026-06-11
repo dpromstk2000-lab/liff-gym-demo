@@ -11,8 +11,7 @@
         .card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        /* 30分刻みで入力させるための設定 */
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
         button { width: 100%; padding: 15px; background: #2d3436; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
@@ -21,8 +20,12 @@
 <div class="card">
     <h2 style="margin-top: 0;">新規予約申し込み</h2>
     <div class="form-group">
-        <label>希望日時 (30分単位)</label>
-        <input type="datetime-local" id="datetimeInput" step="1800" required>
+        <label>日付を選択</label>
+        <input type="date" id="dateInput" required>
+    </div>
+    <div class="form-group">
+        <label>時間を選択 (10:00 - 19:00)</label>
+        <select id="timeSelect"></select>
     </div>
     <button onclick="submitReservation()">予約を送信する</button>
 </div>
@@ -32,10 +35,20 @@
     const supabaseKey = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 【重要】今日の日付を最小値として設定
-    const now = new Date();
-    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('datetimeInput').min = now.toISOString().slice(0, 16);
+    // 時間のプルダウンを生成
+    const timeSelect = document.getElementById('timeSelect');
+    for (let h = 10; h < 19; h++) {
+        for (let m of ['00', '30']) {
+            let option = document.createElement('option');
+            option.value = `${h}:${m}`;
+            option.text = `${h}:${m}`;
+            timeSelect.appendChild(option);
+        }
+    }
+
+    // 今日の日付を最小値に設定
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('dateInput').min = today;
 
     async function init() {
         await liff.init({ liffId: "2010362463-80AFWCcm" });
@@ -43,19 +56,16 @@
     }
 
     async function submitReservation() {
-        const input = document.getElementById('datetimeInput').value;
-        if (!input) return alert("日時を選択してください");
-
-        // 30分単位のチェック（分が00か30以外は弾く）
-        const minutes = new Date(input).getMinutes();
-        if (minutes !== 0 && minutes !== 30) return alert("時間は30分単位で選択してください（例：13:00、13:30）");
+        const date = document.getElementById('dateInput').value;
+        const time = document.getElementById('timeSelect').value;
+        if (!date) return alert("日付を選択してください");
 
         const profile = await liff.getProfile();
         
         const { error } = await supabaseClient
             .from('gym_profiles')
             .update({ 
-                preferred_datetime: input,
+                preferred_datetime: `${date} ${time}`,
                 reservation_status: 'pending' 
             })
             .eq('line_user_id', profile.userId);
