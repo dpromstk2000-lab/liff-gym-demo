@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約申し込み</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; display: flex; justify-content: center; }
+        .card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>新規予約申し込み</h2>
+    <div class="form-group">
+        <label>希望日時を選択</label>
+        <input type="datetime-local" id="datetimeInput">
+    </div>
+    <button onclick="submitReservation()">予約を送信する</button>
+</div>
+
+<script>
+    const supabaseUrl = 'https://cbknucemarcpbscirzyv.supabase.co';
+    const supabaseKey = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function init() {
+        await liff.init({ liffId: "2010362463-80AFWCcm" });
+        if (!liff.isLoggedIn()) liff.login();
+    }
+
+    async function submitReservation() {
+        const datetime = document.getElementById('datetimeInput').value;
+        if (!datetime) return alert("日時を選択してください");
+
+        const profile = await liff.getProfile();
+        
+        // 予約日時を更新し、ステータスを pending (承認待ち) に設定
+        const { error } = await supabaseClient
+            .from('gym_profiles')
+            .update({ 
+                preferred_datetime: datetime,
+                reservation_status: 'pending' 
+            })
+            .eq('line_user_id', profile.userId);
+
+        if (error) return alert("予約エラー: " + error.message);
+        
+        alert("予約を申し込みました！オーナーの承認をお待ちください。");
+        window.location.href = 'member.html'; // マイページへ戻る
+    }
+
+    init();
+</script>
+</body>
+</html>
