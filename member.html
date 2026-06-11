@@ -7,42 +7,34 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <style>
-        body { 
-            font-family: 'Helvetica Neue', Arial, sans-serif; 
-            background: #f8f9fa; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-            margin: 0;
-        }
-        .card { 
-            background: #ffffff; 
-            width: 90%; 
-            max-width: 400px; 
-            padding: 30px; 
-            border-radius: 24px; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
-            text-align: center; 
-            border: 1px solid #eee;
-        }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f8f9fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #ffffff; width: 90%; max-width: 400px; padding: 30px; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee; }
         .title { font-size: 1.4rem; font-weight: 700; margin-bottom: 25px; color: #1a1a1a; letter-spacing: 0.05em; }
-        .info { margin: 20px 0; padding: 20px; background: #fdfdfd; border: 1px solid #f0f0f0; border-radius: 16px; }
-        .label { font-size: 0.9rem; color: #666; margin-bottom: 8px; }
+        .info { margin: 15px 0; padding: 20px; background: #fdfdfd; border: 1px solid #f0f0f0; border-radius: 16px; }
+        .label { font-size: 0.8rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+        .value { font-size: 1.1rem; font-weight: 600; color: #333; }
         .count { font-size: 3rem; font-weight: 800; color: #2d3436; line-height: 1; }
-        #qrcode { margin-top: 30px; padding-top: 20px; border-top: 1px solid #f0f0f0; }
-        #qrImg { width: 180px; height: 180px; border-radius: 12px; }
+        #qrcode { margin-top: 25px; padding-top: 20px; border-top: 1px solid #f0f0f0; }
+        #qrImg { width: 160px; height: 160px; border-radius: 12px; }
     </style>
 </head>
 <body>
 
 <div class="card">
     <div class="title">MY PAGE</div>
+    
     <div id="userInfo" class="info">読込中...</div>
+    
     <div id="memberStatus" class="info">
         <div class="label">残りセッション回数</div>
         <div id="countDisplay" class="count">-</div>
     </div>
+
+    <div id="reservationStatus" class="info">
+        <div class="label">次回の予約日時</div>
+        <div id="resDateDisplay" class="value">-</div>
+    </div>
+
     <div id="qrcode">
         <img id="qrImg" src="" alt="QRコード">
     </div>
@@ -71,6 +63,10 @@
         if (data) {
             document.getElementById('userInfo').innerText = `${data.display_name} 様`;
             document.getElementById('countDisplay').innerText = `${data.remaining_count}`;
+            
+            // 予約日時の表示（データがあれば表示、なければ「未予約」）
+            document.getElementById('resDateDisplay').innerText = data.preferred_datetime || "予約はありません";
+            
             document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${lineId}`;
         } else {
             document.getElementById('userInfo').innerText = "登録情報が見つかりません";
