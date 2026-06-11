@@ -34,7 +34,7 @@
     const supabaseUrl = 'https://cbknucemarcpbscirzyv.supabase.co';
     const supabaseKey = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
     
-    // 【修正箇所】変数名を 'supabaseClient' に変更して競合を回避
+    // クライアント作成
     const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
     async function init() {
@@ -46,11 +46,11 @@
     }
 
     async function fetchMemberData(lineId) {
-        // 【修正箇所】supabaseClient を使用
+        // 【重要】Supabaseの列名に合わせて line_id に修正しました
         const { data, error } = await supabaseClient
             .from('profiles')
             .select('*')
-            .eq('LINE_ID', lineId)
+            .eq('line_id', lineId)
             .single();
 
         if (data) {
@@ -59,6 +59,7 @@
             document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${lineId}`;
         } else {
             document.getElementById('userInfo').innerText = "登録情報が見つかりません";
+            console.log("エラー内容:", error); // デバッグ用
         }
     }
 
