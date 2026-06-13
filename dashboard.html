@@ -2,80 +2,263 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>DPRO GYM オーナーダッシュボード</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DPRO GYM オーナーダッシュボード v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-900 text-white p-6">
-    <header class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-yellow-500">予約・回数管理</h1>
-        <button onclick="fetchReservations()" class="bg-yellow-600 hover:bg-yellow-500 text-black font-bold px-4 py-2 rounded-lg text-sm">最新情報を取得</button>
+<body class="bg-gray-900 text-white p-4 md:p-6 min-h-screen">
+
+    <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-gray-800">
+        <div>
+            <h1 class="text-2xl font-bold text-yellow-500 tracking-wider">DPRO GYM</h1>
+            <p class="text-xs text-gray-400 mt-1">オーナー専用 予約・回数管理システム</p>
+        </div>
+        <button onclick="fetchReservations()" class="w-full sm:w-auto bg-yellow-600 hover:bg-yellow-500 text-black font-bold px-5 py-2.5 rounded-xl text-sm transition shadow-lg shadow-yellow-600/10 flex items-center justify-center gap-2">
+            🔄 最新情報を取得
+        </button>
     </header>
 
-    <div id="data-container" class="grid gap-4">読み込み中...</div>
+    <div class="bg-gray-800 p-4 rounded-2xl border border-gray-700 shadow-xl mb-6 space-y-4">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-900 p-3 rounded-xl border border-gray-800">
+            <div class="flex items-center gap-2">
+                <button onclick="changeDate(-1)" class="bg-gray-800 hover:bg-gray-700 text-yellow-400 font-bold px-4 py-2 rounded-lg text-sm transition">◀ 前日</button>
+                <button onclick="setToday()" class="bg-gray-800 hover:bg-gray-700 text-gray-300 font-bold px-3 py-2 rounded-lg text-sm transition">今日</button>
+                <button onclick="changeDate(1)" class="bg-gray-800 hover:bg-gray-700 text-yellow-400 font-bold px-4 py-2 rounded-lg text-sm transition">翌日 ▶</button>
+            </div>
+            
+            <div class="text-lg font-bold text-yellow-500 flex items-center gap-3">
+                <span id="date-display">2026年06月13日</span>
+                <label class="inline-flex items-center music-pointer text-xs bg-gray-800 px-3 py-1.5 rounded-md text-gray-400 font-normal border border-gray-700">
+                    <input type="checkbox" id="show-all-dates" onchange="toggleShowAllDates()" class="form-checkbox rounded text-yellow-500 mr-2 bg-gray-900 border-gray-700 focus:ring-0">
+                    全日程を表示
+                </label>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="relative flex-1 max-w-md">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
+                <input type="text" id="search-input" oninput="applyFilters()" placeholder="会員名で検索..." 
+                    class="w-full bg-gray-900 border border-gray-700 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-yellow-500 text-white placeholder-gray-500 transition">
+            </div>
+
+            <div class="flex bg-gray-900 p-1 rounded-xl border border-gray-800 overflow-x-auto">
+                <button onclick="filterStatus('all')" id="tab-all" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap bg-yellow-600 text-black">すべて</button>
+                <button onclick="filterStatus('pending')" id="tab-pending" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap text-gray-400 hover:text-white">承認待ち</button>
+                <button onclick="filterStatus('confirmed')" id="tab-confirmed" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap text-gray-400 hover:text-white">OK(承認済)</button>
+                <button onclick="filterStatus('cancelled')" id="tab-cancelled" class="px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap text-gray-400 hover:text-white">NO(却下済)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="data-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div class="col-span-full text-center py-12 text-gray-500">読み込み中...</div>
+    </div>
 
     <script>
+        // Supabase 設定（既存のキーをそのまま維持）
         const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co'; 
         const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J'; 
         const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // ステータス更新用
-        async function updateStatus(id, newStatus) {
-            const { error } = await sbClient.from('gym_profiles').update({ reservation_status: newStatus }).eq('id', id);
-            if (error) return alert("失敗: " + error.message);
-            fetchReservations();
+        // 状態管理用変数
+        let allReservations = []; // 取得した全データを保持
+        let currentStatusFilter = 'all'; // 現在選択されているステータス
+        let targetDate = new Date(); // 表示対象の日付（初期値は今日）
+        let showAllDates = false; // 全日程表示フラグ
+
+        // 日付の初期表示を設定
+        updateDateDisplay();
+
+        // 日付表示の更新関数
+        function updateDateDisplay() {
+            const y = targetDate.getFullYear();
+            const m = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const d = String(targetDate.getDate()).padStart(2, '0');
+            const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][targetDate.getDay()];
+            document.getElementById('date-display').innerText = `${y}年${m}月${d}日(${dayOfWeek})`;
         }
 
-        // 回数更新用（ここが新機能！）
-        async function updateCount(id, currentCount, delta) {
-            const newCount = Math.max(0, (currentCount || 0) + delta);
-            const { error } = await sbClient.from('gym_profiles').update({ remaining_count: newCount }).eq('id', id);
-            if (error) return alert("失敗: " + error.message);
-            fetchReservations();
+        // 日付変更ボタン
+        function changeDate(days) {
+            targetDate.setDate(targetDate.getDate() + days);
+            updateDateDisplay();
+            // 「全日程を表示」にチェックが入っていたら自動で外す（直感的な操作のため）
+            if (showAllDates) {
+                showAllDates = false;
+                document.getElementById('show-all-dates').checked = false;
+            }
+            applyFilters();
         }
 
+        // 今日ボタン
+        function setToday() {
+            targetDate = new Date();
+            updateDateDisplay();
+            if (showAllDates) {
+                showAllDates = false;
+                document.getElementById('show-all-dates').checked = false;
+            }
+            applyFilters();
+        }
+
+        // 全日程表示のトグル
+        function toggleShowAllDates() {
+            showAllDates = document.getElementById('show-all-dates').checked;
+            applyFilters();
+        }
+
+        // ステータスタブ切り替え
+        function filterStatus(status) {
+            currentStatusFilter = status;
+            
+            // タブの見た目切り替え
+            const tabs = ['all', 'pending', 'confirmed', 'cancelled'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (t === status) {
+                    btn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap bg-yellow-600 text-black";
+                } else {
+                    btn.className = "px-4 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap text-gray-400 hover:text-white";
+                }
+            });
+
+            applyFilters();
+        }
+
+        // データベースから情報を取得（元のロジックをベースにグローバル保存化）
         async function fetchReservations() {
+            const container = document.getElementById('data-container');
+            container.innerHTML = '<div class="col-span-full text-center py-12 text-gray-400">データを同期中...</div>';
+
             const { data, error } = await sbClient.from('gym_profiles').select('*').order('created_at', { ascending: false });
             
             if (error) {
-                document.getElementById('data-container').innerHTML = 'エラー: ' + error.message;
+                container.innerHTML = `<div class="col-span-full bg-red-900/20 border border-red-700 text-red-400 p-4 rounded-xl text-center">エラー: ${error.message}</div>`;
                 return;
             }
 
-            let html = '';
-            data.forEach(row => {
+            allReservations = data || [];
+            applyFilters(); // フィルターを適用して描画
+        }
+
+        // フィルターを適用して画面に描画（ここが進化ポイント！）
+        function applyFilters() {
+            const searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            // 日付の比較用文字列を生成 (YYYY-MM-DD)
+            const targetY = targetDate.getFullYear();
+            const targetM = String(targetDate.getMonth() + 1).padStart(2, '0');
+            const targetD = String(targetDate.getDate()).padStart(2, '0');
+            const dateStr = `${targetY}-${targetM}-${targetD}`; // 2026-06-13 形式
+
+            // データの絞り込み
+            const filteredData = allReservations.filter(row => {
+                // 1. 名前検索フィルター
+                const name = (row.display_name || 'ゲスト様').toLowerCase();
+                if (searchQuery && !name.includes(searchQuery)) return false;
+
+                // 2. ステータスフィルター
                 const status = row.reservation_status || 'pending';
-                const statusColor = status === 'confirmed' ? 'bg-green-700' : (status === 'cancelled' ? 'bg-red-700' : 'bg-gray-700');
+                if (currentStatusFilter !== 'all' && status !== currentStatusFilter) return false;
+
+                // 3. 日付フィルター（全日程表示にチェックがない場合のみ有効）
+                if (!showAllDates) {
+                    const prefDatetime = row.preferred_datetime || '';
+                    // データベースの日時文字列(preferred_datetime)に、選択中の「YYYY-MM-DD」が含まれているか判定
+                    if (!prefDatetime.includes(dateStr)) return false;
+                }
+
+                return true;
+            });
+
+            // HTMLの組み立て
+            let html = '';
+            filteredData.forEach(row => {
+                const status = row.reservation_status || 'pending';
                 
+                // ステータスごとの配色バッジ
+                let statusColor = 'bg-gray-700 text-gray-200';
+                let statusLabel = '未対応';
+                if (status === 'confirmed') {
+                    statusColor = 'bg-green-900/80 text-green-300 border border-green-700';
+                    statusLabel = '承認済み';
+                } else if (status === 'cancelled') {
+                    statusColor = 'bg-red-900/80 text-red-300 border border-red-700';
+                    statusLabel = '却下済み';
+                }
+
                 html += `
-                <div class="bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-lg">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-yellow-400">${row.display_name || 'ゲスト様'}</span>
-                        <span class="${statusColor} px-2 py-1 rounded text-xs">${status}</span>
-                    </div>
-                    <div class="text-sm space-y-2 text-gray-300 border-t border-gray-700 pt-2">
-                        <p>🗓 日時: ${row.preferred_datetime || '未設定'}</p>
-                        <p>🎯 目的: ${row.target_goal || '-'}</p>
+                <div class="bg-gray-800 p-5 rounded-2xl border border-gray-700 shadow-md hover:border-gray-600 transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="font-bold text-lg text-yellow-400 truncate max-w-[180px]" title="${row.display_name || 'ゲスト様'}">
+                                ${row.display_name || 'ゲスト様'}
+                            </span>
+                            <span class="${statusColor} px-2.5 py-0.5 rounded-lg text-xs font-semibold tracking-wider">${statusLabel}</span>
+                        </div>
                         
-                        <!-- 回数管理エリア -->
-                        <div class="flex items-center gap-3 bg-gray-900 p-2 rounded">
-                            <span>残り回数: <strong class="text-yellow-400 text-lg">${row.remaining_count || 0}</strong> 回</span>
-                            <div class="flex gap-1">
-                                <button onclick="updateCount('${row.id}', ${row.remaining_count}, -1)" class="bg-gray-600 hover:bg-gray-500 px-3 py-1 rounded font-bold">-</button>
-                                <button onclick="updateCount('${row.id}', ${row.remaining_count}, 1)" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded font-bold">+</button>
+                        <div class="text-sm space-y-2.5 text-gray-300 border-t border-gray-700/60 pt-3 mb-4">
+                            <p class="flex items-start gap-2">
+                                <span class="text-gray-500 shrink-0">🗓 日時:</span>
+                                <span class="font-medium text-white">${row.preferred_datetime || '未設定'}</span>
+                            </p>
+                            <p class="flex items-start gap-2">
+                                <span class="text-gray-500 shrink-0">🎯 目的:</span>
+                                <span class="text-gray-300">${row.target_goal || '-'}</span>
+                            </p>
+                            
+                            <div class="flex items-center justify-between bg-gray-900/90 p-2.5 rounded-xl border border-gray-800 mt-2">
+                                <span class="text-xs text-gray-400">残り回数: <strong class="text-yellow-400 text-base ml-1">${row.remaining_count || 0}</strong> 回</span>
+                                <div class="flex gap-1.5">
+                                    <button onclick="updateCount('${row.id}', ${row.remaining_count}, -1)" class="bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded-lg font-bold text-sm transition text-gray-200">-1</button>
+                                    <button onclick="updateCount('${row.id}', ${row.remaining_count}, 1)" class="bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded-lg font-bold text-sm transition text-white">+1</button>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="flex gap-2 pt-2">
-                            <button onclick="updateStatus('${row.id}', 'confirmed')" class="bg-green-600 hover:bg-green-500 px-3 py-1 rounded text-xs font-bold">OK(承認)</button>
-                            <button onclick="updateStatus('${row.id}', 'cancelled')" class="bg-red-600 hover:bg-red-500 px-3 py-1 rounded text-xs font-bold">NO(却下)</button>
-                        </div>
+                    <div class="flex gap-2 pt-2 border-t border-gray-700/40">
+                        <button onclick="updateStatus('${row.id}', 'confirmed')" class="flex-1 bg-green-600 hover:bg-green-500 active:bg-green-700 py-2 rounded-xl text-xs font-bold transition text-white shadow-md shadow-green-900/20">
+                            OK (承認)
+                        </button>
+                        <button onclick="updateStatus('${row.id}', 'cancelled')" class="flex-1 bg-gray-700 hover:bg-red-600 active:bg-red-700 py-2 rounded-xl text-xs font-bold transition text-gray-300 hover:text-white">
+                            NO (却下)
+                        </button>
                     </div>
                 </div>`;
             });
-            document.getElementById('data-container').innerHTML = html || '予約はありません。';
+
+            // 該当データがゼロ件のときの表示
+            const container = document.getElementById('data-container');
+            if (filteredData.length === 0) {
+                container.innerHTML = `
+                <div class="col-span-full text-center py-16 text-gray-500 border-2 border-dashed border-gray-800 rounded-2xl bg-gray-800/10">
+                    📭 条件に一致する予約・会員データはありません。
+                </div>`;
+            } else {
+                container.innerHTML = html;
+            }
         }
 
+        // ステータス更新用（完了後に再フェッチして状態を同期）
+        async function updateStatus(id, newStatus) {
+            const { error } = await sbClient.from('gym_profiles').update({ reservation_status: newStatus }).eq('id', id);
+            if (error) return alert("ステータス更新失敗: " + error.message);
+            fetchReservations();
+        }
+
+        // 回数更新用
+        async function updateCount(id, currentCount, delta) {
+            const newCount = Math.max(0, (currentCount || 0) + delta);
+            const { error } = await sbClient.from('gym_profiles').update({ remaining_count: newCount }).eq('id', id);
+            if (error) return alert("回数更新失敗: " + error.message);
+            fetchReservations();
+        }
+
+        // 初回読み込み実行
         fetchReservations();
     </script>
 </body>
