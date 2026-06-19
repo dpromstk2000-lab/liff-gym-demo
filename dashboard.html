@@ -23,6 +23,10 @@
     textarea {
       resize: vertical;
     }
+    .modal-backdrop {
+      background: rgba(0,0,0,.78);
+      backdrop-filter: blur(8px);
+    }
   </style>
 </head>
 
@@ -33,7 +37,7 @@
       <div>
         <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DPRO GYM</p>
         <h1 class="text-2xl font-black mt-1">オーナーダッシュボード</h1>
-        <p class="text-xs text-gray-400 mt-1">予約・会員・回数・フォロー管理</p>
+        <p class="text-xs text-gray-400 mt-1">予約・会員・回数・フォロー・通知管理</p>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2">
@@ -91,8 +95,8 @@
       </div>
 
       <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">総会員・予約者</p>
-        <p id="metricTotal" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+        <p class="text-xs text-gray-400 font-bold">通知ログ</p>
+        <p id="metricLogs" class="text-3xl font-black text-yellow-400 mt-2">-</p>
       </div>
     </section>
 
@@ -156,6 +160,22 @@
       <div id="todoList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
     </section>
 
+    <!-- 通知ログ -->
+    <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5">
+      <div class="flex items-center justify-between gap-4 mb-4">
+        <div>
+          <h2 class="text-lg font-black">最近の通知ログ</h2>
+          <p class="text-sm text-gray-400 mt-1">コピー作成・手動送信したメッセージの履歴</p>
+        </div>
+        <button onclick="fetchNotificationLogs()" class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 font-bold px-4 py-2 rounded-2xl text-sm">
+          更新
+        </button>
+      </div>
+      <div id="notificationLogList" class="space-y-2">
+        <div class="text-sm text-gray-500">読み込み中...</div>
+      </div>
+    </section>
+
     <!-- 一覧 -->
     <section>
       <div id="dataContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -165,19 +185,97 @@
 
   </main>
 
+  <!-- 通知作成モーダル -->
+  <div id="notificationModal" class="hidden fixed inset-0 z-50 modal-backdrop p-4 overflow-y-auto">
+    <div class="max-w-2xl mx-auto my-8 card-bg border border-yellow-500/40 rounded-3xl shadow-2xl fade-in">
+      <div class="p-5 border-b border-gray-800 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">MESSAGE TEMPLATE</p>
+          <h2 id="modalTitle" class="text-xl font-black mt-1">通知文を作成</h2>
+          <p id="modalSubTitle" class="text-sm text-gray-400 mt-2">コピーしてLINEで送信できます。</p>
+        </div>
+        <button onclick="closeNotificationModal()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 w-10 h-10 rounded-2xl font-black text-gray-400">
+          ×
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 text-sm">
+          <div class="grid sm:grid-cols-2 gap-3">
+            <div>
+              <p class="text-xs text-gray-500 font-bold">お客様</p>
+              <p id="modalCustomerName" class="font-black text-yellow-400 mt-1">-</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 font-bold">予約日時</p>
+              <p id="modalReservationDate" class="font-black text-yellow-400 mt-1">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-500 font-bold mb-2">通知タイトル</label>
+          <input
+            id="notificationTitleInput"
+            type="text"
+            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+          >
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-500 font-bold mb-2">メッセージ本文</label>
+          <textarea
+            id="notificationBodyInput"
+            rows="12"
+            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm leading-relaxed focus:outline-none focus:border-yellow-500"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-500 font-bold mb-2">オーナーメモ</label>
+          <input
+            id="notificationOwnerNoteInput"
+            type="text"
+            placeholder="例：予約確定後にLINEで手動送信"
+            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+          >
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-2">
+          <button onclick="copyMessageAndSaveLog()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm">
+            コピーしてログ保存
+          </button>
+          <button onclick="saveNotificationLogOnly()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm">
+            ログだけ保存
+          </button>
+          <a href="https://manager.line.biz/" target="_blank" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm text-center">
+            LINE管理画面
+          </a>
+        </div>
+
+        <p class="text-xs text-gray-500 leading-relaxed">
+          ※ この画面では安全のため、LINEの自動Push送信は行いません。コピーした文面をLINE公式アカウント管理画面またはチャットで送信してください。
+        </p>
+      </div>
+    </div>
+  </div>
+
 <script>
   const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let allReservations = [];
+  let notificationLogs = [];
   let currentFilter = 'all';
   let targetDate = new Date();
   let showAllDates = false;
+  let currentNotification = null;
 
-  window.addEventListener('load', () => {
+  window.addEventListener('load', async () => {
     updateDateDisplay();
-    fetchReservations();
+    await fetchReservations();
+    await fetchNotificationLogs();
   });
 
   function localDateString(date) {
@@ -269,6 +367,63 @@
     applyFilters();
   }
 
+  async function fetchNotificationLogs() {
+    const list = document.getElementById('notificationLogList');
+    list.innerHTML = '<div class="text-sm text-gray-500">通知ログを読み込み中...</div>';
+
+    const { data, error } = await sbClient
+      .from('dpro_gym_notification_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(8);
+
+    if (error) {
+      notificationLogs = [];
+      document.getElementById('metricLogs').textContent = '-';
+      list.innerHTML = `
+        <div class="bg-red-500/10 border border-red-500/40 text-red-200 p-4 rounded-2xl text-sm">
+          通知ログを取得できません。STEP 3-1 SQLが未実行の可能性があります。<br>
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+      return;
+    }
+
+    notificationLogs = data || [];
+    document.getElementById('metricLogs').textContent = notificationLogs.length;
+    renderNotificationLogs();
+  }
+
+  function renderNotificationLogs() {
+    const list = document.getElementById('notificationLogList');
+
+    if (!notificationLogs.length) {
+      list.innerHTML = '<div class="text-sm text-gray-500">通知ログはまだありません。</div>';
+      return;
+    }
+
+    list.innerHTML = notificationLogs.map(log => {
+      const typeLabel = notificationTypeLabel(log.notification_type);
+      const statusLabel = log.send_status === 'copied' ? 'コピー済み' : log.send_status === 'sent' ? '送信済み' : '作成済み';
+      const created = formatLogDate(log.created_at);
+
+      return `
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3 text-sm">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="font-black text-yellow-400">${escapeHtml(log.display_name || 'ゲスト様')}</p>
+              <p class="text-xs text-gray-500 mt-1">${escapeHtml(typeLabel)} / ${escapeHtml(statusLabel)} / ${escapeHtml(created)}</p>
+            </div>
+            <button onclick="copyText('${escapeAttr(log.message_body || '')}')" class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">
+              再コピー
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mt-2 line-clamp-2">${escapeHtml(log.title || '')}</p>
+        </div>
+      `;
+    }).join('');
+  }
+
   function applyFilters() {
     const query = document.getElementById('searchInput').value.toLowerCase().trim();
     const selectedDate = localDateString(targetDate);
@@ -334,7 +489,6 @@
     document.getElementById('metricSelected').textContent = selectedCount;
     document.getElementById('metricLowCount').textContent = lowCount;
     document.getElementById('metricFollow').textContent = followCount;
-    document.getElementById('metricTotal').textContent = allReservations.length;
   }
 
   function renderTodo() {
@@ -384,7 +538,7 @@
     ];
 
     document.getElementById('todoSummary').textContent =
-      `承認待ち ${pending.length}件・本日来店 ${todayVisits.length}件・継続提案 ${low.length}件・フォロー予定 ${followDue.length}件`;
+      `承認待ち ${pending.length}件・本日来店 ${todayVisits.length}件・継続提案 ${low.length}件・フォロー予定 ${followDue.length}件・再調整 ${cancelled.length}件`;
 
     document.getElementById('todoList').innerHTML = items.map(item => `
       <button onclick="filterMode('${item.filter}')" class="text-left bg-gray-950 hover:bg-gray-900 border border-gray-800 hover:border-yellow-500/50 rounded-2xl p-4 transition">
@@ -484,7 +638,7 @@
         <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center justify-between">
           <div>
             <p class="text-xs text-gray-500 font-bold">残り回数</p>
-            <p class="text-3xl font-black ${count <= 0 ? 'text-red-400' : count === 1 ? 'text-yellow-400' : 'text-yellow-400'}">
+            <p class="text-3xl font-black ${count <= 0 ? 'text-red-400' : 'text-yellow-400'}">
               ${count}<span class="text-sm text-gray-500 ml-1">回</span>
             </p>
           </div>
@@ -510,6 +664,24 @@
           <button onclick="copyName('${escapeAttr(name)}')" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300">
             名前をコピー
           </button>
+        </div>
+
+        <div class="bg-gray-950 border border-yellow-500/20 rounded-2xl p-4 space-y-3">
+          <p class="text-sm font-black text-yellow-400">LINE通知文を作成</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'reservation_confirmed')" class="bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 py-3 rounded-2xl text-xs font-black">
+              予約確定文
+            </button>
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'reservation_cancelled')" class="bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 py-3 rounded-2xl text-xs font-black">
+              再調整文
+            </button>
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'reminder')" class="bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 py-3 rounded-2xl text-xs font-black">
+              リマインド
+            </button>
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'continuation')" class="bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-500/40 text-yellow-300 py-3 rounded-2xl text-xs font-black">
+              継続提案
+            </button>
+          </div>
         </div>
 
         <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3">
@@ -656,7 +828,17 @@
 
     if (error) return alert('ステータス更新失敗: ' + error.message);
 
-    fetchReservations();
+    await fetchReservations();
+
+    if (newStatus === 'confirmed') {
+      const ok = confirm('予約を承認しました。\n続けて予約確定メッセージを作成しますか？');
+      if (ok) openNotificationModal(id, 'reservation_confirmed');
+    }
+
+    if (newStatus === 'cancelled') {
+      const ok = confirm('再調整に変更しました。\n続けて再調整メッセージを作成しますか？');
+      if (ok) openNotificationModal(id, 'reservation_cancelled');
+    }
   }
 
   async function updateCount(id, currentCount, delta) {
@@ -682,7 +864,12 @@
 
     if (error) return alert('回数更新失敗: ' + error.message);
 
-    fetchReservations();
+    await fetchReservations();
+
+    if (newCount <= 1) {
+      const ok = confirm('残り回数が少なくなりました。\n継続提案メッセージを作成しますか？');
+      if (ok) openNotificationModal(id, 'continuation');
+    }
   }
 
   async function markVisited(id, currentCount, currentVisitCount) {
@@ -715,7 +902,12 @@
 
     if (error) return alert('来店処理に失敗しました: ' + error.message);
 
-    fetchReservations();
+    await fetchReservations();
+
+    if (newCount <= 1) {
+      const makeMsg = confirm('来店処理が完了しました。\n残り回数が少ないため、継続提案メッセージを作成しますか？');
+      if (makeMsg) openNotificationModal(id, 'continuation');
+    }
   }
 
   async function saveManagement(id, sid) {
@@ -757,7 +949,10 @@
     if (error) return alert('キャンセル理由の保存に失敗しました: ' + error.message);
 
     alert('再調整として保存しました');
-    fetchReservations();
+    await fetchReservations();
+
+    const ok = confirm('再調整メッセージを作成しますか？');
+    if (ok) openNotificationModal(id, 'reservation_cancelled');
   }
 
   async function copyName(name) {
@@ -767,6 +962,224 @@
     } catch (e) {
       prompt('コピーしてください', name);
     }
+  }
+
+  function openNotificationModal(profileId, type) {
+    const row = allReservations.find(item => String(item.id) === String(profileId));
+    if (!row) {
+      alert('対象の会員データが見つかりません。最新情報を取得してください。');
+      return;
+    }
+
+    const template = buildNotificationTemplate(row, type);
+
+    currentNotification = {
+      row,
+      type,
+      title: template.title,
+      body: template.body
+    };
+
+    document.getElementById('modalTitle').textContent = notificationTypeLabel(type);
+    document.getElementById('modalSubTitle').textContent = '文面は編集できます。コピーしてLINEで送信してください。';
+    document.getElementById('modalCustomerName').textContent = row.display_name || 'ゲスト様';
+    document.getElementById('modalReservationDate').textContent = formatDateTime(row.preferred_datetime) || '未設定';
+    document.getElementById('notificationTitleInput').value = template.title;
+    document.getElementById('notificationBodyInput').value = template.body;
+    document.getElementById('notificationOwnerNoteInput').value = template.note;
+
+    document.getElementById('notificationModal').classList.remove('hidden');
+  }
+
+  function closeNotificationModal() {
+    document.getElementById('notificationModal').classList.add('hidden');
+    currentNotification = null;
+  }
+
+  function buildNotificationTemplate(row, type) {
+    const name = row.display_name || 'ゲスト様';
+    const dateText = formatDateTime(row.preferred_datetime) || '未設定';
+    const purpose = row.purpose || 'トレーニング';
+    const goal = row.target_goal || '';
+    const count = Number(row.remaining_count || 0);
+
+    if (type === 'reservation_confirmed') {
+      return {
+        title: '予約確定のご案内',
+        note: '予約承認後の確定連絡',
+        body:
+`${name}様
+
+ご予約が確定しました。
+
+【予約日時】
+${dateText}
+
+【内容】
+${purpose}
+
+当日は開始時間の5分前を目安にお越しください。
+動きやすい服装・室内シューズ・飲み物・タオルをご持参ください。
+
+ご来店をお待ちしております。`
+      };
+    }
+
+    if (type === 'reservation_cancelled') {
+      return {
+        title: '予約再調整のご案内',
+        note: '再調整・キャンセル時の連絡',
+        body:
+`${name}様
+
+ご予約について、日程の再調整をお願いいたします。
+
+【現在の予約希望日時】
+${dateText}
+
+お手数ですが、マイページの「予約・変更をする」から新しい希望日時をお送りください。
+
+ご不明点があれば、このLINEにそのままご返信ください。`
+      };
+    }
+
+    if (type === 'reminder') {
+      return {
+        title: '来店前リマインド',
+        note: '来店前日の確認連絡',
+        body:
+`${name}様
+
+明日または近日のご予約確認です。
+
+【予約日時】
+${dateText}
+
+当日は以下をご持参ください。
+・動きやすい服装
+・室内シューズ
+・飲み物
+・タオル
+
+開始時間の5分前を目安にお越しください。
+お待ちしております。`
+      };
+    }
+
+    if (type === 'continuation') {
+      return {
+        title: '回数追加・継続相談のご案内',
+        note: '残り回数が少ない会員への案内',
+        body:
+`${name}様
+
+いつもご利用ありがとうございます。
+
+現在の残り回数は ${count} 回です。
+
+目標に向けて継続をご希望の場合は、次回ご来店時またはLINEでお気軽にご相談ください。
+
+【現在の目標】
+${goal || '目標に合わせてサポートいたします'}
+
+無理なく続けられる形をご提案します。`
+      };
+    }
+
+    return {
+      title: 'ご案内',
+      note: '手動作成メッセージ',
+      body:
+`${name}様
+
+DPRO GYMからのご案内です。
+
+${dateText}
+
+ご確認よろしくお願いいたします。`
+    };
+  }
+
+  async function copyMessageAndSaveLog() {
+    if (!currentNotification) return;
+
+    const title = document.getElementById('notificationTitleInput').value.trim();
+    const body = document.getElementById('notificationBodyInput').value.trim();
+
+    if (!body) {
+      alert('メッセージ本文が空です。');
+      return;
+    }
+
+    await copyText(body);
+    await saveNotificationLog('copied');
+
+    alert('メッセージをコピーし、通知ログに保存しました。');
+    closeNotificationModal();
+    await fetchNotificationLogs();
+  }
+
+  async function saveNotificationLogOnly() {
+    if (!currentNotification) return;
+
+    const body = document.getElementById('notificationBodyInput').value.trim();
+
+    if (!body) {
+      alert('メッセージ本文が空です。');
+      return;
+    }
+
+    await saveNotificationLog('created');
+
+    alert('通知ログに保存しました。');
+    closeNotificationModal();
+    await fetchNotificationLogs();
+  }
+
+  async function saveNotificationLog(status) {
+    const row = currentNotification.row;
+    const title = document.getElementById('notificationTitleInput').value.trim();
+    const body = document.getElementById('notificationBodyInput').value.trim();
+    const note = document.getElementById('notificationOwnerNoteInput').value.trim();
+
+    const { error } = await sbClient
+      .from('dpro_gym_notification_logs')
+      .insert([{
+        profile_id: row.id,
+        line_user_id: row.line_user_id || null,
+        display_name: row.display_name || null,
+        notification_type: currentNotification.type,
+        title: title,
+        message_body: body,
+        send_method: 'copy',
+        send_status: status,
+        owner_note: note || null
+      }]);
+
+    if (error) {
+      alert('通知ログの保存に失敗しました: ' + error.message);
+      throw error;
+    }
+  }
+
+  async function copyText(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (e) {
+      prompt('コピーしてください', text);
+    }
+  }
+
+  function notificationTypeLabel(type) {
+    const map = {
+      reservation_confirmed: '予約確定メッセージ',
+      reservation_cancelled: '再調整メッセージ',
+      reminder: '来店前リマインド',
+      continuation: '継続提案メッセージ',
+      consultation: '相談メッセージ',
+      manual: '手動メッセージ'
+    };
+    return map[type] || '通知メッセージ';
   }
 
   function formatDateTime(value) {
@@ -787,6 +1200,17 @@
     return `${m}/${d}(${w}) ${time}`;
   }
 
+  function formatLogDate(value) {
+    if (!value) return '';
+    const dt = new Date(value);
+    if (Number.isNaN(dt.getTime())) return String(value);
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const d = String(dt.getDate()).padStart(2, '0');
+    const h = String(dt.getHours()).padStart(2, '0');
+    const min = String(dt.getMinutes()).padStart(2, '0');
+    return `${m}/${d} ${h}:${min}`;
+  }
+
   function safeId(value) {
     return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
   }
@@ -802,7 +1226,7 @@
   }
 
   function escapeAttr(value) {
-    return String(value ?? '').replace(/[\\'"]/g, '\\$&');
+    return String(value ?? '').replace(/[\\'"]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '');
   }
 </script>
 
