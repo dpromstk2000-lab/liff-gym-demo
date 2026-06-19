@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>DPRO GYM｜オーナーダッシュボード</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -181,23 +183,39 @@
       <div id="todoList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
     </section>
 
-    <!-- 対応履歴 -->
+    <!-- 対応履歴：折りたたみ -->
     <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5">
-      <div class="flex items-center justify-between gap-4 mb-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-black">最近の対応履歴</h2>
-          <p class="text-sm text-gray-400 mt-1">お客様へのLINE案内を作成した履歴</p>
+          <p id="historySummaryText" class="text-sm text-gray-400 mt-1">
+            お客様へのLINE案内を作成した履歴
+          </p>
         </div>
 
-        <button
-          onclick="fetchInteractionHistory()"
-          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 font-bold px-4 py-2 rounded-2xl text-sm"
-        >
-          更新
-        </button>
+        <div class="flex gap-2">
+          <button
+            onclick="fetchInteractionHistory()"
+            class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 font-bold px-4 py-2 rounded-2xl text-sm"
+          >
+            更新
+          </button>
+
+          <button
+            id="historyToggleButton"
+            onclick="toggleInteractionHistory()"
+            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-4 py-2 rounded-2xl text-sm"
+          >
+            開く
+          </button>
+        </div>
       </div>
 
-      <div id="interactionHistoryList" class="space-y-2">
+      <div id="historyClosedPreview" class="mt-4 bg-gray-950 border border-gray-800 rounded-2xl p-4 text-sm text-gray-400">
+        対応履歴は折りたたまれています。必要な時だけ開いて確認できます。
+      </div>
+
+      <div id="interactionHistoryList" class="hidden mt-4 space-y-2">
         <div class="text-sm text-gray-500">読み込み中...</div>
       </div>
     </section>
@@ -314,6 +332,9 @@
 
   let allReservations = [];
   let interactionHistory = [];
+  let interactionHistoryTotal = 0;
+  let isHistoryOpen = false;
+
   let currentFilter = 'all';
   let targetDate = new Date();
   let showAllDates = false;
@@ -417,29 +438,69 @@
 
   async function fetchInteractionHistory() {
     const list = document.getElementById('interactionHistoryList');
+    const preview = document.getElementById('historyClosedPreview');
+
     list.innerHTML = '<div class="text-sm text-gray-500">対応履歴を読み込み中...</div>';
 
     const { data, error, count } = await sbClient
       .from('dpro_gym_notification_logs')
       .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
-      .limit(8);
+      .limit(3);
 
     if (error) {
       interactionHistory = [];
+      interactionHistoryTotal = 0;
+
       document.getElementById('metricHistory').textContent = '-';
-      list.innerHTML = `
-        <div class="bg-red-500/10 border border-red-500/40 text-red-200 p-4 rounded-2xl text-sm">
+      document.getElementById('historySummaryText').textContent = '対応履歴を取得できません。';
+      preview.innerHTML = `
+        <div class="text-red-200">
           対応履歴を取得できません。STEP 3-1 SQLまたはRLS修正SQLが未実行の可能性があります。<br>
           ${escapeHtml(error.message)}
         </div>
       `;
+
+      list.innerHTML = `
+        <div class="bg-red-500/10 border border-red-500/40 text-red-200 p-4 rounded-2xl text-sm">
+          対応履歴を取得できません。<br>
+          ${escapeHtml(error.message)}
+        </div>
+      `;
+
       return;
     }
 
     interactionHistory = data || [];
-    document.getElementById('metricHistory').textContent = count ?? interactionHistory.length;
+    interactionHistoryTotal = count ?? interactionHistory.length;
+
+    document.getElementById('metricHistory').textContent = interactionHistoryTotal;
+    document.getElementById('historySummaryText').textContent =
+      `お客様へのLINE案内を作成した履歴：${interactionHistoryTotal}件`;
+
+    preview.innerHTML = interactionHistoryTotal > 0
+      ? `対応履歴は ${interactionHistoryTotal}件 あります。開くと最新3件だけ表示します。`
+      : '対応履歴はまだありません。';
+
     renderInteractionHistory();
+  }
+
+  function toggleInteractionHistory() {
+    isHistoryOpen = !isHistoryOpen;
+
+    const list = document.getElementById('interactionHistoryList');
+    const preview = document.getElementById('historyClosedPreview');
+    const button = document.getElementById('historyToggleButton');
+
+    if (isHistoryOpen) {
+      list.classList.remove('hidden');
+      preview.classList.add('hidden');
+      button.textContent = '閉じる';
+    } else {
+      list.classList.add('hidden');
+      preview.classList.remove('hidden');
+      button.textContent = '開く';
+    }
   }
 
   function renderInteractionHistory() {
@@ -465,7 +526,9 @@
           <div class="flex items-start justify-between gap-3">
             <div>
               <p class="font-black text-yellow-400">${escapeHtml(item.display_name || 'ゲスト様')}</p>
-              <p class="text-xs text-gray-500 mt-1">${escapeHtml(typeLabel)} / ${escapeHtml(statusLabel)} / ${escapeHtml(created)}</p>
+              <p class="text-xs text-gray-500 mt-1">
+                ${escapeHtml(typeLabel)} / ${escapeHtml(statusLabel)} / ${escapeHtml(created)}
+              </p>
             </div>
 
             <button
@@ -480,10 +543,19 @@
         </div>
       `;
     }).join('');
+
+    if (interactionHistoryTotal > interactionHistory.length) {
+      list.innerHTML += `
+        <div class="text-xs text-gray-500 text-center pt-2">
+          最新${interactionHistory.length}件のみ表示中です。過去の履歴はSupabaseに保存されています。
+        </div>
+      `;
+    }
   }
 
   async function copyHistoryMessage(index) {
     const item = interactionHistory[index];
+
     if (!item || !item.message_body) {
       alert('コピーできる文面がありません。');
       return;
