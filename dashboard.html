@@ -273,21 +273,22 @@
           >
         </div>
 
+        <div id="modalActionStatus" class="hidden bg-yellow-500/10 border border-yellow-500/30 text-yellow-100 rounded-2xl p-3 text-sm leading-relaxed"></div>
+
         <div class="grid sm:grid-cols-3 gap-2">
           <button
             onclick="copyMessageAndSaveHistory()"
-            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm"
+            class="bg-gray-900 hover:bg-gray-800 border border-yellow-500/40 text-yellow-300 font-black py-3 rounded-2xl text-sm"
           >
             文面をコピーする
           </button>
 
-          <a
-            href="https://manager.line.biz/"
-            target="_blank"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm text-center"
+          <button
+            onclick="copyMessageSaveAndOpenLineManager()"
+            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm"
           >
-            LINE管理画面を開く
-          </a>
+            コピーしてLINE管理画面へ
+          </button>
 
           <button
             onclick="closeNotificationModal()"
@@ -298,7 +299,7 @@
         </div>
 
         <p class="text-xs text-gray-500 leading-relaxed">
-          ※ 「文面をコピーする」を押すと、対応履歴にも自動で保存されます。コピーした文面をLINE公式アカウント管理画面またはチャットで送信してください。
+          ※ おすすめは「コピーしてLINE管理画面へ」です。文面をコピーし、対応履歴に保存したうえで、LINE公式アカウント管理画面を開きます。
         </p>
       </div>
     </div>
@@ -307,6 +308,8 @@
 <script>
   const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
+  const LINE_MANAGER_URL = 'https://manager.line.biz/';
+
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let allReservations = [];
@@ -427,7 +430,7 @@
       document.getElementById('metricHistory').textContent = '-';
       list.innerHTML = `
         <div class="bg-red-500/10 border border-red-500/40 text-red-200 p-4 rounded-2xl text-sm">
-          対応履歴を取得できません。STEP 3-1 SQLが未実行の可能性があります。<br>
+          対応履歴を取得できません。STEP 3-1 SQLまたはRLS修正SQLが未実行の可能性があります。<br>
           ${escapeHtml(error.message)}
         </div>
       `;
@@ -1109,12 +1112,26 @@
     document.getElementById('notificationBodyInput').value = template.body;
     document.getElementById('notificationOwnerNoteInput').value = template.note;
 
+    hideModalStatus();
     document.getElementById('notificationModal').classList.remove('hidden');
   }
 
   function closeNotificationModal() {
     document.getElementById('notificationModal').classList.add('hidden');
     currentNotification = null;
+    hideModalStatus();
+  }
+
+  function showModalStatus(message) {
+    const el = document.getElementById('modalActionStatus');
+    el.textContent = message;
+    el.classList.remove('hidden');
+  }
+
+  function hideModalStatus() {
+    const el = document.getElementById('modalActionStatus');
+    el.textContent = '';
+    el.classList.add('hidden');
   }
 
   function buildNotificationTemplate(row, type) {
@@ -1237,13 +1254,56 @@ ${dateText}
       return;
     }
 
-    await copyText(body);
-    await saveInteractionHistory('copied');
+    try {
+      await copyText(body);
+      await saveInteractionHistory('copied');
+      await fetchInteractionHistory();
 
-    alert('文面をコピーしました。対応履歴にも保存しました。');
+      showModalStatus('文面をコピーしました。対応履歴にも保存しました。このまま「コピーしてLINE管理画面へ」を押すか、LINE管理画面に貼り付けて送信してください。');
+    } catch (error) {
+      console.error(error);
+    }
+  }
 
-    closeNotificationModal();
-    await fetchInteractionHistory();
+  async function copyMessageSaveAndOpenLineManager() {
+    if (!currentNotification) return;
+
+    const title = document.getElementById('notificationTitleInput').value.trim();
+    const body = document.getElementById('notificationBodyInput').value.trim();
+
+    if (!title) {
+      alert('案内タイトルを入力してください。');
+      return;
+    }
+
+    if (!body) {
+      alert('メッセージ本文が空です。');
+      return;
+    }
+
+    const managerWindow = window.open('about:blank', '_blank');
+
+    try {
+      await copyText(body);
+      await saveInteractionHistory('copied');
+      await fetchInteractionHistory();
+
+      showModalStatus('文面をコピーし、対応履歴に保存しました。LINE管理画面を開きます。');
+
+      if (managerWindow) {
+        managerWindow.location.href = LINE_MANAGER_URL;
+      } else {
+        window.location.href = LINE_MANAGER_URL;
+      }
+
+    } catch (error) {
+      if (managerWindow) {
+        managerWindow.close();
+      }
+
+      console.error(error);
+      alert('文面コピーまたは対応履歴の保存に失敗しました: ' + error.message);
+    }
   }
 
   async function saveInteractionHistory(status) {
