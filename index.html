@@ -69,7 +69,7 @@
             <div>
               <p class="text-xs text-yellow-400 font-black">現在の予約状況</p>
               <p id="existingReservationText" class="text-lg font-black mt-2">-</p>
-              <p id="existingReservationStatusText" class="text-sm text-gray-400 mt-2">-</p>
+              <p id="existingReservationStatusText" class="text-sm text-gray-400 mt-2 leading-relaxed">-</p>
             </div>
             <div class="text-3xl">📅</div>
           </div>
@@ -117,7 +117,7 @@
           </div>
         </div>
 
-        <button id="startButton" onclick="goStep(1)" class="w-full bg-yellow-500 hover:bg-yellow-400 active:bg-yellow-600 text-black font-black py-4 rounded-2xl shadow-lg shadow-yellow-500/10 transition">
+        <button id="startButton" onclick="startReservationFlow()" class="w-full bg-yellow-500 hover:bg-yellow-400 active:bg-yellow-600 text-black font-black py-4 rounded-2xl shadow-lg shadow-yellow-500/10 transition">
           予約をはじめる
         </button>
 
@@ -239,9 +239,13 @@
         <div>
           <p class="text-xs text-yellow-500 font-bold">STEP 4 / 4</p>
           <h2 class="text-xl font-black mt-1">希望日時を選んでください</h2>
-          <p class="text-sm text-gray-400 mt-2">
+          <p id="dateStepMessage" class="text-sm text-gray-400 mt-2">
             予約済みの時間は「満席」として選択できません。
           </p>
+        </div>
+
+        <div id="skipInfoBox" class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 text-xs text-yellow-100 leading-relaxed">
+          前回のアンケート回答を使用します。今回は日時を選ぶだけで予約変更できます。
         </div>
 
         <div>
@@ -274,7 +278,7 @@
           内容確認へ
         </button>
 
-        <button onclick="goStep(3)" class="text-sm text-gray-400 underline">戻る</button>
+        <button onclick="goBackFromDateStep()" class="text-sm text-gray-400 underline">戻る</button>
       </div>
 
       <!-- STEP 5 -->
@@ -393,6 +397,7 @@
     displayName: 'デモユーザー',
     userId: 'demo-user',
     existingData: null,
+    isSkippingQuestionnaire: false,
     purpose: '',
     goal: '',
     concern: '',
@@ -462,6 +467,36 @@
     renderExistingReservation(data);
   }
 
+  function hasAnsweredQuestionnaire(data) {
+    return !!(
+      data &&
+      data.purpose &&
+      data.target_goal &&
+      data.status
+    );
+  }
+
+  function startReservationFlow() {
+    if (state.existingData && hasAnsweredQuestionnaire(state.existingData)) {
+      state.purpose = state.existingData.purpose || state.purpose;
+      state.goal = state.existingData.target_goal || state.goal;
+      state.concern = state.existingData.status || state.concern;
+      state.isSkippingQuestionnaire = true;
+
+      document.getElementById('skipInfoBox').classList.remove('hidden');
+      document.getElementById('dateStepMessage').textContent = '前回のアンケート回答を使用して、日時だけ変更できます。';
+
+      goStep(4);
+      return;
+    }
+
+    state.isSkippingQuestionnaire = false;
+    document.getElementById('skipInfoBox').classList.add('hidden');
+    document.getElementById('dateStepMessage').textContent = '予約済みの時間は「満席」として選択できません。';
+
+    goStep(1);
+  }
+
   function renderExistingReservation(data) {
     const box = document.getElementById('existingReservationBox');
     const text = document.getElementById('existingReservationText');
@@ -473,27 +508,34 @@
 
     const dateText = formatDateTime(data.preferred_datetime) || '予約はありません';
     const status = data.reservation_status || 'pending';
+    const answered = hasAnsweredQuestionnaire(data);
+
+    const skipText = answered
+      ? 'アンケート回答済みのため、次回からは日時選択だけで変更できます。'
+      : 'アンケート未回答のため、最初から入力してください。';
 
     text.textContent = dateText;
 
     if (!data.preferred_datetime) {
-      statusText.textContent = '新しく予約できます。';
-      startButton.textContent = '予約をはじめる';
-      headerBadge.textContent = '新規予約';
+      statusText.textContent = answered
+        ? `現在予約はありません。${skipText}`
+        : '新しく予約できます。';
+      startButton.textContent = answered ? '日時だけ予約する' : '予約をはじめる';
+      headerBadge.textContent = answered ? '日時予約' : '新規予約';
       return;
     }
 
     if (status === 'confirmed') {
-      statusText.textContent = '現在の予約は確定済みです。変更する場合は新しい希望日時を送信できます。';
-      startButton.textContent = '予約を変更する';
+      statusText.textContent = `現在の予約は確定済みです。${skipText}`;
+      startButton.textContent = answered ? '日時だけ変更する' : '予約を変更する';
       headerBadge.textContent = '予約変更';
     } else if (status === 'cancelled') {
-      statusText.textContent = '現在は再調整中です。新しい希望日時を送信できます。';
-      startButton.textContent = '再予約する';
+      statusText.textContent = `現在は再調整中です。${skipText}`;
+      startButton.textContent = answered ? '日時だけ再予約する' : '再予約する';
       headerBadge.textContent = '再予約';
     } else {
-      statusText.textContent = '現在の予約は承認待ちです。変更する場合は新しい希望日時を送信できます。';
-      startButton.textContent = '希望日時を変更する';
+      statusText.textContent = `現在の予約は承認待ちです。${skipText}`;
+      startButton.textContent = answered ? '希望日時だけ変更する' : '希望日時を変更する';
       headerBadge.textContent = '承認待ち';
     }
   }
@@ -530,6 +572,14 @@
     }
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function goBackFromDateStep() {
+    if (state.isSkippingQuestionnaire) {
+      goStep(0);
+    } else {
+      goStep(3);
+    }
   }
 
   function selectPurpose(value) {
