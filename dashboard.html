@@ -6,23 +6,29 @@
   <title>DPRO GYM｜オーナーダッシュボード</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     }
+
     .card-bg {
       background: linear-gradient(180deg, rgba(31,41,55,.98), rgba(17,24,39,.98));
     }
+
     .fade-in {
       animation: fadeIn .18s ease-out;
     }
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
     textarea {
       resize: vertical;
     }
+
     .modal-backdrop {
       background: rgba(0,0,0,.78);
       backdrop-filter: blur(8px);
@@ -37,7 +43,7 @@
       <div>
         <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DPRO GYM</p>
         <h1 class="text-2xl font-black mt-1">オーナーダッシュボード</h1>
-        <p class="text-xs text-gray-400 mt-1">予約・会員・回数・フォロー・通知管理</p>
+        <p class="text-xs text-gray-400 mt-1">予約・会員・回数・フォロー・対応履歴管理</p>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2">
@@ -48,6 +54,7 @@
         >
           予約画面を確認
         </a>
+
         <a
           href="member.html"
           target="_blank"
@@ -55,6 +62,7 @@
         >
           マイページ確認
         </a>
+
         <button
           onclick="fetchReservations()"
           class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
@@ -95,8 +103,8 @@
       </div>
 
       <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">通知ログ</p>
-        <p id="metricLogs" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+        <p class="text-xs text-gray-400 font-bold">対応履歴</p>
+        <p id="metricHistory" class="text-3xl font-black text-yellow-400 mt-2">-</p>
       </div>
     </section>
 
@@ -104,19 +112,31 @@
     <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5 space-y-4">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
-          <button onclick="changeDate(-1)" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap">
+          <button
+            onclick="changeDate(-1)"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
+          >
             ◀ 前日
           </button>
-          <button onclick="setToday()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm whitespace-nowrap">
+
+          <button
+            onclick="setToday()"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
+          >
             今日
           </button>
-          <button onclick="changeDate(1)" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap">
+
+          <button
+            onclick="changeDate(1)"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
+          >
             翌日 ▶
           </button>
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <div id="dateDisplay" class="text-xl font-black text-yellow-400">-</div>
+
           <label class="inline-flex items-center gap-2 bg-gray-900 border border-gray-800 px-3 py-2 rounded-2xl text-sm text-gray-300">
             <input type="checkbox" id="showAllDates" onchange="toggleShowAllDates()" class="accent-yellow-500">
             全日程を表示
@@ -157,21 +177,27 @@
           <p id="todoSummary" class="text-sm text-gray-400 mt-1">読み込み中...</p>
         </div>
       </div>
+
       <div id="todoList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
     </section>
 
-    <!-- 通知ログ -->
+    <!-- 対応履歴 -->
     <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5">
       <div class="flex items-center justify-between gap-4 mb-4">
         <div>
-          <h2 class="text-lg font-black">最近の通知ログ</h2>
-          <p class="text-sm text-gray-400 mt-1">コピー作成・手動送信したメッセージの履歴</p>
+          <h2 class="text-lg font-black">最近の対応履歴</h2>
+          <p class="text-sm text-gray-400 mt-1">お客様へのLINE案内を作成した履歴</p>
         </div>
-        <button onclick="fetchNotificationLogs()" class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 font-bold px-4 py-2 rounded-2xl text-sm">
+
+        <button
+          onclick="fetchInteractionHistory()"
+          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 font-bold px-4 py-2 rounded-2xl text-sm"
+        >
           更新
         </button>
       </div>
-      <div id="notificationLogList" class="space-y-2">
+
+      <div id="interactionHistoryList" class="space-y-2">
         <div class="text-sm text-gray-500">読み込み中...</div>
       </div>
     </section>
@@ -188,13 +214,18 @@
   <!-- 通知作成モーダル -->
   <div id="notificationModal" class="hidden fixed inset-0 z-50 modal-backdrop p-4 overflow-y-auto">
     <div class="max-w-2xl mx-auto my-8 card-bg border border-yellow-500/40 rounded-3xl shadow-2xl fade-in">
+
       <div class="p-5 border-b border-gray-800 flex items-start justify-between gap-4">
         <div>
           <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">MESSAGE TEMPLATE</p>
-          <h2 id="modalTitle" class="text-xl font-black mt-1">通知文を作成</h2>
-          <p id="modalSubTitle" class="text-sm text-gray-400 mt-2">コピーしてLINEで送信できます。</p>
+          <h2 id="modalTitle" class="text-xl font-black mt-1">LINE案内文を作成</h2>
+          <p id="modalSubTitle" class="text-sm text-gray-400 mt-2">文面をコピーしてLINEで送信できます。</p>
         </div>
-        <button onclick="closeNotificationModal()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 w-10 h-10 rounded-2xl font-black text-gray-400">
+
+        <button
+          onclick="closeNotificationModal()"
+          class="bg-gray-900 hover:bg-gray-800 border border-gray-800 w-10 h-10 rounded-2xl font-black text-gray-400"
+        >
           ×
         </button>
       </div>
@@ -206,6 +237,7 @@
               <p class="text-xs text-gray-500 font-bold">お客様</p>
               <p id="modalCustomerName" class="font-black text-yellow-400 mt-1">-</p>
             </div>
+
             <div>
               <p class="text-xs text-gray-500 font-bold">予約日時</p>
               <p id="modalReservationDate" class="font-black text-yellow-400 mt-1">-</p>
@@ -214,7 +246,7 @@
         </div>
 
         <div>
-          <label class="block text-xs text-gray-500 font-bold mb-2">通知タイトル</label>
+          <label class="block text-xs text-gray-500 font-bold mb-2">案内タイトル</label>
           <input
             id="notificationTitleInput"
             type="text"
@@ -242,19 +274,31 @@
         </div>
 
         <div class="grid sm:grid-cols-3 gap-2">
-          <button onclick="copyMessageAndSaveLog()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm">
-            コピーしてログ保存
+          <button
+            onclick="copyMessageAndSaveHistory()"
+            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm"
+          >
+            文面をコピーする
           </button>
-          <button onclick="saveNotificationLogOnly()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm">
-            ログだけ保存
-          </button>
-          <a href="https://manager.line.biz/" target="_blank" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm text-center">
-            LINE管理画面
+
+          <a
+            href="https://manager.line.biz/"
+            target="_blank"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm text-center"
+          >
+            LINE管理画面を開く
           </a>
+
+          <button
+            onclick="closeNotificationModal()"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm"
+          >
+            閉じる
+          </button>
         </div>
 
         <p class="text-xs text-gray-500 leading-relaxed">
-          ※ この画面では安全のため、LINEの自動Push送信は行いません。コピーした文面をLINE公式アカウント管理画面またはチャットで送信してください。
+          ※ 「文面をコピーする」を押すと、対応履歴にも自動で保存されます。コピーした文面をLINE公式アカウント管理画面またはチャットで送信してください。
         </p>
       </div>
     </div>
@@ -266,7 +310,7 @@
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let allReservations = [];
-  let notificationLogs = [];
+  let interactionHistory = [];
   let currentFilter = 'all';
   let targetDate = new Date();
   let showAllDates = false;
@@ -275,7 +319,7 @@
   window.addEventListener('load', async () => {
     updateDateDisplay();
     await fetchReservations();
-    await fetchNotificationLogs();
+    await fetchInteractionHistory();
   });
 
   function localDateString(date) {
@@ -337,6 +381,7 @@
 
     ['all', 'pending', 'confirmed', 'cancelled', 'low', 'follow', 'trial', 'member'].forEach(t => {
       const btn = document.getElementById(`tab-${t}`);
+
       btn.className = t === mode
         ? 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-yellow-500 text-black'
         : 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400 hover:text-white';
@@ -367,61 +412,82 @@
     applyFilters();
   }
 
-  async function fetchNotificationLogs() {
-    const list = document.getElementById('notificationLogList');
-    list.innerHTML = '<div class="text-sm text-gray-500">通知ログを読み込み中...</div>';
+  async function fetchInteractionHistory() {
+    const list = document.getElementById('interactionHistoryList');
+    list.innerHTML = '<div class="text-sm text-gray-500">対応履歴を読み込み中...</div>';
 
-    const { data, error } = await sbClient
+    const { data, error, count } = await sbClient
       .from('dpro_gym_notification_logs')
-      .select('*')
+      .select('*', { count: 'exact' })
       .order('created_at', { ascending: false })
       .limit(8);
 
     if (error) {
-      notificationLogs = [];
-      document.getElementById('metricLogs').textContent = '-';
+      interactionHistory = [];
+      document.getElementById('metricHistory').textContent = '-';
       list.innerHTML = `
         <div class="bg-red-500/10 border border-red-500/40 text-red-200 p-4 rounded-2xl text-sm">
-          通知ログを取得できません。STEP 3-1 SQLが未実行の可能性があります。<br>
+          対応履歴を取得できません。STEP 3-1 SQLが未実行の可能性があります。<br>
           ${escapeHtml(error.message)}
         </div>
       `;
       return;
     }
 
-    notificationLogs = data || [];
-    document.getElementById('metricLogs').textContent = notificationLogs.length;
-    renderNotificationLogs();
+    interactionHistory = data || [];
+    document.getElementById('metricHistory').textContent = count ?? interactionHistory.length;
+    renderInteractionHistory();
   }
 
-  function renderNotificationLogs() {
-    const list = document.getElementById('notificationLogList');
+  function renderInteractionHistory() {
+    const list = document.getElementById('interactionHistoryList');
 
-    if (!notificationLogs.length) {
-      list.innerHTML = '<div class="text-sm text-gray-500">通知ログはまだありません。</div>';
+    if (!interactionHistory.length) {
+      list.innerHTML = '<div class="text-sm text-gray-500">対応履歴はまだありません。</div>';
       return;
     }
 
-    list.innerHTML = notificationLogs.map(log => {
-      const typeLabel = notificationTypeLabel(log.notification_type);
-      const statusLabel = log.send_status === 'copied' ? 'コピー済み' : log.send_status === 'sent' ? '送信済み' : '作成済み';
-      const created = formatLogDate(log.created_at);
+    list.innerHTML = interactionHistory.map((item, index) => {
+      const typeLabel = notificationTypeLabel(item.notification_type);
+      const statusLabel = item.send_status === 'copied'
+        ? '文面コピー済み'
+        : item.send_status === 'sent'
+          ? '送信済み'
+          : '作成済み';
+
+      const created = formatLogDate(item.created_at);
 
       return `
         <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3 text-sm">
           <div class="flex items-start justify-between gap-3">
             <div>
-              <p class="font-black text-yellow-400">${escapeHtml(log.display_name || 'ゲスト様')}</p>
+              <p class="font-black text-yellow-400">${escapeHtml(item.display_name || 'ゲスト様')}</p>
               <p class="text-xs text-gray-500 mt-1">${escapeHtml(typeLabel)} / ${escapeHtml(statusLabel)} / ${escapeHtml(created)}</p>
             </div>
-            <button onclick="copyText('${escapeAttr(log.message_body || '')}')" class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">
+
+            <button
+              onclick="copyHistoryMessage(${index})"
+              class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0"
+            >
               再コピー
             </button>
           </div>
-          <p class="text-xs text-gray-400 mt-2 line-clamp-2">${escapeHtml(log.title || '')}</p>
+
+          <p class="text-xs text-gray-400 mt-2">${escapeHtml(item.title || '')}</p>
         </div>
       `;
     }).join('');
+  }
+
+  async function copyHistoryMessage(index) {
+    const item = interactionHistory[index];
+    if (!item || !item.message_body) {
+      alert('コピーできる文面がありません。');
+      return;
+    }
+
+    await copyText(item.message_body);
+    alert('文面をコピーしました。');
   }
 
   function applyFilters() {
@@ -478,6 +544,7 @@
     const selectedCount = allReservations.filter(r => (r.preferred_datetime || '').includes(selectedDate)).length;
     const pendingCount = allReservations.filter(r => (r.reservation_status || 'pending') === 'pending').length;
     const lowCount = allReservations.filter(r => Number(r.remaining_count || 0) <= 1).length;
+
     const followCount = allReservations.filter(r => {
       const follow = r.follow_status || '未対応';
       const count = Number(r.remaining_count || 0);
@@ -541,7 +608,10 @@
       `承認待ち ${pending.length}件・本日来店 ${todayVisits.length}件・継続提案 ${low.length}件・フォロー予定 ${followDue.length}件・再調整 ${cancelled.length}件`;
 
     document.getElementById('todoList').innerHTML = items.map(item => `
-      <button onclick="filterMode('${item.filter}')" class="text-left bg-gray-950 hover:bg-gray-900 border border-gray-800 hover:border-yellow-500/50 rounded-2xl p-4 transition">
+      <button
+        onclick="filterMode('${item.filter}')"
+        class="text-left bg-gray-950 hover:bg-gray-900 border border-gray-800 hover:border-yellow-500/50 rounded-2xl p-4 transition"
+      >
         <div class="flex items-center justify-between">
           <span class="text-2xl">${item.icon}</span>
           <span class="text-2xl font-black text-yellow-400">${item.count}</span>
@@ -613,22 +683,27 @@
             <span class="text-gray-500 w-20 shrink-0">日時</span>
             <strong class="text-white">${escapeHtml(date)}</strong>
           </div>
+
           <div class="flex gap-3">
             <span class="text-gray-500 w-20 shrink-0">目的</span>
             <span>${escapeHtml(purpose)}</span>
           </div>
+
           <div class="flex gap-3">
             <span class="text-gray-500 w-20 shrink-0">目標</span>
             <span>${escapeHtml(goal)}</span>
           </div>
+
           <div class="flex gap-3">
             <span class="text-gray-500 w-20 shrink-0">悩み</span>
             <span>${escapeHtml(concern)}</span>
           </div>
+
           <div class="flex gap-3">
             <span class="text-gray-500 w-20 shrink-0">最終来店</span>
             <span>${escapeHtml(lastVisit)}</span>
           </div>
+
           <div class="flex gap-3">
             <span class="text-gray-500 w-20 shrink-0">来店回数</span>
             <span>${visitCount}回</span>
@@ -642,6 +717,7 @@
               ${count}<span class="text-sm text-gray-500 ml-1">回</span>
             </p>
           </div>
+
           <div class="flex gap-2">
             <button onclick="updateCount('${escapeAttr(id)}', ${count}, -1)" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl font-black">-1</button>
             <button onclick="updateCount('${escapeAttr(id)}', ${count}, 1)" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl font-black">+1</button>
@@ -652,6 +728,7 @@
           <button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-sm font-black">
             OK 承認
           </button>
+
           <button onclick="markVisited('${escapeAttr(id)}', ${count}, ${visitCount})" class="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-sm font-black">
             来店済み
           </button>
@@ -661,23 +738,28 @@
           <button onclick="updateStatus('${escapeAttr(id)}', 'cancelled')" class="bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-sm font-black">
             再調整
           </button>
+
           <button onclick="copyName('${escapeAttr(name)}')" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300">
             名前をコピー
           </button>
         </div>
 
         <div class="bg-gray-950 border border-yellow-500/20 rounded-2xl p-4 space-y-3">
-          <p class="text-sm font-black text-yellow-400">LINE通知文を作成</p>
+          <p class="text-sm font-black text-yellow-400">LINE案内文を作成</p>
+
           <div class="grid grid-cols-2 gap-2">
             <button onclick="openNotificationModal('${escapeAttr(id)}', 'reservation_confirmed')" class="bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 py-3 rounded-2xl text-xs font-black">
               予約確定文
             </button>
+
             <button onclick="openNotificationModal('${escapeAttr(id)}', 'reservation_cancelled')" class="bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 py-3 rounded-2xl text-xs font-black">
               再調整文
             </button>
+
             <button onclick="openNotificationModal('${escapeAttr(id)}', 'reminder')" class="bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 py-3 rounded-2xl text-xs font-black">
               リマインド
             </button>
+
             <button onclick="openNotificationModal('${escapeAttr(id)}', 'continuation')" class="bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-500/40 text-yellow-300 py-3 rounded-2xl text-xs font-black">
               継続提案
             </button>
@@ -703,12 +785,22 @@
 
           <div>
             <label class="block text-xs text-gray-500 font-bold mb-1">次回フォロー日</label>
-            <input id="next-follow-${sid}" type="date" value="${escapeHtml(nextFollow)}" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
+            <input
+              id="next-follow-${sid}"
+              type="date"
+              value="${escapeHtml(nextFollow)}"
+              class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
+            >
           </div>
 
           <div>
             <label class="block text-xs text-gray-500 font-bold mb-1">オーナーメモ</label>
-            <textarea id="memo-${sid}" rows="3" placeholder="接客内容・注意点・次回提案など" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">${escapeHtml(ownerMemo)}</textarea>
+            <textarea
+              id="memo-${sid}"
+              rows="3"
+              placeholder="接客内容・注意点・次回提案など"
+              class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
+            >${escapeHtml(ownerMemo)}</textarea>
           </div>
 
           <button onclick="saveManagement('${escapeAttr(id)}', '${sid}')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-sm font-black">
@@ -718,7 +810,14 @@
 
         <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3">
           <label class="block text-xs text-gray-500 font-bold">キャンセル・再調整理由</label>
-          <textarea id="cancel-${sid}" rows="2" placeholder="例：都合が合わない、別日希望など" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-red-500">${escapeHtml(cancelReason)}</textarea>
+
+          <textarea
+            id="cancel-${sid}"
+            rows="2"
+            placeholder="例：都合が合わない、別日希望など"
+            class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-red-500"
+          >${escapeHtml(cancelReason)}</textarea>
+
           <button onclick="saveCancelReason('${escapeAttr(id)}', '${sid}')" class="w-full bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-sm font-black">
             理由を保存して再調整にする
           </button>
@@ -740,9 +839,11 @@
     if (status === 'confirmed') {
       return '<span class="bg-green-500 text-black text-xs font-black px-3 py-1 rounded-full shrink-0">確定</span>';
     }
+
     if (status === 'cancelled') {
       return '<span class="bg-red-500 text-white text-xs font-black px-3 py-1 rounded-full shrink-0">再調整</span>';
     }
+
     return '<span class="bg-yellow-500 text-black text-xs font-black px-3 py-1 rounded-full shrink-0">承認待ち</span>';
   }
 
@@ -750,15 +851,19 @@
     if (status === '入会済') {
       return '<span class="bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">入会済</span>';
     }
+
     if (status === '継続提案') {
       return '<span class="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">継続提案</span>';
     }
+
     if (status === '休眠') {
       return '<span class="bg-gray-600/30 text-gray-300 border border-gray-600 text-[10px] font-black px-2 py-1 rounded-full shrink-0">休眠</span>';
     }
+
     if (status === '退会') {
       return '<span class="bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">退会</span>';
     }
+
     return '<span class="bg-green-500/20 text-green-300 border border-green-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">体験</span>';
   }
 
@@ -826,7 +931,10 @@
       .update(updateData)
       .eq('id', id);
 
-    if (error) return alert('ステータス更新失敗: ' + error.message);
+    if (error) {
+      alert('ステータス更新失敗: ' + error.message);
+      return;
+    }
 
     await fetchReservations();
 
@@ -862,7 +970,10 @@
       .update(updateData)
       .eq('id', id);
 
-    if (error) return alert('回数更新失敗: ' + error.message);
+    if (error) {
+      alert('回数更新失敗: ' + error.message);
+      return;
+    }
 
     await fetchReservations();
 
@@ -900,7 +1011,10 @@
       .update(updateData)
       .eq('id', id);
 
-    if (error) return alert('来店処理に失敗しました: ' + error.message);
+    if (error) {
+      alert('来店処理に失敗しました: ' + error.message);
+      return;
+    }
 
     await fetchReservations();
 
@@ -926,7 +1040,10 @@
       })
       .eq('id', id);
 
-    if (error) return alert('管理情報の保存に失敗しました: ' + error.message);
+    if (error) {
+      alert('管理情報の保存に失敗しました: ' + error.message);
+      return;
+    }
 
     alert('管理情報を保存しました');
     fetchReservations();
@@ -946,7 +1063,10 @@
       })
       .eq('id', id);
 
-    if (error) return alert('キャンセル理由の保存に失敗しました: ' + error.message);
+    if (error) {
+      alert('キャンセル理由の保存に失敗しました: ' + error.message);
+      return;
+    }
 
     alert('再調整として保存しました');
     await fetchReservations();
@@ -966,6 +1086,7 @@
 
   function openNotificationModal(profileId, type) {
     const row = allReservations.find(item => String(item.id) === String(profileId));
+
     if (!row) {
       alert('対象の会員データが見つかりません。最新情報を取得してください。');
       return;
@@ -1050,7 +1171,7 @@ ${dateText}
         body:
 `${name}様
 
-明日または近日のご予約確認です。
+ご予約確認のご連絡です。
 
 【予約日時】
 ${dateText}
@@ -1100,11 +1221,16 @@ ${dateText}
     };
   }
 
-  async function copyMessageAndSaveLog() {
+  async function copyMessageAndSaveHistory() {
     if (!currentNotification) return;
 
     const title = document.getElementById('notificationTitleInput').value.trim();
     const body = document.getElementById('notificationBodyInput').value.trim();
+
+    if (!title) {
+      alert('案内タイトルを入力してください。');
+      return;
+    }
 
     if (!body) {
       alert('メッセージ本文が空です。');
@@ -1112,31 +1238,15 @@ ${dateText}
     }
 
     await copyText(body);
-    await saveNotificationLog('copied');
+    await saveInteractionHistory('copied');
 
-    alert('メッセージをコピーし、通知ログに保存しました。');
+    alert('文面をコピーしました。対応履歴にも保存しました。');
+
     closeNotificationModal();
-    await fetchNotificationLogs();
+    await fetchInteractionHistory();
   }
 
-  async function saveNotificationLogOnly() {
-    if (!currentNotification) return;
-
-    const body = document.getElementById('notificationBodyInput').value.trim();
-
-    if (!body) {
-      alert('メッセージ本文が空です。');
-      return;
-    }
-
-    await saveNotificationLog('created');
-
-    alert('通知ログに保存しました。');
-    closeNotificationModal();
-    await fetchNotificationLogs();
-  }
-
-  async function saveNotificationLog(status) {
+  async function saveInteractionHistory(status) {
     const row = currentNotification.row;
     const title = document.getElementById('notificationTitleInput').value.trim();
     const body = document.getElementById('notificationBodyInput').value.trim();
@@ -1157,7 +1267,7 @@ ${dateText}
       }]);
 
     if (error) {
-      alert('通知ログの保存に失敗しました: ' + error.message);
+      alert('対応履歴の保存に失敗しました: ' + error.message);
       throw error;
     }
   }
@@ -1179,7 +1289,8 @@ ${dateText}
       consultation: '相談メッセージ',
       manual: '手動メッセージ'
     };
-    return map[type] || '通知メッセージ';
+
+    return map[type] || 'LINE案内メッセージ';
   }
 
   function formatDateTime(value) {
@@ -1202,12 +1313,15 @@ ${dateText}
 
   function formatLogDate(value) {
     if (!value) return '';
+
     const dt = new Date(value);
     if (Number.isNaN(dt.getTime())) return String(value);
+
     const m = String(dt.getMonth() + 1).padStart(2, '0');
     const d = String(dt.getDate()).padStart(2, '0');
     const h = String(dt.getHours()).padStart(2, '0');
     const min = String(dt.getMinutes()).padStart(2, '0');
+
     return `${m}/${d} ${h}:${min}`;
   }
 
@@ -1226,7 +1340,12 @@ ${dateText}
   }
 
   function escapeAttr(value) {
-    return String(value ?? '').replace(/[\\'"]/g, '\\$&').replace(/\n/g, '\\n').replace(/\r/g, '');
+    return String(value ?? '')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '&quot;')
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '');
   }
 </script>
 
