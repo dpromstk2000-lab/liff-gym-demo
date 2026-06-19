@@ -8,56 +8,93 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
-    .glass { background: linear-gradient(180deg, rgba(31,41,55,.96), rgba(17,24,39,.96)); }
-    .safe-bottom { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-    .fade-in { animation: fadeIn .2s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    }
+    .glass {
+      background: linear-gradient(180deg, rgba(31,41,55,.96), rgba(17,24,39,.96));
+    }
+    .safe-bottom {
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+    .fade-in {
+      animation: fadeIn .18s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    textarea {
+      resize: vertical;
+    }
   </style>
 </head>
+
 <body class="bg-gray-950 text-white min-h-screen">
+
   <main class="max-w-md mx-auto min-h-screen glass shadow-2xl border-x border-gray-800 flex flex-col">
-    <header class="bg-black/90 border-b border-yellow-500/30 px-5 py-4">
+
+    <header class="sticky top-0 z-20 bg-black/90 backdrop-blur border-b border-yellow-500/30 px-5 py-4">
       <div class="flex items-center justify-between">
         <div>
           <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DPRO GYM</p>
           <h1 class="text-lg font-black mt-1">会員マイページ</h1>
         </div>
-        <span id="statusBadge" class="text-[11px] bg-gray-800 text-gray-300 font-black px-3 py-1 rounded-full border border-gray-700">読込中</span>
+        <span id="topStatusBadge" class="text-[11px] bg-gray-800 text-gray-300 font-black px-3 py-1 rounded-full border border-gray-700">
+          読込中
+        </span>
       </div>
     </header>
 
     <section class="p-5 flex-1 safe-bottom fade-in">
-      <div id="loading" class="text-center py-16 text-gray-400">会員情報を読み込み中...</div>
+
+      <div id="notice" class="hidden mb-4 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-100 leading-relaxed"></div>
+
+      <div id="loading" class="text-center py-16 text-gray-400">
+        会員情報を読み込み中...
+      </div>
 
       <div id="content" class="hidden space-y-5">
-        <div class="rounded-3xl bg-gradient-to-br from-yellow-500 to-yellow-300 p-5 text-black shadow-xl shadow-yellow-500/10">
+
+        <!-- メインカード -->
+        <div id="heroCard" class="rounded-3xl bg-gradient-to-br from-yellow-500 to-yellow-300 p-5 text-black shadow-xl shadow-yellow-500/10">
           <p class="text-xs font-black tracking-widest opacity-80">MY PAGE</p>
           <h2 id="welcomeName" class="text-2xl font-black mt-2 leading-tight">こんにちは</h2>
-          <p id="nextAction" class="text-sm font-bold mt-3 opacity-80">次回予約と残り回数を確認できます。</p>
+          <p id="mainMessage" class="text-sm font-bold mt-3 opacity-80">
+            次回予約と残り回数を確認できます。
+          </p>
         </div>
 
+        <!-- 状態サマリー -->
         <div class="grid grid-cols-2 gap-3">
           <div class="bg-gray-900 border border-gray-800 rounded-3xl p-4">
             <p class="text-xs text-gray-400 font-bold">残り回数</p>
-            <div class="mt-2 flex items-end gap-1"><span id="countDisplay" class="text-4xl font-black text-yellow-400">-</span><span class="text-sm text-gray-400 mb-1">回</span></div>
+            <div class="mt-2 flex items-end gap-1">
+              <span id="countDisplay" class="text-4xl font-black text-yellow-400">-</span>
+              <span class="text-sm text-gray-400 mb-1">回</span>
+            </div>
           </div>
+
           <div class="bg-gray-900 border border-gray-800 rounded-3xl p-4">
-            <p class="text-xs text-gray-400 font-bold">予約状態</p>
-            <div id="reservationLabel" class="mt-3 text-lg font-black">-</div>
-            <p id="reservationSub" class="text-xs text-gray-500 mt-1">-</p>
+            <p class="text-xs text-gray-400 font-bold">会員状態</p>
+            <div id="memberStatusDisplay" class="mt-3 text-lg font-black">-</div>
+            <p id="memberStatusSub" class="text-xs text-gray-500 mt-1">-</p>
           </div>
         </div>
 
+        <!-- 次回予約 -->
         <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 space-y-4">
-          <div class="flex items-center justify-between gap-4">
+          <div class="flex items-start justify-between gap-4">
             <div>
               <p class="text-xs text-gray-400 font-bold">次回予約</p>
               <p id="resDateDisplay" class="text-xl font-black text-yellow-400 mt-1">-</p>
+              <p id="reservationStatusText" class="text-sm text-gray-400 mt-2">-</p>
             </div>
             <div class="text-3xl">📅</div>
           </div>
+
           <div class="h-px bg-gray-800"></div>
+
           <div class="grid grid-cols-2 gap-3 text-sm">
             <div>
               <p class="text-gray-500 text-xs">目的</p>
@@ -70,28 +107,95 @@
           </div>
         </div>
 
-        <div class="space-y-3">
-          <a href="index.html" class="block w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-center py-4 rounded-2xl transition">予約・変更をする</a>
-          <button onclick="closeLiff()" class="w-full bg-gray-900 border border-gray-800 text-gray-300 font-bold py-4 rounded-2xl">LINEトークに戻る</button>
+        <!-- 来店状況 -->
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-900 border border-gray-800 rounded-3xl p-4">
+            <p class="text-xs text-gray-400 font-bold">来店回数</p>
+            <p class="text-3xl font-black text-yellow-400 mt-2">
+              <span id="visitCountDisplay">0</span><span class="text-sm text-gray-500 ml-1">回</span>
+            </p>
+          </div>
+
+          <div class="bg-gray-900 border border-gray-800 rounded-3xl p-4">
+            <p class="text-xs text-gray-400 font-bold">最終来店</p>
+            <p id="lastVisitDisplay" class="text-lg font-black text-yellow-400 mt-3">-</p>
+          </div>
         </div>
 
+        <!-- お知らせ -->
+        <div id="actionNotice" class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-3xl p-5">
+          <p id="actionNoticeTitle" class="font-black text-yellow-300"></p>
+          <p id="actionNoticeBody" class="text-sm text-gray-300 mt-2 leading-relaxed"></p>
+        </div>
+
+        <!-- メイン操作 -->
+        <div class="space-y-3">
+          <a href="index.html" class="block w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black text-center py-4 rounded-2xl transition">
+            予約・変更をする
+          </a>
+
+          <button onclick="sendConsultMessage()" class="w-full bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-4 rounded-2xl transition">
+            トレーナーに相談する
+          </button>
+
+          <button onclick="requestContinuation()" class="w-full bg-gray-900 hover:bg-gray-800 border border-yellow-500/40 text-yellow-300 font-black py-4 rounded-2xl transition">
+            回数追加・継続相談をする
+          </button>
+        </div>
+
+        <!-- キャンセル・再調整 -->
+        <div id="cancelBox" class="bg-gray-900 border border-gray-800 rounded-3xl p-5 space-y-3">
+          <div>
+            <p class="text-sm font-black">キャンセル・再調整申請</p>
+            <p class="text-xs text-gray-500 mt-1">予約日時の都合が悪くなった場合はこちらから申請できます。</p>
+          </div>
+
+          <textarea
+            id="cancelReasonInput"
+            rows="3"
+            placeholder="例：仕事の都合で別日に変更したいです"
+            class="w-full bg-gray-950 border border-gray-800 rounded-2xl p-3 text-sm focus:outline-none focus:border-red-500"
+          ></textarea>
+
+          <button id="cancelRequestBtn" onclick="requestCancel()" class="w-full bg-red-500/90 hover:bg-red-500 text-white font-black py-4 rounded-2xl transition">
+            キャンセル・再調整を申請する
+          </button>
+
+          <p id="cancelStatusText" class="hidden text-xs text-red-300 leading-relaxed"></p>
+        </div>
+
+        <!-- チェックインQR -->
         <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 text-center">
           <p class="text-xs text-gray-400 font-bold">来店チェックイン</p>
           <p class="text-sm text-gray-500 mt-2">来店時にスタッフへ提示してください</p>
+
           <div class="mt-4 bg-white p-3 rounded-2xl inline-block">
             <img id="qrImg" src="" alt="チェックインQR" class="w-40 h-40 rounded-xl" />
           </div>
         </div>
+
+        <button onclick="closeLiff()" class="w-full bg-gray-900 border border-gray-800 text-gray-300 font-bold py-4 rounded-2xl">
+          LINEトークに戻る
+        </button>
+
       </div>
 
+      <!-- 未登録 -->
       <div id="emptyState" class="hidden space-y-5 text-center py-12">
-        <div class="mx-auto w-20 h-20 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center text-4xl">📝</div>
+        <div class="mx-auto w-20 h-20 bg-gray-900 border border-gray-800 rounded-full flex items-center justify-center text-4xl">
+          📝
+        </div>
         <div>
           <h2 class="text-xl font-black">登録情報がありません</h2>
-          <p class="text-sm text-gray-400 mt-3 leading-relaxed">まずは無料体験予約から登録してください。LINEのお名前を自動で取得して予約できます。</p>
+          <p class="text-sm text-gray-400 mt-3 leading-relaxed">
+            まずは無料体験予約から登録してください。LINEのお名前を自動で取得して予約できます。
+          </p>
         </div>
-        <a href="index.html" class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl">無料体験を予約する</a>
+        <a href="index.html" class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl">
+          無料体験を予約する
+        </a>
       </div>
+
     </section>
   </main>
 
@@ -101,24 +205,38 @@
   const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  const state = { displayName: 'デモユーザー', userId: 'demo-user' };
+  const state = {
+    displayName: 'デモユーザー',
+    userId: 'demo-user',
+    memberData: null
+  };
+
   window.addEventListener('load', init);
 
   async function init() {
     try {
       await liff.init({ liffId: MY_LIFF_ID });
+
       if (!liff.isLoggedIn() && liff.isInClient()) {
         liff.login();
         return;
       }
+
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
         state.displayName = profile.displayName || 'ゲスト様';
         state.userId = profile.userId || 'demo-user';
       }
+
+      if (!liff.isInClient()) {
+        showNotice('LINEアプリ外で表示中のため、デモユーザーとして動作します。LINE内ではお名前を自動取得します。');
+      }
+
     } catch (e) {
       console.warn('LIFF demo mode:', e);
+      showNotice('LIFF初期化に失敗しました。デモ表示として続行します。');
     }
+
     await fetchMemberData();
   }
 
@@ -130,87 +248,333 @@
       .maybeSingle();
 
     document.getElementById('loading').classList.add('hidden');
+
     if (error) {
+      console.error(error);
       document.getElementById('emptyState').classList.remove('hidden');
-      document.getElementById('statusBadge').textContent = 'エラー';
-      return;
-    }
-    if (!data) {
-      document.getElementById('emptyState').classList.remove('hidden');
-      document.getElementById('statusBadge').textContent = '未登録';
+      document.getElementById('topStatusBadge').textContent = 'エラー';
       return;
     }
 
+    if (!data) {
+      document.getElementById('emptyState').classList.remove('hidden');
+      document.getElementById('topStatusBadge').textContent = '未登録';
+      return;
+    }
+
+    state.memberData = data;
     renderMember(data);
   }
 
   function renderMember(data) {
     const name = data.display_name || state.displayName || 'ゲスト';
     const count = Number(data.remaining_count || 0);
-    const status = data.reservation_status || 'pending';
-    const dateText = formatDateTime(data.preferred_datetime);
+    const reservationStatus = data.reservation_status || 'pending';
+    const memberStatus = data.member_status || '体験予約';
 
     document.getElementById('content').classList.remove('hidden');
+
     document.getElementById('welcomeName').textContent = `こんにちは、${name}様`;
     document.getElementById('countDisplay').textContent = count;
-    document.getElementById('resDateDisplay').textContent = dateText || '予約はありません';
+    document.getElementById('memberStatusDisplay').textContent = memberStatus;
     document.getElementById('purposeDisplay').textContent = data.purpose || '-';
     document.getElementById('goalDisplay').textContent = data.target_goal || '-';
-    document.getElementById('qrImg').src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(data.line_user_id || state.userId)}`;
+    document.getElementById('visitCountDisplay').textContent = Number(data.visit_count || 0);
+    document.getElementById('lastVisitDisplay').textContent = formatDateOnly(data.last_visit_date) || '-';
 
-    const badge = document.getElementById('statusBadge');
-    const label = document.getElementById('reservationLabel');
-    const sub = document.getElementById('reservationSub');
-    const action = document.getElementById('nextAction');
+    document.getElementById('resDateDisplay').textContent = formatDateTime(data.preferred_datetime) || '予約はありません';
+
+    document.getElementById('qrImg').src =
+      `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(data.line_user_id || state.userId)}`;
+
+    renderStatus(data);
+    renderActionNotice(data);
+    renderCancelBox(data);
+  }
+
+  function renderStatus(data) {
+    const reservationStatus = data.reservation_status || 'pending';
+    const memberStatus = data.member_status || '体験予約';
+    const count = Number(data.remaining_count || 0);
+
+    const topBadge = document.getElementById('topStatusBadge');
+    const reservationText = document.getElementById('reservationStatusText');
+    const memberSub = document.getElementById('memberStatusSub');
+    const mainMessage = document.getElementById('mainMessage');
 
     if (!data.preferred_datetime) {
-      badge.className = 'text-[11px] bg-gray-800 text-gray-300 font-black px-3 py-1 rounded-full border border-gray-700';
-      badge.textContent = '未予約';
-      label.textContent = '未予約';
-      sub.textContent = '予約できます';
-      action.textContent = '無料体験または次回予約をLINEから簡単に申し込めます。';
-    } else if (status === 'confirmed') {
-      badge.className = 'text-[11px] bg-green-500 text-black font-black px-3 py-1 rounded-full';
-      badge.textContent = '予約確定';
-      label.textContent = '確定済み';
-      sub.textContent = '当日お待ちしています';
-      action.textContent = '予約は確定しています。当日はQRをスタッフへ提示してください。';
-    } else if (status === 'cancelled') {
-      badge.className = 'text-[11px] bg-red-500 text-white font-black px-3 py-1 rounded-full';
-      badge.textContent = '再調整';
-      label.textContent = '再予約可';
-      sub.textContent = '別日で予約できます';
-      action.textContent = '予約が再調整になりました。別日で再度お申し込みください。';
+      topBadge.className = 'text-[11px] bg-gray-800 text-gray-300 font-black px-3 py-1 rounded-full border border-gray-700';
+      topBadge.textContent = '未予約';
+      reservationText.textContent = '現在、予約は入っていません。';
+      mainMessage.textContent = '無料体験または次回予約をLINEから簡単に申し込めます。';
+    } else if (reservationStatus === 'confirmed') {
+      topBadge.className = 'text-[11px] bg-green-500 text-black font-black px-3 py-1 rounded-full';
+      topBadge.textContent = '予約確定';
+      reservationText.textContent = '予約は確定しています。当日はQRをスタッフへ提示してください。';
+      mainMessage.textContent = '次回予約は確定しています。当日お待ちしています。';
+    } else if (reservationStatus === 'cancelled') {
+      topBadge.className = 'text-[11px] bg-red-500 text-white font-black px-3 py-1 rounded-full';
+      topBadge.textContent = '再調整中';
+      reservationText.textContent = 'キャンセル・再調整の申請を受け付けています。';
+      mainMessage.textContent = '日程を再調整中です。必要に応じて再予約してください。';
     } else {
-      badge.className = 'text-[11px] bg-yellow-500 text-black font-black px-3 py-1 rounded-full';
-      badge.textContent = '承認待ち';
-      label.textContent = '承認待ち';
-      sub.textContent = 'オーナー確認中';
-      action.textContent = '予約を受け付けました。オーナー確認後、確定連絡が届きます。';
+      topBadge.className = 'text-[11px] bg-yellow-500 text-black font-black px-3 py-1 rounded-full';
+      topBadge.textContent = '承認待ち';
+      reservationText.textContent = '予約を受け付けました。オーナー確認後、確定連絡があります。';
+      mainMessage.textContent = '予約を受け付けました。オーナー確認後、確定連絡をお送りします。';
     }
+
+    if (memberStatus === '入会済') {
+      memberSub.textContent = '継続利用中';
+    } else if (memberStatus === '継続提案') {
+      memberSub.textContent = '継続相談がおすすめ';
+    } else if (memberStatus === '休眠') {
+      memberSub.textContent = '再開相談できます';
+    } else if (memberStatus === '退会') {
+      memberSub.textContent = '再登録相談できます';
+    } else {
+      memberSub.textContent = '体験・初回来店前';
+    }
+
+    const countEl = document.getElementById('countDisplay');
+    if (count <= 0) {
+      countEl.className = 'text-4xl font-black text-red-400';
+    } else if (count === 1) {
+      countEl.className = 'text-4xl font-black text-yellow-400';
+    } else {
+      countEl.className = 'text-4xl font-black text-yellow-400';
+    }
+  }
+
+  function renderActionNotice(data) {
+    const box = document.getElementById('actionNotice');
+    const title = document.getElementById('actionNoticeTitle');
+    const body = document.getElementById('actionNoticeBody');
+
+    const count = Number(data.remaining_count || 0);
+    const memberStatus = data.member_status || '体験予約';
+    const reservationStatus = data.reservation_status || 'pending';
+
+    box.classList.remove('hidden');
+
+    if (count <= 0 && memberStatus !== '体験予約') {
+      title.textContent = '継続相談のタイミングです';
+      body.textContent = '残り回数が0回です。次回トレーニングを続けたい場合は「回数追加・継続相談をする」からご相談ください。';
+      return;
+    }
+
+    if (count === 1 && memberStatus !== '体験予約') {
+      title.textContent = '残り回数が少なくなっています';
+      body.textContent = '残り1回です。次回以降も継続したい場合は、早めのご相談がおすすめです。';
+      return;
+    }
+
+    if (reservationStatus === 'cancelled') {
+      title.textContent = '再調整を受け付けています';
+      body.textContent = '日程の再調整が必要な状態です。「予約・変更をする」から新しい希望日時を送信できます。';
+      return;
+    }
+
+    if (reservationStatus === 'pending') {
+      title.textContent = '予約確認中です';
+      body.textContent = 'オーナーが予約内容を確認しています。確定までもう少しお待ちください。';
+      return;
+    }
+
+    if (memberStatus === '体験予約') {
+      title.textContent = '無料体験のご予約ありがとうございます';
+      body.textContent = '当日はカウンセリング後、目的に合わせた体験トレーニングをご案内します。';
+      return;
+    }
+
+    title.textContent = '次回もお待ちしています';
+    body.textContent = '予約・変更、相談、継続のご希望はこのマイページから行えます。';
+  }
+
+  function renderCancelBox(data) {
+    const btn = document.getElementById('cancelRequestBtn');
+    const statusText = document.getElementById('cancelStatusText');
+    const input = document.getElementById('cancelReasonInput');
+
+    if (data.cancel_reason) {
+      input.value = data.cancel_reason;
+    }
+
+    if (!data.preferred_datetime) {
+      btn.disabled = true;
+      btn.className = 'w-full bg-gray-700 text-gray-500 font-black py-4 rounded-2xl cursor-not-allowed';
+      statusText.classList.remove('hidden');
+      statusText.textContent = '現在予約がないため、キャンセル申請はできません。';
+      return;
+    }
+
+    if ((data.reservation_status || 'pending') === 'cancelled') {
+      btn.disabled = true;
+      btn.className = 'w-full bg-gray-700 text-gray-500 font-black py-4 rounded-2xl cursor-not-allowed';
+      statusText.classList.remove('hidden');
+      statusText.textContent = 'キャンセル・再調整申請済みです。必要に応じて「予約・変更をする」から新しい希望日時を送信してください。';
+      return;
+    }
+
+    btn.disabled = false;
+    statusText.classList.add('hidden');
+  }
+
+  async function requestCancel() {
+    const data = state.memberData;
+    if (!data) return;
+
+    const reason = document.getElementById('cancelReasonInput').value.trim();
+
+    if (!reason) {
+      alert('キャンセル・再調整理由を入力してください。');
+      return;
+    }
+
+    const ok = confirm('キャンセル・再調整を申請しますか？\nオーナー画面では「再調整」として表示されます。');
+    if (!ok) return;
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update({
+        reservation_status: 'cancelled',
+        cancel_reason: reason,
+        cancel_requested_at: new Date().toISOString(),
+        follow_status: '要連絡',
+        next_follow_date: todayString()
+      })
+      .eq('line_user_id', state.userId);
+
+    if (error) {
+      alert('申請に失敗しました: ' + error.message);
+      return;
+    }
+
+    try {
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        await liff.sendMessages([{
+          type: 'text',
+          text: `【キャンセル・再調整申請】\n${state.displayName}様から予約のキャンセル・再調整申請がありました。\n理由：${reason}`
+        }]);
+      }
+    } catch (e) {
+      console.warn('LINE message skipped:', e);
+    }
+
+    alert('キャンセル・再調整を申請しました。');
+    await fetchMemberData();
+  }
+
+  async function sendConsultMessage() {
+    const ok = confirm('トレーナーに相談希望のメッセージを送りますか？');
+    if (!ok) return;
+
+    try {
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        await liff.sendMessages([{
+          type: 'text',
+          text: `【相談希望】\n${state.displayName}様がトレーナーへの相談を希望しています。`
+        }]);
+        alert('相談希望を送信しました。');
+        liff.closeWindow();
+        return;
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+
+    alert('LINEトークから「相談希望」と送ってください。');
+  }
+
+  async function requestContinuation() {
+    const ok = confirm('回数追加・継続相談の希望を送りますか？');
+    if (!ok) return;
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update({
+        member_status: '継続提案',
+        follow_status: '要連絡',
+        next_follow_date: todayString()
+      })
+      .eq('line_user_id', state.userId);
+
+    if (error) {
+      alert('送信に失敗しました: ' + error.message);
+      return;
+    }
+
+    try {
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        await liff.sendMessages([{
+          type: 'text',
+          text: `【回数追加・継続相談】\n${state.displayName}様が回数追加・継続相談を希望しています。`
+        }]);
+        alert('継続相談の希望を送信しました。');
+        liff.closeWindow();
+        return;
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+
+    alert('継続相談の希望を登録しました。');
+    await fetchMemberData();
+  }
+
+  function showNotice(text) {
+    const el = document.getElementById('notice');
+    el.textContent = text;
+    el.classList.remove('hidden');
+  }
+
+  function todayString() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  function formatDateOnly(value) {
+    if (!value) return '';
+    const [y, m, d] = String(value).split('-').map(Number);
+    if (!y || !m || !d) return String(value);
+    const dt = new Date(y, m - 1, d);
+    const w = ['日', '月', '火', '水', '木', '金', '土'][dt.getDay()];
+    return `${m}/${d}(${w})`;
   }
 
   function formatDateTime(value) {
     if (!value) return '';
+
     const text = String(value).replace('T', ' ');
     const [date, timeRaw] = text.split(' ');
+
     if (!date) return text;
+
     const [y, m, d] = date.split('-').map(Number);
     if (!y || !m || !d) return text;
+
     const dt = new Date(y, m - 1, d);
     const w = ['日', '月', '火', '水', '木', '金', '土'][dt.getDay()];
     const time = timeRaw ? timeRaw.slice(0, 5) : '';
+
     return `${m}/${d}(${w}) ${time}`;
   }
 
   function closeLiff() {
     try {
-      if (typeof liff !== 'undefined' && liff.isInClient()) liff.closeWindow();
-      else location.href = 'index.html';
+      if (typeof liff !== 'undefined' && liff.isInClient()) {
+        liff.closeWindow();
+      } else {
+        location.href = 'index.html';
+      }
     } catch (e) {
       location.href = 'index.html';
     }
   }
 </script>
+
 </body>
 </html>
