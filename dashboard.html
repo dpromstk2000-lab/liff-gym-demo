@@ -7,43 +7,110 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
-    .card-bg { background: linear-gradient(180deg, rgba(31,41,55,.98), rgba(17,24,39,.98)); }
-    .fade-in { animation: fadeIn .2s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    }
+    .card-bg {
+      background: linear-gradient(180deg, rgba(31,41,55,.98), rgba(17,24,39,.98));
+    }
+    .fade-in {
+      animation: fadeIn .18s ease-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    textarea {
+      resize: vertical;
+    }
   </style>
 </head>
+
 <body class="bg-gray-950 text-white min-h-screen">
+
   <header class="sticky top-0 z-30 bg-black/90 backdrop-blur border-b border-yellow-500/30">
     <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DPRO GYM</p>
         <h1 class="text-2xl font-black mt-1">オーナーダッシュボード</h1>
-        <p class="text-xs text-gray-400 mt-1">予約・会員・回数管理をLINEと連携</p>
+        <p class="text-xs text-gray-400 mt-1">予約・会員・回数・フォロー管理</p>
       </div>
-      <div class="flex gap-2">
-        <a href="index.html" target="_blank" class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition">予約画面を確認</a>
-        <button onclick="fetchReservations()" class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10">🔄 最新情報を取得</button>
+
+      <div class="flex flex-col sm:flex-row gap-2">
+        <a
+          href="index.html"
+          target="_blank"
+          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
+        >
+          予約画面を確認
+        </a>
+        <a
+          href="member.html"
+          target="_blank"
+          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
+        >
+          マイページ確認
+        </a>
+        <button
+          onclick="fetchReservations()"
+          class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
+        >
+          🔄 最新情報を取得
+        </button>
       </div>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6">
-    <section class="grid grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4">
-      <div class="card-bg border border-gray-800 rounded-3xl p-4"><p class="text-xs text-gray-400 font-bold">本日の予約</p><p id="metricToday" class="text-3xl font-black text-yellow-400 mt-2">-</p></div>
-      <div class="card-bg border border-gray-800 rounded-3xl p-4"><p class="text-xs text-gray-400 font-bold">承認待ち</p><p id="metricPending" class="text-3xl font-black text-yellow-400 mt-2">-</p></div>
-      <div class="card-bg border border-gray-800 rounded-3xl p-4"><p class="text-xs text-gray-400 font-bold">選択日の予約</p><p id="metricSelected" class="text-3xl font-black text-yellow-400 mt-2">-</p></div>
-      <div class="card-bg border border-gray-800 rounded-3xl p-4"><p class="text-xs text-gray-400 font-bold">残り1回以下</p><p id="metricLowCount" class="text-3xl font-black text-yellow-400 mt-2">-</p></div>
-      <div class="card-bg border border-gray-800 rounded-3xl p-4 col-span-2 lg:col-span-1"><p class="text-xs text-gray-400 font-bold">総会員・予約者</p><p id="metricTotal" class="text-3xl font-black text-yellow-400 mt-2">-</p></div>
+
+    <!-- メトリクス -->
+    <section class="grid grid-cols-2 lg:grid-cols-6 gap-3 md:gap-4">
+      <div class="card-bg border border-gray-800 rounded-3xl p-4">
+        <p class="text-xs text-gray-400 font-bold">本日の予約</p>
+        <p id="metricToday" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      </div>
+
+      <div class="card-bg border border-gray-800 rounded-3xl p-4">
+        <p class="text-xs text-gray-400 font-bold">承認待ち</p>
+        <p id="metricPending" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      </div>
+
+      <div class="card-bg border border-gray-800 rounded-3xl p-4">
+        <p class="text-xs text-gray-400 font-bold">選択日の予約</p>
+        <p id="metricSelected" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      </div>
+
+      <div class="card-bg border border-gray-800 rounded-3xl p-4">
+        <p class="text-xs text-gray-400 font-bold">残り1回以下</p>
+        <p id="metricLowCount" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      </div>
+
+      <div class="card-bg border border-gray-800 rounded-3xl p-4">
+        <p class="text-xs text-gray-400 font-bold">フォロー予定</p>
+        <p id="metricFollow" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      </div>
+
+      <div class="card-bg border border-gray-800 rounded-3xl p-4">
+        <p class="text-xs text-gray-400 font-bold">総会員・予約者</p>
+        <p id="metricTotal" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      </div>
     </section>
 
+    <!-- 操作パネル -->
     <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5 space-y-4">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
-          <button onclick="changeDate(-1)" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap">◀ 前日</button>
-          <button onclick="setToday()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm whitespace-nowrap">今日</button>
-          <button onclick="changeDate(1)" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap">翌日 ▶</button>
+          <button onclick="changeDate(-1)" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap">
+            ◀ 前日
+          </button>
+          <button onclick="setToday()" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm whitespace-nowrap">
+            今日
+          </button>
+          <button onclick="changeDate(1)" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap">
+            翌日 ▶
+          </button>
         </div>
+
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
           <div id="dateDisplay" class="text-xl font-black text-yellow-400">-</div>
           <label class="inline-flex items-center gap-2 bg-gray-900 border border-gray-800 px-3 py-2 rounded-2xl text-sm text-gray-300">
@@ -56,18 +123,29 @@
       <div class="grid lg:grid-cols-[1fr_auto] gap-4">
         <div class="relative">
           <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">🔍</span>
-          <input id="searchInput" type="text" oninput="applyFilters()" placeholder="会員名・目的・悩みで検索" class="w-full bg-gray-950 border border-gray-800 rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-yellow-500 placeholder-gray-600">
+          <input
+            id="searchInput"
+            type="text"
+            oninput="applyFilters()"
+            placeholder="会員名・目的・悩み・メモで検索"
+            class="w-full bg-gray-950 border border-gray-800 rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-yellow-500 placeholder-gray-600"
+          >
         </div>
+
         <div class="flex bg-gray-950 border border-gray-800 p-1 rounded-2xl overflow-x-auto">
-          <button onclick="filterStatus('all')" id="tab-all" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-yellow-500 text-black">すべて</button>
-          <button onclick="filterStatus('pending')" id="tab-pending" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">承認待ち</button>
-          <button onclick="filterStatus('confirmed')" id="tab-confirmed" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">確定</button>
-          <button onclick="filterStatus('cancelled')" id="tab-cancelled" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">再調整</button>
-          <button onclick="filterStatus('low')" id="tab-low" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">残り少</button>
+          <button onclick="filterMode('all')" id="tab-all" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-yellow-500 text-black">すべて</button>
+          <button onclick="filterMode('pending')" id="tab-pending" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">承認待ち</button>
+          <button onclick="filterMode('confirmed')" id="tab-confirmed" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">確定</button>
+          <button onclick="filterMode('cancelled')" id="tab-cancelled" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">再調整</button>
+          <button onclick="filterMode('low')" id="tab-low" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">残り少</button>
+          <button onclick="filterMode('follow')" id="tab-follow" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">フォロー</button>
+          <button onclick="filterMode('trial')" id="tab-trial" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">体験</button>
+          <button onclick="filterMode('member')" id="tab-member" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">入会済</button>
         </div>
       </div>
     </section>
 
+    <!-- 今日の対応 -->
     <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5">
       <div class="flex items-center justify-between gap-4 mb-4">
         <div>
@@ -78,11 +156,13 @@
       <div id="todoList" class="grid md:grid-cols-2 lg:grid-cols-4 gap-3"></div>
     </section>
 
+    <!-- 一覧 -->
     <section>
       <div id="dataContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <div class="col-span-full text-center py-16 text-gray-500">読み込み中...</div>
       </div>
     </section>
+
   </main>
 
 <script>
@@ -91,7 +171,7 @@
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   let allReservations = [];
-  let currentStatusFilter = 'all';
+  let currentFilter = 'all';
   let targetDate = new Date();
   let showAllDates = false;
 
@@ -107,6 +187,16 @@
     return `${y}-${m}-${d}`;
   }
 
+  function todayString() {
+    return localDateString(new Date());
+  }
+
+  function tomorrowString() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return localDateString(d);
+  }
+
   function updateDateDisplay() {
     const y = targetDate.getFullYear();
     const m = String(targetDate.getMonth() + 1).padStart(2, '0');
@@ -118,20 +208,24 @@
   function changeDate(days) {
     targetDate.setDate(targetDate.getDate() + days);
     updateDateDisplay();
+
     if (showAllDates) {
       showAllDates = false;
       document.getElementById('showAllDates').checked = false;
     }
+
     applyFilters();
   }
 
   function setToday() {
     targetDate = new Date();
     updateDateDisplay();
+
     if (showAllDates) {
       showAllDates = false;
       document.getElementById('showAllDates').checked = false;
     }
+
     applyFilters();
   }
 
@@ -140,14 +234,16 @@
     applyFilters();
   }
 
-  function filterStatus(status) {
-    currentStatusFilter = status;
-    ['all', 'pending', 'confirmed', 'cancelled', 'low'].forEach(t => {
+  function filterMode(mode) {
+    currentFilter = mode;
+
+    ['all', 'pending', 'confirmed', 'cancelled', 'low', 'follow', 'trial', 'member'].forEach(t => {
       const btn = document.getElementById(`tab-${t}`);
-      btn.className = t === status
+      btn.className = t === mode
         ? 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-yellow-500 text-black'
         : 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400 hover:text-white';
     });
+
     applyFilters();
   }
 
@@ -161,7 +257,11 @@
       .order('created_at', { ascending: false });
 
     if (error) {
-      container.innerHTML = `<div class="col-span-full bg-red-500/10 border border-red-500/40 text-red-200 p-5 rounded-3xl text-center">エラー: ${escapeHtml(error.message)}</div>`;
+      container.innerHTML = `
+        <div class="col-span-full bg-red-500/10 border border-red-500/40 text-red-200 p-5 rounded-3xl text-center">
+          エラー: ${escapeHtml(error.message)}
+        </div>
+      `;
       return;
     }
 
@@ -171,19 +271,42 @@
 
   function applyFilters() {
     const query = document.getElementById('searchInput').value.toLowerCase().trim();
-    const dateStr = localDateString(targetDate);
+    const selectedDate = localDateString(targetDate);
 
     const filtered = allReservations.filter(row => {
-      const status = row.reservation_status || 'pending';
+      const reservationStatus = row.reservation_status || 'pending';
+      const memberStatus = row.member_status || '体験予約';
+      const followStatus = row.follow_status || '未対応';
       const count = Number(row.remaining_count || 0);
-      const searchable = [row.display_name, row.purpose, row.target_goal, row.status, row.preferred_datetime].join(' ').toLowerCase();
+
+      const searchable = [
+        row.display_name,
+        row.purpose,
+        row.target_goal,
+        row.status,
+        row.owner_memo,
+        row.cancel_reason,
+        row.preferred_datetime,
+        memberStatus,
+        followStatus
+      ].join(' ').toLowerCase();
+
       if (query && !searchable.includes(query)) return false;
-      if (currentStatusFilter === 'low' && count > 1) return false;
-      if (!['all', 'low'].includes(currentStatusFilter) && status !== currentStatusFilter) return false;
+
       if (!showAllDates) {
         const pref = row.preferred_datetime || '';
-        if (!pref.includes(dateStr)) return false;
+        if (!pref.includes(selectedDate)) return false;
       }
+
+      if (currentFilter === 'all') return true;
+      if (currentFilter === 'pending') return reservationStatus === 'pending';
+      if (currentFilter === 'confirmed') return reservationStatus === 'confirmed';
+      if (currentFilter === 'cancelled') return reservationStatus === 'cancelled';
+      if (currentFilter === 'low') return count <= 1;
+      if (currentFilter === 'follow') return followStatus !== '完了' && (followStatus !== '未対応' || !!row.next_follow_date || count <= 1);
+      if (currentFilter === 'trial') return memberStatus === '体験予約';
+      if (currentFilter === 'member') return memberStatus === '入会済';
+
       return true;
     });
 
@@ -193,132 +316,447 @@
   }
 
   function renderMetrics() {
-    const todayStr = localDateString(new Date());
-    const selectedStr = localDateString(targetDate);
-    const todayCount = allReservations.filter(r => (r.preferred_datetime || '').includes(todayStr)).length;
-    const selectedCount = allReservations.filter(r => (r.preferred_datetime || '').includes(selectedStr)).length;
+    const today = todayString();
+    const selectedDate = localDateString(targetDate);
+
+    const todayCount = allReservations.filter(r => (r.preferred_datetime || '').includes(today)).length;
+    const selectedCount = allReservations.filter(r => (r.preferred_datetime || '').includes(selectedDate)).length;
     const pendingCount = allReservations.filter(r => (r.reservation_status || 'pending') === 'pending').length;
     const lowCount = allReservations.filter(r => Number(r.remaining_count || 0) <= 1).length;
+    const followCount = allReservations.filter(r => {
+      const follow = r.follow_status || '未対応';
+      const count = Number(r.remaining_count || 0);
+      return follow !== '完了' && (follow !== '未対応' || !!r.next_follow_date || count <= 1);
+    }).length;
 
     document.getElementById('metricToday').textContent = todayCount;
     document.getElementById('metricPending').textContent = pendingCount;
     document.getElementById('metricSelected').textContent = selectedCount;
     document.getElementById('metricLowCount').textContent = lowCount;
+    document.getElementById('metricFollow').textContent = followCount;
     document.getElementById('metricTotal').textContent = allReservations.length;
   }
 
   function renderTodo() {
-    const todayStr = localDateString(new Date());
+    const today = todayString();
+
     const pending = allReservations.filter(r => (r.reservation_status || 'pending') === 'pending');
-    const today = allReservations.filter(r => (r.preferred_datetime || '').includes(todayStr));
+    const todayVisits = allReservations.filter(r => (r.preferred_datetime || '').includes(today));
     const low = allReservations.filter(r => Number(r.remaining_count || 0) <= 1);
     const cancelled = allReservations.filter(r => (r.reservation_status || 'pending') === 'cancelled');
 
+    const followDue = allReservations.filter(r => {
+      const follow = r.follow_status || '未対応';
+      if (follow === '完了') return false;
+      if (!r.next_follow_date) return false;
+      return r.next_follow_date <= today;
+    });
+
     const items = [
-      { icon: '✅', title: '承認待ち', count: pending.length, text: '予約可否を確認' },
-      { icon: '📅', title: '本日来店', count: today.length, text: '来店準備・QR確認' },
-      { icon: '💬', title: '再調整', count: cancelled.length, text: '別日程を案内' },
-      { icon: '🔁', title: '継続提案', count: low.length, text: '残り回数が少ない会員' }
+      {
+        icon: '✅',
+        title: '承認待ち',
+        count: pending.length,
+        text: '予約可否を確認',
+        filter: 'pending'
+      },
+      {
+        icon: '📅',
+        title: '本日来店',
+        count: todayVisits.length,
+        text: '来店準備・回数確認',
+        filter: 'all'
+      },
+      {
+        icon: '🔁',
+        title: '継続提案',
+        count: low.length,
+        text: '残り回数が少ない会員',
+        filter: 'low'
+      },
+      {
+        icon: '💬',
+        title: 'フォロー予定',
+        count: followDue.length,
+        text: '今日までに連絡予定',
+        filter: 'follow'
+      }
     ];
 
-    document.getElementById('todoSummary').textContent = `承認待ち ${pending.length}件・本日来店 ${today.length}件・継続提案 ${low.length}件`;
+    document.getElementById('todoSummary').textContent =
+      `承認待ち ${pending.length}件・本日来店 ${todayVisits.length}件・継続提案 ${low.length}件・フォロー予定 ${followDue.length}件`;
+
     document.getElementById('todoList').innerHTML = items.map(item => `
-      <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-        <div class="flex items-center justify-between"><span class="text-2xl">${item.icon}</span><span class="text-2xl font-black text-yellow-400">${item.count}</span></div>
+      <button onclick="filterMode('${item.filter}')" class="text-left bg-gray-950 hover:bg-gray-900 border border-gray-800 hover:border-yellow-500/50 rounded-2xl p-4 transition">
+        <div class="flex items-center justify-between">
+          <span class="text-2xl">${item.icon}</span>
+          <span class="text-2xl font-black text-yellow-400">${item.count}</span>
+        </div>
         <p class="font-black mt-3">${item.title}</p>
         <p class="text-xs text-gray-500 mt-1">${item.text}</p>
-      </div>
+      </button>
     `).join('');
   }
 
   function renderCards(rows) {
     const container = document.getElementById('dataContainer');
+
     if (!rows.length) {
-      container.innerHTML = '<div class="col-span-full text-center py-16 text-gray-500 border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/30">📭 条件に一致する予約・会員データはありません。</div>';
+      container.innerHTML = `
+        <div class="col-span-full text-center py-16 text-gray-500 border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/30">
+          📭 条件に一致する予約・会員データはありません。
+        </div>
+      `;
       return;
     }
 
-    container.innerHTML = rows.map(row => {
-      const id = escapeHtml(row.id);
-      const name = escapeHtml(row.display_name || 'ゲスト様');
-      const status = row.reservation_status || 'pending';
-      const count = Number(row.remaining_count || 0);
-      const badge = statusBadge(status);
-      const nextAction = getNextAction(row);
-      const date = escapeHtml(formatDateTime(row.preferred_datetime) || '未設定');
-      const purpose = escapeHtml(row.purpose || '-');
-      const goal = escapeHtml(row.target_goal || '-');
-      const concern = escapeHtml(row.status || '-');
-      const rawName = String(row.display_name || 'ゲスト様').replace(/'/g, "\\'");
-
-      return `
-        <article class="card-bg border border-gray-800 hover:border-yellow-500/40 rounded-3xl p-5 fade-in transition flex flex-col gap-4">
-          <div class="flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <h3 class="text-xl font-black text-yellow-400 truncate">${name}</h3>
-              <p class="text-xs text-gray-500 mt-1">${nextAction}</p>
-            </div>
-            ${badge}
-          </div>
-
-          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3 text-sm">
-            <div class="flex gap-3"><span class="text-gray-500 w-16 shrink-0">日時</span><strong class="text-white">${date}</strong></div>
-            <div class="flex gap-3"><span class="text-gray-500 w-16 shrink-0">目的</span><span>${purpose}</span></div>
-            <div class="flex gap-3"><span class="text-gray-500 w-16 shrink-0">目標</span><span>${goal}</span></div>
-            <div class="flex gap-3"><span class="text-gray-500 w-16 shrink-0">悩み</span><span>${concern}</span></div>
-          </div>
-
-          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center justify-between">
-            <div>
-              <p class="text-xs text-gray-500 font-bold">残り回数</p>
-              <p class="text-3xl font-black ${count <= 1 ? 'text-red-400' : 'text-yellow-400'}">${count}<span class="text-sm text-gray-500 ml-1">回</span></p>
-            </div>
-            <div class="flex gap-2">
-              <button onclick="updateCount('${id}', ${count}, -1)" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl font-black">-1</button>
-              <button onclick="updateCount('${id}', ${count}, 1)" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl font-black">+1</button>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="updateStatus('${id}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-sm font-black">OK 承認</button>
-            <button onclick="updateStatus('${id}', 'cancelled')" class="bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-sm font-black">NO 再調整</button>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="copyName('${rawName}')" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300">名前をコピー</button>
-            <a href="https://manager.line.biz/" target="_blank" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300 text-center">LINE管理画面</a>
-          </div>
-        </article>
-      `;
-    }).join('');
+    container.innerHTML = rows.map(row => buildCard(row)).join('');
   }
 
-  function statusBadge(status) {
-    if (status === 'confirmed') return '<span class="bg-green-500 text-black text-xs font-black px-3 py-1 rounded-full shrink-0">確定</span>';
-    if (status === 'cancelled') return '<span class="bg-red-500 text-white text-xs font-black px-3 py-1 rounded-full shrink-0">再調整</span>';
+  function buildCard(row) {
+    const id = String(row.id);
+    const sid = safeId(id);
+
+    const name = row.display_name || 'ゲスト様';
+    const reservationStatus = row.reservation_status || 'pending';
+    const memberStatus = row.member_status || '体験予約';
+    const followStatus = row.follow_status || '未対応';
+    const count = Number(row.remaining_count || 0);
+    const visitCount = Number(row.visit_count || 0);
+
+    const nextAction = getNextAction(row);
+    const date = formatDateTime(row.preferred_datetime) || '未設定';
+    const purpose = row.purpose || '-';
+    const goal = row.target_goal || '-';
+    const concern = row.status || '-';
+    const ownerMemo = row.owner_memo || '';
+    const cancelReason = row.cancel_reason || '';
+    const lastVisit = row.last_visit_date || '-';
+    const nextFollow = row.next_follow_date || '';
+
+    const cardBorder = count <= 0
+      ? 'border-red-500/70'
+      : count === 1
+        ? 'border-yellow-500/60'
+        : 'border-gray-800';
+
+    return `
+      <article class="card-bg border ${cardBorder} hover:border-yellow-500/50 rounded-3xl p-5 fade-in transition flex flex-col gap-4">
+
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <h3 class="text-xl font-black text-yellow-400 truncate">${escapeHtml(name)}</h3>
+              ${memberStatusBadge(memberStatus)}
+            </div>
+            <p class="text-xs text-gray-500 mt-1">${escapeHtml(nextAction)}</p>
+          </div>
+          ${reservationStatusBadge(reservationStatus)}
+        </div>
+
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3 text-sm">
+          <div class="flex gap-3">
+            <span class="text-gray-500 w-20 shrink-0">日時</span>
+            <strong class="text-white">${escapeHtml(date)}</strong>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-gray-500 w-20 shrink-0">目的</span>
+            <span>${escapeHtml(purpose)}</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-gray-500 w-20 shrink-0">目標</span>
+            <span>${escapeHtml(goal)}</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-gray-500 w-20 shrink-0">悩み</span>
+            <span>${escapeHtml(concern)}</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-gray-500 w-20 shrink-0">最終来店</span>
+            <span>${escapeHtml(lastVisit)}</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="text-gray-500 w-20 shrink-0">来店回数</span>
+            <span>${visitCount}回</span>
+          </div>
+        </div>
+
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <p class="text-xs text-gray-500 font-bold">残り回数</p>
+            <p class="text-3xl font-black ${count <= 0 ? 'text-red-400' : count === 1 ? 'text-yellow-400' : 'text-yellow-400'}">
+              ${count}<span class="text-sm text-gray-500 ml-1">回</span>
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="updateCount('${escapeAttr(id)}', ${count}, -1)" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-xl font-black">-1</button>
+            <button onclick="updateCount('${escapeAttr(id)}', ${count}, 1)" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl font-black">+1</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-sm font-black">
+            OK 承認
+          </button>
+          <button onclick="markVisited('${escapeAttr(id)}', ${count}, ${visitCount})" class="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-sm font-black">
+            来店済み
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="updateStatus('${escapeAttr(id)}', 'cancelled')" class="bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-sm font-black">
+            再調整
+          </button>
+          <button onclick="copyName('${escapeAttr(name)}')" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300">
+            名前をコピー
+          </button>
+        </div>
+
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-gray-500 font-bold mb-1">会員ステータス</label>
+              <select id="member-${sid}" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
+                ${optionHtml(['体験予約', '入会済', '継続提案', '休眠', '退会'], memberStatus)}
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs text-gray-500 font-bold mb-1">フォロー状態</label>
+              <select id="follow-${sid}" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
+                ${optionHtml(['未対応', '要連絡', 'フォロー中', '完了'], followStatus)}
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 font-bold mb-1">次回フォロー日</label>
+            <input id="next-follow-${sid}" type="date" value="${escapeHtml(nextFollow)}" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 font-bold mb-1">オーナーメモ</label>
+            <textarea id="memo-${sid}" rows="3" placeholder="接客内容・注意点・次回提案など" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">${escapeHtml(ownerMemo)}</textarea>
+          </div>
+
+          <button onclick="saveManagement('${escapeAttr(id)}', '${sid}')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-sm font-black">
+            管理情報を保存
+          </button>
+        </div>
+
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3">
+          <label class="block text-xs text-gray-500 font-bold">キャンセル・再調整理由</label>
+          <textarea id="cancel-${sid}" rows="2" placeholder="例：都合が合わない、別日希望など" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-red-500">${escapeHtml(cancelReason)}</textarea>
+          <button onclick="saveCancelReason('${escapeAttr(id)}', '${sid}')" class="w-full bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-sm font-black">
+            理由を保存して再調整にする
+          </button>
+        </div>
+
+        <a
+          href="https://manager.line.biz/"
+          target="_blank"
+          class="block text-center bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300"
+        >
+          LINE管理画面を開く
+        </a>
+
+      </article>
+    `;
+  }
+
+  function reservationStatusBadge(status) {
+    if (status === 'confirmed') {
+      return '<span class="bg-green-500 text-black text-xs font-black px-3 py-1 rounded-full shrink-0">確定</span>';
+    }
+    if (status === 'cancelled') {
+      return '<span class="bg-red-500 text-white text-xs font-black px-3 py-1 rounded-full shrink-0">再調整</span>';
+    }
     return '<span class="bg-yellow-500 text-black text-xs font-black px-3 py-1 rounded-full shrink-0">承認待ち</span>';
   }
 
+  function memberStatusBadge(status) {
+    if (status === '入会済') {
+      return '<span class="bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">入会済</span>';
+    }
+    if (status === '継続提案') {
+      return '<span class="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">継続提案</span>';
+    }
+    if (status === '休眠') {
+      return '<span class="bg-gray-600/30 text-gray-300 border border-gray-600 text-[10px] font-black px-2 py-1 rounded-full shrink-0">休眠</span>';
+    }
+    if (status === '退会') {
+      return '<span class="bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">退会</span>';
+    }
+    return '<span class="bg-green-500/20 text-green-300 border border-green-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">体験</span>';
+  }
+
   function getNextAction(row) {
-    const status = row.reservation_status || 'pending';
+    const reservationStatus = row.reservation_status || 'pending';
+    const memberStatus = row.member_status || '体験予約';
+    const followStatus = row.follow_status || '未対応';
     const count = Number(row.remaining_count || 0);
-    if (count <= 0) return '次にすること：継続・回数券の提案';
-    if (count === 1) return '次にすること：次回更新の声かけ';
-    if (status === 'pending') return '次にすること：予約を承認する';
-    if (status === 'confirmed') return '次にすること：来店準備';
-    if (status === 'cancelled') return '次にすること：別日程を案内';
+    const today = todayString();
+
+    if (row.next_follow_date && row.next_follow_date <= today && followStatus !== '完了') {
+      return '次にすること：本日フォロー連絡';
+    }
+
+    if (count <= 0) {
+      return '次にすること：継続・回数券の提案';
+    }
+
+    if (count === 1) {
+      return '次にすること：次回更新の声かけ';
+    }
+
+    if (reservationStatus === 'pending') {
+      return '次にすること：予約を承認する';
+    }
+
+    if (reservationStatus === 'confirmed') {
+      return '次にすること：来店準備';
+    }
+
+    if (reservationStatus === 'cancelled') {
+      return '次にすること：別日程を案内';
+    }
+
+    if (memberStatus === '休眠') {
+      return '次にすること：再来店フォロー';
+    }
+
     return '次にすること：状況確認';
   }
 
+  function optionHtml(options, selected) {
+    return options.map(opt => {
+      const isSelected = opt === selected ? 'selected' : '';
+      return `<option value="${escapeHtml(opt)}" ${isSelected}>${escapeHtml(opt)}</option>`;
+    }).join('');
+  }
+
   async function updateStatus(id, newStatus) {
-    const { error } = await sbClient.from('gym_profiles').update({ reservation_status: newStatus }).eq('id', id);
+    const updateData = {
+      reservation_status: newStatus
+    };
+
+    if (newStatus === 'confirmed') {
+      updateData.follow_status = '未対応';
+    }
+
+    if (newStatus === 'cancelled') {
+      updateData.follow_status = '要連絡';
+      updateData.next_follow_date = todayString();
+    }
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update(updateData)
+      .eq('id', id);
+
     if (error) return alert('ステータス更新失敗: ' + error.message);
+
     fetchReservations();
   }
 
   async function updateCount(id, currentCount, delta) {
     const newCount = Math.max(0, Number(currentCount || 0) + delta);
-    const { error } = await sbClient.from('gym_profiles').update({ remaining_count: newCount }).eq('id', id);
+
+    const updateData = {
+      remaining_count: newCount
+    };
+
+    if (newCount <= 0) {
+      updateData.member_status = '継続提案';
+      updateData.follow_status = '要連絡';
+      updateData.next_follow_date = todayString();
+    } else if (newCount === 1) {
+      updateData.follow_status = '要連絡';
+      updateData.next_follow_date = tomorrowString();
+    }
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update(updateData)
+      .eq('id', id);
+
     if (error) return alert('回数更新失敗: ' + error.message);
+
+    fetchReservations();
+  }
+
+  async function markVisited(id, currentCount, currentVisitCount) {
+    const ok = confirm('来店済みにしますか？\n残り回数を1回減らし、来店回数を1回増やします。');
+    if (!ok) return;
+
+    const newCount = Math.max(0, Number(currentCount || 0) - 1);
+    const newVisitCount = Number(currentVisitCount || 0) + 1;
+
+    const updateData = {
+      last_visit_date: todayString(),
+      visit_count: newVisitCount,
+      remaining_count: newCount,
+      reservation_status: 'confirmed'
+    };
+
+    if (newCount <= 0) {
+      updateData.member_status = '継続提案';
+      updateData.follow_status = '要連絡';
+      updateData.next_follow_date = todayString();
+    } else if (newCount === 1) {
+      updateData.follow_status = '要連絡';
+      updateData.next_follow_date = tomorrowString();
+    }
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update(updateData)
+      .eq('id', id);
+
+    if (error) return alert('来店処理に失敗しました: ' + error.message);
+
+    fetchReservations();
+  }
+
+  async function saveManagement(id, sid) {
+    const memberStatus = document.getElementById(`member-${sid}`).value;
+    const followStatus = document.getElementById(`follow-${sid}`).value;
+    const nextFollowDate = document.getElementById(`next-follow-${sid}`).value || null;
+    const memo = document.getElementById(`memo-${sid}`).value.trim();
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update({
+        member_status: memberStatus,
+        follow_status: followStatus,
+        next_follow_date: nextFollowDate,
+        owner_memo: memo
+      })
+      .eq('id', id);
+
+    if (error) return alert('管理情報の保存に失敗しました: ' + error.message);
+
+    alert('管理情報を保存しました');
+    fetchReservations();
+  }
+
+  async function saveCancelReason(id, sid) {
+    const reason = document.getElementById(`cancel-${sid}`).value.trim();
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update({
+        reservation_status: 'cancelled',
+        cancel_reason: reason,
+        cancel_requested_at: new Date().toISOString(),
+        follow_status: '要連絡',
+        next_follow_date: todayString()
+      })
+      .eq('id', id);
+
+    if (error) return alert('キャンセル理由の保存に失敗しました: ' + error.message);
+
+    alert('再調整として保存しました');
     fetchReservations();
   }
 
@@ -333,22 +771,40 @@
 
   function formatDateTime(value) {
     if (!value) return '';
+
     const text = String(value).replace('T', ' ');
     const [date, timeRaw] = text.split(' ');
+
     if (!date) return text;
+
     const [y, m, d] = date.split('-').map(Number);
     if (!y || !m || !d) return text;
+
     const dt = new Date(y, m - 1, d);
     const w = ['日', '月', '火', '水', '木', '金', '土'][dt.getDay()];
     const time = timeRaw ? timeRaw.slice(0, 5) : '';
+
     return `${m}/${d}(${w}) ${time}`;
+  }
+
+  function safeId(value) {
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
   }
 
   function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>'"]/g, char => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
     }[char]));
   }
+
+  function escapeAttr(value) {
+    return String(value ?? '').replace(/[\\'"]/g, '\\$&');
+  }
 </script>
+
 </body>
 </html>
