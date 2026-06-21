@@ -66,6 +66,13 @@
         </a>
 
         <button
+          onclick="openGymSettingsModal()"
+          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
+        >
+          休み・営業時間設定
+        </button>
+
+        <button
           onclick="resetGymDemoData()"
           class="bg-red-500 hover:bg-red-400 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-red-500/10"
         >
@@ -158,6 +165,68 @@
         <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
           <p class="font-black text-yellow-400">対応履歴</p>
           <p class="text-gray-500 text-xs mt-2 leading-relaxed">LINE案内文のコピー履歴を初期化して見やすく再生成</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 休み・営業時間設定 -->
+    <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5 space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">GYM SETTINGS</p>
+          <h2 class="text-lg font-black mt-1">休み・営業時間設定</h2>
+          <p id="gymSettingsSummary" class="text-sm text-gray-400 mt-2 leading-relaxed">
+            設定を読み込み中...
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+          <button
+            onclick="openGymSettingsModal()"
+            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
+          >
+            休み・営業時間を変更
+          </button>
+
+          <button
+            onclick="loadGymSettings(true)"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-5 py-3 rounded-2xl text-sm transition"
+          >
+            設定を再読み込み
+          </button>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-4 gap-3 text-sm">
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+          <p class="text-xs text-gray-500 font-bold">営業時間</p>
+          <p id="gymSettingsHours" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        </div>
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+          <p class="text-xs text-gray-500 font-bold">予約枠</p>
+          <p id="gymSettingsSlot" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        </div>
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+          <p class="text-xs text-gray-500 font-bold">定休日</p>
+          <p id="gymSettingsHolidays" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        </div>
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+          <p class="text-xs text-gray-500 font-bold">予約可能期間</p>
+          <p id="gymSettingsMaxDays" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-3">
+          <div>
+            <p class="text-xs text-gray-500 font-bold">臨時休業日</p>
+            <div id="gymSettingsClosedDates" class="mt-2 flex flex-wrap gap-2 text-sm text-gray-300">
+              -
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 leading-relaxed max-w-md">
+            ここで設定した休み・営業時間は、予約画面 index.html の日付/時間選択に反映されます。
+          </p>
         </div>
       </div>
     </section>
@@ -281,6 +350,159 @@
 
   </main>
 
+  <!-- 休み・営業時間設定モーダル -->
+  <div id="gymSettingsModal" class="hidden fixed inset-0 z-50 modal-backdrop p-4 overflow-y-auto">
+    <div class="max-w-3xl mx-auto my-8 card-bg border border-yellow-500/40 rounded-3xl shadow-2xl fade-in">
+      <div class="p-5 border-b border-gray-800 flex items-start justify-between gap-4">
+        <div>
+          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">GYM SETTINGS</p>
+          <h2 class="text-xl font-black mt-1">休み・営業時間設定</h2>
+          <p class="text-sm text-gray-400 mt-2">予約画面で選べる日付・時間に反映されます。</p>
+        </div>
+
+        <button
+          onclick="closeGymSettingsModal()"
+          class="bg-gray-900 hover:bg-gray-800 border border-gray-800 w-10 h-10 rounded-2xl font-black text-gray-400"
+        >
+          ×
+        </button>
+      </div>
+
+      <div class="p-5 space-y-5">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 font-bold mb-2">店舗名</label>
+            <input
+              id="settingShopName"
+              type="text"
+              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+              placeholder="DPRO GYM"
+            >
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 font-bold mb-2">予約可能期間</label>
+            <select
+              id="settingMaxReservationDays"
+              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+            >
+              <option value="30">30日先まで</option>
+              <option value="45">45日先まで</option>
+              <option value="60">60日先まで（約2か月）</option>
+              <option value="90">90日先まで</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs text-gray-500 font-bold mb-2">営業開始</label>
+            <select
+              id="settingOpenTime"
+              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+            ></select>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 font-bold mb-2">営業終了</label>
+            <select
+              id="settingCloseTime"
+              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+            ></select>
+          </div>
+
+          <div>
+            <label class="block text-xs text-gray-500 font-bold mb-2">予約枠</label>
+            <select
+              id="settingSlotMinutes"
+              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+            >
+              <option value="15">15分枠</option>
+              <option value="30">30分枠</option>
+              <option value="45">45分枠</option>
+              <option value="60">60分枠</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="bg-gray-950 border border-gray-800 rounded-3xl p-4">
+          <p class="text-xs text-gray-500 font-bold mb-3">曜日定休日</p>
+          <div id="settingHolidayCheckboxes" class="grid grid-cols-4 sm:grid-cols-7 gap-2">
+            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="0" class="accent-yellow-500 mr-1">日</label>
+            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="1" class="accent-yellow-500 mr-1">月</label>
+            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="2" class="accent-yellow-500 mr-1">火</label>
+            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="3" class="accent-yellow-500 mr-1">水</label>
+            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="4" class="accent-yellow-500 mr-1">木</label>
+            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="5" class="accent-yellow-500 mr-1">金</label>
+            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="6" class="accent-yellow-500 mr-1">土</label>
+          </div>
+        </div>
+
+        <div class="bg-gray-950 border border-gray-800 rounded-3xl p-4 space-y-4">
+          <div>
+            <p class="text-xs text-gray-500 font-bold">臨時休業日</p>
+            <p class="text-xs text-gray-500 mt-1">年末年始、研修、臨時休などを追加できます。</p>
+          </div>
+
+          <div class="grid sm:grid-cols-[1fr_auto] gap-2">
+            <input
+              id="settingClosedDateInput"
+              type="date"
+              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+            >
+            <button
+              onclick="addGymClosedDate()"
+              class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-5 py-3 rounded-2xl text-sm"
+            >
+              追加
+            </button>
+          </div>
+
+          <div id="settingClosedDatesList" class="flex flex-wrap gap-2"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs text-gray-500 font-bold mb-2">予約画面に表示するメモ</label>
+          <textarea
+            id="settingNotice"
+            rows="3"
+            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm leading-relaxed focus:outline-none focus:border-yellow-500"
+            placeholder="例：日曜定休。臨時休業日はオーナー画面から変更できます。"
+          ></textarea>
+        </div>
+
+        <div id="gymSettingsModalMessage" class="hidden bg-yellow-500/10 border border-yellow-500/30 text-yellow-100 rounded-2xl p-3 text-sm leading-relaxed"></div>
+
+        <div class="grid sm:grid-cols-3 gap-2">
+          <button
+            onclick="saveGymSettings()"
+            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm"
+          >
+            保存する
+          </button>
+
+          <button
+            onclick="loadGymSettings(true)"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm"
+          >
+            再読み込み
+          </button>
+
+          <button
+            onclick="closeGymSettingsModal()"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm"
+          >
+            閉じる
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-500 leading-relaxed">
+          ※ この設定は gym_settings テーブルだけを更新します。他業種のテーブルや予約データには触りません。
+        </p>
+      </div>
+    </div>
+  </div>
+
   <!-- 通知作成モーダル -->
   <div id="notificationModal" class="hidden fixed inset-0 z-50 modal-backdrop p-4 overflow-y-auto">
     <div class="max-w-2xl mx-auto my-8 card-bg border border-yellow-500/40 rounded-3xl shadow-2xl fade-in">
@@ -393,8 +615,24 @@
   let showAllDates = false;
   let currentNotification = null;
 
+  let gymSettings = {
+    id: 1,
+    shop_name: 'DPRO GYM',
+    open_time: '10:00',
+    close_time: '19:00',
+    slot_minutes: 30,
+    holidays: [0],
+    closed_dates: [],
+    max_reservation_days: 60,
+    notice: '日曜定休。臨時休業日はオーナー画面から変更できます。'
+  };
+  let editingClosedDates = [];
+
+
   window.addEventListener('load', async () => {
+    fillGymSettingTimeSelects();
     updateDateDisplay();
+    await loadGymSettings(false);
     await fetchReservations();
     await fetchInteractionHistory();
   });
@@ -465,6 +703,277 @@
     });
 
     applyFilters();
+  }
+
+  function fillGymSettingTimeSelects() {
+    const openSelect = document.getElementById('settingOpenTime');
+    const closeSelect = document.getElementById('settingCloseTime');
+    if (!openSelect || !closeSelect) return;
+
+    let options = '';
+    for (let h = 0; h < 24; h++) {
+      for (const m of ['00', '30']) {
+        const value = `${String(h).padStart(2, '0')}:${m}`;
+        options += `<option value="${value}">${value}</option>`;
+      }
+    }
+
+    openSelect.innerHTML = options;
+    closeSelect.innerHTML = options;
+  }
+
+  function normalizeGymSettings(row) {
+    const fallback = {
+      id: 1,
+      shop_name: 'DPRO GYM',
+      open_time: '10:00',
+      close_time: '19:00',
+      slot_minutes: 30,
+      holidays: [0],
+      closed_dates: [],
+      max_reservation_days: 60,
+      notice: '日曜定休。臨時休業日はオーナー画面から変更できます。'
+    };
+
+    const source = row || {};
+    return {
+      id: 1,
+      shop_name: source.shop_name || fallback.shop_name,
+      open_time: normalizeTimeValue(source.open_time || fallback.open_time),
+      close_time: normalizeTimeValue(source.close_time || fallback.close_time),
+      slot_minutes: Number(source.slot_minutes || fallback.slot_minutes),
+      holidays: normalizeNumberArray(source.holidays, fallback.holidays),
+      closed_dates: normalizeTextDateArray(source.closed_dates),
+      max_reservation_days: Number(source.max_reservation_days || fallback.max_reservation_days),
+      notice: source.notice || fallback.notice
+    };
+  }
+
+  function normalizeTimeValue(value) {
+    const text = String(value || '').slice(0, 5);
+    return /^\d{2}:\d{2}$/.test(text) ? text : '10:00';
+  }
+
+  function normalizeNumberArray(value, fallback = []) {
+    if (!Array.isArray(value)) return [...fallback];
+    return [...new Set(value.map(v => Number(v)).filter(v => Number.isInteger(v) && v >= 0 && v <= 6))].sort((a, b) => a - b);
+  }
+
+  function normalizeTextDateArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) {
+      return [...new Set(value.map(v => String(v || '').trim()).filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v)))].sort();
+    }
+    if (typeof value === 'string') {
+      return [...new Set(value.split(',').map(v => v.trim()).filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v)))].sort();
+    }
+    return [];
+  }
+
+  function timeToMinutes(value) {
+    const [h, m] = normalizeTimeValue(value).split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function weekdayLabel(value) {
+    const labels = ['日', '月', '火', '水', '木', '金', '土'];
+    return labels[Number(value)] ?? '-';
+  }
+
+  function formatDateLabel(value) {
+    if (!value) return '-';
+    const [y, m, d] = String(value).split('-').map(Number);
+    if (!y || !m || !d) return String(value);
+    const dt = new Date(y, m - 1, d);
+    const w = ['日', '月', '火', '水', '木', '金', '土'][dt.getDay()];
+    return `${m}/${d}(${w})`;
+  }
+
+  async function loadGymSettings(showAlert = false) {
+    const summary = document.getElementById('gymSettingsSummary');
+    if (summary) summary.textContent = '休み・営業時間設定を読み込み中...';
+
+    const { data, error } = await sbClient
+      .from('gym_settings')
+      .select('*')
+      .eq('id', 1)
+      .maybeSingle();
+
+    if (error) {
+      console.error(error);
+      if (summary) {
+        summary.textContent = 'gym_settings を取得できません。STEP GYM-1-4 SQL が未実行の可能性があります。';
+      }
+      if (showAlert) alert('休み・営業時間設定を取得できません。\n' + error.message);
+      renderGymSettingsSummary();
+      return;
+    }
+
+    gymSettings = normalizeGymSettings(data);
+    editingClosedDates = [...gymSettings.closed_dates];
+    renderGymSettingsSummary();
+    syncGymSettingsModal();
+
+    if (showAlert) alert('休み・営業時間設定を再読み込みしました。');
+  }
+
+  function renderGymSettingsSummary() {
+    const holidaysText = gymSettings.holidays.length
+      ? gymSettings.holidays.map(weekdayLabel).join('・')
+      : 'なし';
+
+    const closedDatesText = gymSettings.closed_dates.length
+      ? gymSettings.closed_dates.map(date => `
+          <span class="inline-flex items-center rounded-full bg-gray-900 border border-gray-800 px-3 py-1 text-xs font-bold text-gray-200">
+            ${escapeHtml(formatDateLabel(date))}
+          </span>
+        `).join('')
+      : '<span class="text-gray-500 text-sm">臨時休業日はありません。</span>';
+
+    const summary = document.getElementById('gymSettingsSummary');
+    if (summary) {
+      summary.textContent = `${gymSettings.shop_name} / ${gymSettings.open_time}〜${gymSettings.close_time} / ${gymSettings.slot_minutes}分枠 / 定休日：${holidaysText} / 予約可能：${gymSettings.max_reservation_days}日先まで`;
+    }
+
+    const hours = document.getElementById('gymSettingsHours');
+    if (hours) hours.textContent = `${gymSettings.open_time}〜${gymSettings.close_time}`;
+
+    const slot = document.getElementById('gymSettingsSlot');
+    if (slot) slot.textContent = `${gymSettings.slot_minutes}分`;
+
+    const holidays = document.getElementById('gymSettingsHolidays');
+    if (holidays) holidays.textContent = holidaysText;
+
+    const maxDays = document.getElementById('gymSettingsMaxDays');
+    if (maxDays) maxDays.textContent = `${gymSettings.max_reservation_days}日先まで`;
+
+    const closedDates = document.getElementById('gymSettingsClosedDates');
+    if (closedDates) closedDates.innerHTML = closedDatesText;
+  }
+
+  function openGymSettingsModal() {
+    editingClosedDates = [...gymSettings.closed_dates];
+    syncGymSettingsModal();
+    document.getElementById('gymSettingsModal').classList.remove('hidden');
+  }
+
+  function closeGymSettingsModal() {
+    document.getElementById('gymSettingsModal').classList.add('hidden');
+  }
+
+  function syncGymSettingsModal() {
+    const shopName = document.getElementById('settingShopName');
+    const openTime = document.getElementById('settingOpenTime');
+    const closeTime = document.getElementById('settingCloseTime');
+    const slot = document.getElementById('settingSlotMinutes');
+    const maxDays = document.getElementById('settingMaxReservationDays');
+    const notice = document.getElementById('settingNotice');
+
+    if (shopName) shopName.value = gymSettings.shop_name || 'DPRO GYM';
+    if (openTime) openTime.value = gymSettings.open_time || '10:00';
+    if (closeTime) closeTime.value = gymSettings.close_time || '19:00';
+    if (slot) slot.value = String(gymSettings.slot_minutes || 30);
+    if (maxDays) maxDays.value = String(gymSettings.max_reservation_days || 60);
+    if (notice) notice.value = gymSettings.notice || '';
+
+    document.querySelectorAll('#settingHolidayCheckboxes input[type="checkbox"]').forEach(input => {
+      input.checked = gymSettings.holidays.includes(Number(input.value));
+    });
+
+    renderEditingClosedDates();
+    showGymSettingsModalMessage('', false);
+  }
+
+  function renderEditingClosedDates() {
+    const wrap = document.getElementById('settingClosedDatesList');
+    if (!wrap) return;
+
+    if (!editingClosedDates.length) {
+      wrap.innerHTML = '<span class="text-sm text-gray-500">臨時休業日はまだありません。</span>';
+      return;
+    }
+
+    wrap.innerHTML = editingClosedDates.map(date => `
+      <span class="inline-flex items-center gap-2 rounded-full bg-gray-900 border border-gray-800 px-3 py-2 text-sm font-bold text-gray-200">
+        ${escapeHtml(formatDateLabel(date))}
+        <button onclick="removeGymClosedDate('${escapeAttr(date)}')" class="text-gray-500 hover:text-red-400">×</button>
+      </span>
+    `).join('');
+  }
+
+  function addGymClosedDate() {
+    const input = document.getElementById('settingClosedDateInput');
+    const value = input.value;
+    if (!value) {
+      alert('臨時休業日を選択してください。');
+      return;
+    }
+    if (editingClosedDates.includes(value)) {
+      alert('その日付はすでに追加されています。');
+      return;
+    }
+    editingClosedDates.push(value);
+    editingClosedDates = [...new Set(editingClosedDates)].sort();
+    input.value = '';
+    renderEditingClosedDates();
+  }
+
+  function removeGymClosedDate(date) {
+    editingClosedDates = editingClosedDates.filter(item => item !== date);
+    renderEditingClosedDates();
+  }
+
+  function showGymSettingsModalMessage(text, visible = true) {
+    const box = document.getElementById('gymSettingsModalMessage');
+    if (!box) return;
+    if (!visible || !text) {
+      box.classList.add('hidden');
+      box.textContent = '';
+      return;
+    }
+    box.classList.remove('hidden');
+    box.textContent = text;
+  }
+
+  async function saveGymSettings() {
+    const payload = {
+      id: 1,
+      shop_name: document.getElementById('settingShopName').value.trim() || 'DPRO GYM',
+      open_time: document.getElementById('settingOpenTime').value,
+      close_time: document.getElementById('settingCloseTime').value,
+      slot_minutes: Number(document.getElementById('settingSlotMinutes').value || 30),
+      holidays: Array.from(document.querySelectorAll('#settingHolidayCheckboxes input[type="checkbox"]:checked')).map(input => Number(input.value)),
+      closed_dates: [...new Set(editingClosedDates)].sort(),
+      max_reservation_days: Number(document.getElementById('settingMaxReservationDays').value || 60),
+      notice: document.getElementById('settingNotice').value.trim()
+    };
+
+    if (timeToMinutes(payload.open_time) >= timeToMinutes(payload.close_time)) {
+      alert('営業開始時間は営業終了時間より前にしてください。');
+      return;
+    }
+
+    showGymSettingsModalMessage('保存中...', true);
+
+    const { data, error } = await sbClient
+      .from('gym_settings')
+      .upsert(payload, { onConflict: 'id' })
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error(error);
+      showGymSettingsModalMessage('保存に失敗しました。' + error.message, true);
+      alert('保存に失敗しました。\n' + error.message);
+      return;
+    }
+
+    gymSettings = normalizeGymSettings(data || payload);
+    editingClosedDates = [...gymSettings.closed_dates];
+    renderGymSettingsSummary();
+    syncGymSettingsModal();
+    showGymSettingsModalMessage('保存しました。予約画面に反映されます。', true);
+    alert('休み・営業時間設定を保存しました。');
   }
 
   async function fetchReservations() {
@@ -1507,6 +2016,7 @@ ${dateText}
         message.textContent = `DEMO準備完了：予約/会員 ${r.profiles ?? '-'}件・対応履歴 ${r.notification_logs ?? '-'}件を今日基準で再生成しました。`;
       }
 
+      await loadGymSettings(false);
       await fetchReservations();
       await fetchInteractionHistory();
 
