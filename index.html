@@ -80,7 +80,7 @@
           <div>
             <label for="customerNameInput" class="text-sm font-black text-yellow-400">お名前</label>
             <p id="nameHelpText" class="text-xs text-gray-500 mt-1 leading-relaxed">
-              LINE名を取得できる場合は自動入力されます。営業DEMOでは、ここに入力した名前がマイページに表示されます。
+              LINE名を取得できる場合は最初だけ自動入力されます。ここで変更した名前を予約名・マイページ名として優先します。
             </p>
           </div>
           <input
@@ -431,7 +431,7 @@
   // PC / iPad / LINE外ブラウザで確認する時も、demo-user ではなく
   // 岩口さんのLINEユーザーIDを使って、スマホLINE内と同じ会員データを見ます。
   const PC_DEMO_LINE_USER_ID = 'U09f3a54d1f41575fe6f6968e7b17a075';
-  const PC_DEMO_DISPLAY_NAME = '体験 山田';
+  const PC_DEMO_DISPLAY_NAME = '岩口さん';
 
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -519,6 +519,8 @@
     return [
       'デモ太郎',
       'デモユーザー',
+      '体験山田',
+      '体験やまだ',
       'demouser',
       'demo',
       'guest'
@@ -526,7 +528,11 @@
   }
 
   function getCustomerName() {
-    return cleanName(state.customerName) || cleanName(state.displayName) || 'ゲスト様';
+    // 最重要：お客様が入力欄で変更した名前を最優先します。
+    // LINEプロフィール名は初期値としてだけ使い、送信時・マイページ遷移時は入力欄の値を優先します。
+    const input = document.getElementById('customerNameInput');
+    const inputName = cleanName(input ? input.value : '');
+    return inputName || cleanName(state.customerName) || cleanName(state.displayName) || 'ゲスト様';
   }
 
   function syncNameInput() {
@@ -546,6 +552,8 @@
   function handleNameInput() {
     const input = document.getElementById('customerNameInput');
     state.customerName = cleanName(input ? input.value : '');
+    // 名前変更後の「マイページを見る」リンクにも、入力名を即反映します。
+    updateMemberLinks();
   }
 
   function validateCustomerName() {
@@ -564,15 +572,20 @@
   }
 
   async function syncProfileDisplayNameIfNeeded(data) {
+    // LINEプロフィール名で display_name を上書きしないための安全処理。
+    // ここでは「DB名が空、かつ入力欄の名前も空」の時だけLINE名を補完します。
+    // 予約フォームで入力した名前がある場合は必ずそちらを優先します。
     if (!data || !data.id) return;
     if (!state.userId || state.userId === 'demo-user') return;
     if (data.line_user_id !== state.userId) return;
 
+    const typedName = cleanName(document.getElementById('customerNameInput')?.value || '');
     const dbName = cleanName(data.display_name);
     const lineName = cleanName(state.lineDisplayName || state.displayName);
 
-    if (!lineName || isDemoLikeName(lineName)) return;
+    if (typedName && !isDemoLikeName(typedName)) return;
     if (dbName && !isDemoLikeName(dbName)) return;
+    if (!lineName || isDemoLikeName(lineName)) return;
 
     const { error } = await sbClient
       .from('gym_profiles')
@@ -628,6 +641,11 @@
       state.customerName = dbName;
     } else if (state.userId !== 'demo-user' && cleanName(state.lineDisplayName)) {
       state.customerName = cleanName(state.lineDisplayName);
+      await syncProfileDisplayNameIfNeeded(profile);
+    } else if (isDemoLikeName(dbName) && normalizeLineUserId(state.userId) === PC_DEMO_LINE_USER_ID) {
+      // PC / iPad確認では、過去の「体験 山田」「デモ太郎」などを残さず、
+      // 岩口さんのGYM用LINE IDの確認名に自動補正します。
+      state.customerName = PC_DEMO_DISPLAY_NAME;
       await syncProfileDisplayNameIfNeeded(profile);
     } else if (dbName) {
       state.customerName = dbName;
@@ -1156,6 +1174,7 @@
 
     const fullDate = `${state.selectedDate} ${state.selectedTime}`;
     const customerName = getCustomerName();
+    state.customerName = customerName;
 
     const basePayload = {
       display_name: customerName,
