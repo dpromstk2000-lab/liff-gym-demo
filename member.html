@@ -310,7 +310,8 @@
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const state = {
-    displayName: 'デモユーザー',
+    displayName: '体験 山田',
+    lineDisplayName: '',
     userId: 'demo-user',
     memberData: null,
     isLineClient: false,
@@ -332,12 +333,14 @@
 
       if (liff.isLoggedIn()) {
         const profile = await liff.getProfile();
-        state.displayName = profile.displayName || 'ゲスト様';
+        const lineName = cleanName(profile.displayName || '');
+        state.lineDisplayName = lineName;
+        state.displayName = lineName || 'ゲスト様';
         state.userId = profile.userId || 'demo-user';
       }
 
       if (!liff.isInClient()) {
-        showNotice('LINEアプリ外で表示中のため、デモユーザーとして動作します。LINE内ではお名前を自動取得します。');
+        showNotice('LINEアプリ外で表示中のため、デモ用の会員情報を表示します。LINE内ではLINE名を自動取得します。');
       }
 
     } catch (e) {
@@ -364,6 +367,10 @@
       return;
     }
 
+    if (data) {
+      await syncProfileDisplayNameIfNeeded(data);
+    }
+
     state.memberData = data || null;
 
     hideLoading();
@@ -374,6 +381,53 @@
     }
 
     renderMember(state.memberData);
+  }
+
+  function cleanName(value) {
+    return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function isDemoLikeName(value) {
+    const text = cleanName(value).replace(/\s/g, '').toLowerCase();
+    return [
+      'デモ太郎',
+      'デモユーザー',
+      'demouser',
+      'demo',
+      'guest'
+    ].includes(text);
+  }
+
+  function getDisplayName(data = state.memberData) {
+    const dbName = cleanName(data && data.display_name);
+    const lineName = cleanName(state.lineDisplayName || state.displayName);
+
+    if (state.userId !== 'demo-user' && isDemoLikeName(dbName) && lineName && !isDemoLikeName(lineName)) {
+      return lineName;
+    }
+
+    return dbName || lineName || 'ゲスト様';
+  }
+
+  async function syncProfileDisplayNameIfNeeded(data) {
+    if (!data || !data.id) return;
+    if (!state.userId || state.userId === 'demo-user') return;
+    if (data.line_user_id !== state.userId) return;
+
+    const dbName = cleanName(data.display_name);
+    const lineName = cleanName(state.lineDisplayName || state.displayName);
+
+    if (!lineName || isDemoLikeName(lineName)) return;
+    if (dbName && !isDemoLikeName(dbName)) return;
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update({ display_name: lineName })
+      .eq('id', data.id);
+
+    if (!error) {
+      data.display_name = lineName;
+    }
   }
 
   function showLoading() {
@@ -397,7 +451,7 @@
     document.getElementById('emptyBox').classList.add('hidden');
     document.getElementById('memberBox').classList.remove('hidden');
 
-    const name = data.display_name || state.displayName || 'ゲスト様';
+    const name = getDisplayName(data);
     const reservationStatus = data.reservation_status || 'pending';
     const memberStatus = data.member_status || '体験予約';
     const remaining = Number(data.remaining_count || 0);
@@ -600,7 +654,7 @@
 
     const message =
 `【キャンセル・再調整申請】
-${state.displayName}様から再調整申請がありました。
+${getDisplayName()}様から再調整申請がありました。
 
 現在の予約：
 ${formatDateTime(state.memberData.preferred_datetime) || '未設定'}
@@ -655,7 +709,7 @@ ${reason}
 
     const message =
 `【相談希望】
-${state.displayName}様から相談希望がありました。
+${getDisplayName()}様から相談希望がありました。
 
 現在の予約：
 ${formatDateTime(state.memberData.preferred_datetime) || '未設定'}
@@ -692,7 +746,7 @@ ${text}`;
 
     const message =
 `【回数追加・継続相談】
-${state.displayName}様から回数追加・継続相談の希望がありました。
+${getDisplayName()}様から回数追加・継続相談の希望がありました。
 
 現在の残り回数：
 ${Number(state.memberData.remaining_count || 0)}回
