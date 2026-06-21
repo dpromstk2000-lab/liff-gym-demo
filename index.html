@@ -248,6 +248,10 @@
           前回のアンケート回答を使用します。今回は日時を選ぶだけで予約変更できます。
         </div>
 
+        <div id="businessInfoBox" class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-xs text-gray-300 leading-relaxed">
+          営業時間・定休日・臨時休業日を読み込み中です。
+        </div>
+
         <div>
           <div class="flex items-center justify-between mb-2">
             <p class="text-sm font-bold text-gray-300">日付</p>
@@ -406,16 +410,23 @@
     reservedSlots: new Set()
   };
 
-  const timeSlots = [];
-  for (let h = 10; h < 19; h++) {
-    timeSlots.push(`${String(h).padStart(2, '0')}:00`);
-    timeSlots.push(`${String(h).padStart(2, '0')}:30`);
-  }
-  timeSlots.push('19:00');
+  let gymSettings = {
+    shop_name: 'DPRO GYM',
+    open_time: '10:00',
+    close_time: '19:00',
+    slot_minutes: 30,
+    holidays: [0],
+    closed_dates: [],
+    max_reservation_days: 60,
+    notice: ''
+  };
+
+  let timeSlots = [];
 
   window.addEventListener('load', init);
 
   async function init() {
+    await loadGymSettings();
     buildDateButtons();
 
     try {
@@ -616,6 +627,159 @@
     return `${y}-${m}-${d}`;
   }
 
+  function pad2(value) {
+    return String(value).padStart(2, '0');
+  }
+
+  function normalizeTime(value, fallback = '10:00') {
+    const text = String(value || '').slice(0, 5);
+    return /^\d{2}:\d{2}$/.test(text) ? text : fallback;
+  }
+
+  function timeToMinutes(time) {
+    const [h, m] = normalizeTime(time).split(':').map(Number);
+    return h * 60 + m;
+  }
+
+  function normalizeNumberArray(value) {
+    if (!Array.isArray(value)) return [];
+    return [...new Set(
+      value
+        .map(v => Number(v))
+        .filter(v => Number.isInteger(v) && v >= 0 && v <= 6)
+    )].sort((a, b) => a - b);
+  }
+
+  function normalizeClosedDates(value) {
+    if (!value) return [];
+
+    if (Array.isArray(value)) {
+      return [...new Set(
+        value
+          .map(v => String(v || '').trim())
+          .filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v))
+      )].sort();
+    }
+
+    if (typeof value === 'string') {
+      return [...new Set(
+        value
+          .split(',')
+          .map(v => v.trim())
+          .filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v))
+      )].sort();
+    }
+
+    return [];
+  }
+
+  function normalizeGymSettings(data = {}) {
+    const openTime = normalizeTime(data.open_time, '10:00');
+    const closeTime = normalizeTime(data.close_time, '19:00');
+    const slotMinutes = Number(data.slot_minutes || 30);
+    const maxDays = Number(data.max_reservation_days || 60);
+
+    return {
+      shop_name: data.shop_name || 'DPRO GYM',
+      open_time: timeToMinutes(openTime) < timeToMinutes(closeTime) ? openTime : '10:00',
+      close_time: timeToMinutes(openTime) < timeToMinutes(closeTime) ? closeTime : '19:00',
+      slot_minutes: [15, 30, 45, 60].includes(slotMinutes) ? slotMinutes : 30,
+      holidays: normalizeNumberArray(data.holidays || [0]),
+      closed_dates: normalizeClosedDates(data.closed_dates || []),
+      max_reservation_days: Number.isInteger(maxDays) && maxDays >= 7 && maxDays <= 180 ? maxDays : 60,
+      notice: data.notice || ''
+    };
+  }
+
+  async function loadGymSettings() {
+    try {
+      const { data, error } = await sbClient
+        .from('gym_settings')
+        .select('*')
+        .eq('id', 1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        gymSettings = normalizeGymSettings(data);
+      } else {
+        gymSettings = normalizeGymSettings(gymSettings);
+      }
+    } catch (error) {
+      console.warn('gym_settings load skipped:', error);
+      showNotice('営業時間・休業日設定の取得に失敗したため、標準設定（日曜定休 / 10:00〜19:00 / 2か月先まで）で表示します。');
+      gymSettings = normalizeGymSettings(gymSettings);
+    }
+
+    generateTimeSlots();
+    renderBusinessInfo();
+  }
+
+  function generateTimeSlots() {
+    const open = timeToMinutes(gymSettings.open_time);
+    const close = timeToMinutes(gymSettings.close_time);
+    const step = Number(gymSettings.slot_minutes || 30);
+    const slots = [];
+
+    for (let minutes = open; minutes <= close; minutes += step) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      slots.push(`${pad2(h)}:${pad2(m)}`);
+    }
+
+    timeSlots = slots.length ? slots : ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00'];
+  }
+
+  function formatHolidayNames() {
+    const names = ['日', '月', '火', '水', '木', '金', '土'];
+    const holidays = normalizeNumberArray(gymSettings.holidays);
+    return holidays.length ? holidays.map(day => `${names[day]}曜`).join('・') : 'なし';
+  }
+
+  function formatClosedDateNames() {
+    const dates = normalizeClosedDates(gymSettings.closed_dates);
+    if (!dates.length) return 'なし';
+    const first = dates.slice(0, 4).map(displayDate).join('・');
+    return dates.length > 4 ? `${first} ほか${dates.length - 4}日` : first;
+  }
+
+  function renderBusinessInfo() {
+    const box = document.getElementById('businessInfoBox');
+    if (!box) return;
+
+    box.innerHTML = `
+      <p class="font-bold text-gray-200 mb-1">予約可能日について</p>
+      <p>営業時間：${gymSettings.open_time}〜${gymSettings.close_time} / ${gymSettings.slot_minutes}分枠</p>
+      <p>定休日：${formatHolidayNames()} / 臨時休業：${formatClosedDateNames()}</p>
+      <p>予約可能期間：本日から${gymSettings.max_reservation_days}日先まで</p>
+    `;
+  }
+
+  function getDateStatus(dateStr, offset) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    const day = dt.getDay();
+
+    if (offset < 0) {
+      return { selectable: false, label: '過去日', reason: '過去日' };
+    }
+
+    if (offset >= gymSettings.max_reservation_days) {
+      return { selectable: false, label: '期間外', reason: '期間外' };
+    }
+
+    if ((gymSettings.closed_dates || []).includes(dateStr)) {
+      return { selectable: false, label: '臨時休業', reason: '臨時休業' };
+    }
+
+    if ((gymSettings.holidays || []).includes(day)) {
+      return { selectable: false, label: '定休日', reason: '定休日' };
+    }
+
+    return { selectable: true, label: '受付中', reason: '' };
+  }
+
   function displayDate(dateStr) {
     const [y, m, d] = dateStr.split('-').map(Number);
     const dt = new Date(y, m - 1, d);
@@ -630,11 +794,12 @@
     wrap.innerHTML = '';
 
     const today = new Date();
+    const maxDays = Number(gymSettings.max_reservation_days || 60);
 
-    for (let i = 0; i < 14; i++) {
+    for (let i = 0; i < maxDays; i++) {
       const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
       const dateStr = localDateString(d);
-      const day = d.getDay();
+      const status = getDateStatus(dateStr, i);
 
       let label = displayDate(dateStr);
       if (i === 0) label = '今日';
@@ -643,27 +808,37 @@
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.dataset.date = dateStr;
+      btn.disabled = !status.selectable;
 
-      const isSunday = day === 0;
-
-      btn.className = isSunday
-        ? 'date-btn bg-gray-900 border border-gray-800 text-gray-600 rounded-2xl py-3 px-2 text-sm font-black cursor-not-allowed'
-        : 'date-btn bg-gray-900 border border-gray-800 hover:border-yellow-500/60 rounded-2xl py-3 px-2 text-sm font-black transition';
-
-      btn.disabled = isSunday;
+      btn.className = status.selectable
+        ? 'date-btn bg-gray-900 border border-gray-800 hover:border-yellow-500/60 rounded-2xl py-3 px-2 text-sm font-black transition'
+        : 'date-btn bg-gray-900 border border-gray-800 text-gray-600 rounded-2xl py-3 px-2 text-sm font-black cursor-not-allowed';
 
       btn.innerHTML = `
-        <span class="block ${isSunday ? 'text-gray-600' : 'text-yellow-400'} text-xs">${label}</span>
+        <span class="block ${status.selectable ? 'text-yellow-400' : 'text-gray-600'} text-xs">${label}</span>
         <span class="block text-gray-500 text-[11px] mt-1">${dateStr}</span>
-        <span class="block text-[10px] mt-1 ${isSunday ? 'text-gray-600' : 'text-gray-500'}">${isSunday ? '定休日' : '受付中'}</span>
+        <span class="block text-[10px] mt-1 ${status.selectable ? 'text-gray-500' : 'text-gray-600'}">${status.label}</span>
       `;
 
-      btn.onclick = () => selectDate(dateStr);
+      if (status.selectable) {
+        btn.onclick = () => selectDate(dateStr);
+      }
+
       wrap.appendChild(btn);
     }
   }
 
   async function selectDate(dateStr) {
+    const today = new Date();
+    const diffMs = new Date(`${dateStr}T00:00:00`).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const offset = Math.round(diffMs / 86400000);
+    const status = getDateStatus(dateStr, offset);
+
+    if (!status.selectable) {
+      alert(`${status.label}のため、この日は予約できません。`);
+      return;
+    }
+
     state.selectedDate = dateStr;
     state.selectedTime = '';
 
@@ -791,6 +966,17 @@
 
     if (!state.purpose || !state.goal || !state.concern || !state.selectedDate || !state.selectedTime) {
       alert('未入力の項目があります。');
+      return;
+    }
+
+    const todayForSubmit = new Date();
+    const diffMs = new Date(`${state.selectedDate}T00:00:00`).getTime() - new Date(todayForSubmit.getFullYear(), todayForSubmit.getMonth(), todayForSubmit.getDate()).getTime();
+    const offsetForSubmit = Math.round(diffMs / 86400000);
+    const dateStatus = getDateStatus(state.selectedDate, offsetForSubmit);
+
+    if (!dateStatus.selectable) {
+      alert(`${dateStatus.label}のため、この日は予約できません。別の日を選択してください。`);
+      goStep(4);
       return;
     }
 
