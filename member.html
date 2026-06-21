@@ -310,7 +310,7 @@
   // PC / iPad / LINE外ブラウザで確認する時も、demo-user ではなく
   // 岩口さんのLINEユーザーIDを使って、スマホLINE内と同じ会員データを見ます。
   const PC_DEMO_LINE_USER_ID = 'U09f3a54d1f41575fe6f6968e7b17a075';
-  const PC_DEMO_DISPLAY_NAME = '体験 山田';
+  const PC_DEMO_DISPLAY_NAME = '岩口さん';
 
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -456,8 +456,10 @@
     }
 
     if (data && !state.isFallbackDemo) {
-      await syncProfileDisplayNameIfNeeded(data);
+      // 予約フォームで入力した名前を先にDBへ反映します。
+      // その後も、入力名がある場合はLINE名で上書きしないようにしています。
       await syncRequestedDisplayNameIfNeeded(data);
+      await syncProfileDisplayNameIfNeeded(data);
     }
 
     state.memberData = data || null;
@@ -536,6 +538,8 @@
     return [
       'デモ太郎',
       'デモユーザー',
+      '体験山田',
+      '体験やまだ',
       'demouser',
       'demo',
       'guest'
@@ -543,34 +547,33 @@
   }
 
   function getDisplayName(data = state.memberData) {
+    const requestedName = cleanName(state.requestedDisplayName);
     const dbName = cleanName(data && data.display_name);
     const lineName = cleanName(state.lineDisplayName || state.displayName);
-    const requestedName = cleanName(state.requestedDisplayName);
 
-    if (requestedName && !isDemoLikeName(requestedName)) {
-      if (!dbName || isDemoLikeName(dbName) || state.targetProfileId || normalizeLineUserId(state.targetLineUserId) === PC_DEMO_LINE_USER_ID) {
-        return requestedName;
-      }
-    }
-
-    if (!state.isFallbackDemo && normalizeLineUserId(state.userId) && isDemoLikeName(dbName) && lineName && !isDemoLikeName(lineName)) {
-      return lineName;
-    }
-
-    return dbName || requestedName || lineName || 'ゲスト様';
+    // 最重要：予約フォームから渡された入力名を最優先します。
+    // LINEアカウント名は、入力名もDB名も無い場合の補助表示にします。
+    if (requestedName && !isDemoLikeName(requestedName)) return requestedName;
+    if (dbName && !isDemoLikeName(dbName)) return dbName;
+    if (dbName) return dbName;
+    if (lineName && !isDemoLikeName(lineName)) return lineName;
+    return 'ゲスト様';
   }
 
   async function syncProfileDisplayNameIfNeeded(data) {
     try {
       if (!data || !data.id) return;
-      if (!state.userId) return;
-      if (data.line_user_id !== normalizeLineUserId(state.userId)) return;
 
+      const requestedName = cleanName(state.requestedDisplayName);
       const dbName = cleanName(data.display_name);
       const lineName = cleanName(state.lineDisplayName || state.displayName);
 
-      if (!lineName || isDemoLikeName(lineName)) return;
+      // 予約時に入力した名前がある場合、LINE名で上書きしません。
+      if (requestedName && !isDemoLikeName(requestedName)) return;
+      if (!state.userId) return;
+      if (data.line_user_id !== normalizeLineUserId(state.userId)) return;
       if (dbName && !isDemoLikeName(dbName)) return;
+      if (!lineName || isDemoLikeName(lineName)) return;
 
       const { error } = await sbClient
         .from('gym_profiles')
@@ -598,8 +601,8 @@
       const dbName = cleanName(data.display_name);
       if (dbName === requestedName) return;
 
-      // 予約画面から渡された exact profile_id の名前は、マイページ表示でも優先して揃える。
-      if (!state.targetProfileId && dbName && !isDemoLikeName(dbName)) return;
+      // 予約画面から渡された入力名は、LINEアカウント名より優先して保存します。
+      // profile_id が無い場合でも、今表示している最新データへ反映します。
 
       const { error } = await sbClient
         .from('gym_profiles')
