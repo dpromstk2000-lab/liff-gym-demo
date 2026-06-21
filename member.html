@@ -313,6 +313,10 @@
     displayName: '体験 山田',
     lineDisplayName: '',
     userId: 'demo-user',
+    targetProfileId: '',
+    targetLineUserId: '',
+    requestedDisplayName: '',
+    localBridge: null,
     memberData: null,
     isLineClient: false,
     isLiffReady: false,
@@ -321,7 +325,45 @@
 
   window.addEventListener('load', init);
 
+  function readMemberRequest() {
+    const params = new URLSearchParams(window.location.search || '');
+
+    state.targetProfileId = params.get('profile_id') || '';
+    state.targetLineUserId = params.get('uid') || '';
+    state.requestedDisplayName = cleanName(params.get('name') || '');
+
+    try {
+      const raw = localStorage.getItem('dpro_gym_last_profile');
+      const bridge = raw ? JSON.parse(raw) : null;
+      const isFresh = bridge && bridge.saved_at && (Date.now() - Number(bridge.saved_at) < 1000 * 60 * 60 * 24);
+
+      if (isFresh) {
+        state.localBridge = bridge;
+
+        if (!state.targetProfileId && bridge.profile_id) {
+          state.targetProfileId = bridge.profile_id;
+        }
+
+        if (!state.targetLineUserId && bridge.line_user_id) {
+          state.targetLineUserId = bridge.line_user_id;
+        }
+
+        if (!state.requestedDisplayName && bridge.display_name) {
+          state.requestedDisplayName = cleanName(bridge.display_name);
+        }
+      }
+    } catch (e) {
+      console.warn('member request bridge skipped:', e);
+    }
+
+    if (state.requestedDisplayName && !isDemoLikeName(state.requestedDisplayName)) {
+      state.displayName = state.requestedDisplayName;
+    }
+  }
+
   async function init() {
+    readMemberRequest();
+
     try {
       await liff.init({ liffId: MY_LIFF_ID });
       state.isLiffReady = true;
@@ -355,7 +397,14 @@
     let data = null;
 
     try {
-      data = await fetchLatestProfileByLineUserId(state.userId);
+      if (state.targetProfileId) {
+        data = await fetchProfileById(state.targetProfileId);
+      }
+
+      if (!data) {
+        const lookupUserId = state.targetLineUserId || state.userId;
+        data = await fetchLatestProfileByLineUserId(lookupUserId);
+      }
     } catch (error) {
       console.warn('member load failed:', error);
       showNotice('会員情報の取得に失敗しました。デモ用会員情報で再表示します。詳細: ' + (error.message || error));
@@ -377,6 +426,7 @@
 
     if (data && !state.isFallbackDemo) {
       await syncProfileDisplayNameIfNeeded(data);
+      await syncRequestedDisplayNameIfNeeded(data);
     }
 
     state.memberData = data || null;
@@ -389,6 +439,23 @@
     }
 
     renderMember(state.memberData);
+  }
+
+  async function fetchProfileById(profileId) {
+    if (!profileId) return null;
+
+    const response = await sbClient
+      .from('gym_profiles')
+      .select('*')
+      .eq('id', profileId)
+      .limit(1);
+
+    if (response.error) {
+      throw response.error;
+    }
+
+    const rows = Array.isArray(response.data) ? response.data : [];
+    return rows.length ? rows[0] : null;
   }
 
   async function fetchLatestProfileByLineUserId(lineUserId) {
@@ -441,12 +508,19 @@
   function getDisplayName(data = state.memberData) {
     const dbName = cleanName(data && data.display_name);
     const lineName = cleanName(state.lineDisplayName || state.displayName);
+    const requestedName = cleanName(state.requestedDisplayName);
+
+    if (requestedName && !isDemoLikeName(requestedName)) {
+      if (!dbName || isDemoLikeName(dbName) || state.targetProfileId || state.targetLineUserId === 'demo-user') {
+        return requestedName;
+      }
+    }
 
     if (!state.isFallbackDemo && state.userId !== 'demo-user' && isDemoLikeName(dbName) && lineName && !isDemoLikeName(lineName)) {
       return lineName;
     }
 
-    return dbName || lineName || 'ゲスト様';
+    return dbName || requestedName || lineName || 'ゲスト様';
   }
 
   async function syncProfileDisplayNameIfNeeded(data) {
@@ -474,6 +548,35 @@
       data.display_name = lineName;
     } catch (e) {
       console.warn('display_name sync error:', e);
+    }
+  }
+
+  async function syncRequestedDisplayNameIfNeeded(data) {
+    try {
+      if (!data || !data.id) return;
+
+      const requestedName = cleanName(state.requestedDisplayName);
+      if (!requestedName || isDemoLikeName(requestedName)) return;
+
+      const dbName = cleanName(data.display_name);
+      if (dbName === requestedName) return;
+
+      // 予約画面から渡された exact profile_id の名前は、マイページ表示でも優先して揃える。
+      if (!state.targetProfileId && dbName && !isDemoLikeName(dbName)) return;
+
+      const { error } = await sbClient
+        .from('gym_profiles')
+        .update({ display_name: requestedName })
+        .eq('id', data.id);
+
+      if (error) {
+        console.warn('requested display_name sync skipped:', error);
+        return;
+      }
+
+      data.display_name = requestedName;
+    } catch (e) {
+      console.warn('requested display_name sync error:', e);
     }
   }
 
