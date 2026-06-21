@@ -66,6 +66,13 @@
         </a>
 
         <button
+          onclick="resetGymDemoData()"
+          class="bg-red-500 hover:bg-red-400 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-red-500/10"
+        >
+          営業前DEMO準備
+        </button>
+
+        <button
           onclick="fetchReservations()"
           class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
         >
@@ -107,6 +114,51 @@
       <div class="card-bg border border-gray-800 rounded-3xl p-4">
         <p class="text-xs text-gray-400 font-bold">対応履歴</p>
         <p id="metricHistory" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      </div>
+    </section>
+
+    <!-- 営業前DEMO準備 -->
+    <section class="card-bg border border-yellow-500/25 rounded-3xl p-4 md:p-5 space-y-4">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DEMO RESET</p>
+          <h2 class="text-lg font-black mt-1">営業前DEMO準備</h2>
+          <p id="demoResetMessage" class="text-sm text-gray-400 mt-2 leading-relaxed">
+            スマホ・iPad・PCから、今日基準の予約・会員・フォロー・対応履歴を作り直せます。
+          </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+          <button
+            id="demoResetButton"
+            onclick="resetGymDemoData()"
+            class="bg-red-500 hover:bg-red-400 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-red-500/10"
+          >
+            営業前DEMOを準備する
+          </button>
+
+          <button
+            onclick="fetchReservations(); fetchInteractionHistory();"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-5 py-3 rounded-2xl text-sm transition"
+          >
+            表示を更新
+          </button>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-3 text-sm">
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+          <p class="font-black text-yellow-400">予約データ</p>
+          <p class="text-gray-500 text-xs mt-2 leading-relaxed">本日・次営業日・先の日付に、承認待ち/確定/再調整の予約を作成</p>
+        </div>
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+          <p class="font-black text-yellow-400">会員データ</p>
+          <p class="text-gray-500 text-xs mt-2 leading-relaxed">体験予約・入会済・残り回数少・継続提案の見本を作成</p>
+        </div>
+        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+          <p class="font-black text-yellow-400">対応履歴</p>
+          <p class="text-gray-500 text-xs mt-2 leading-relaxed">LINE案内文のコピー履歴を初期化して見やすく再生成</p>
+        </div>
       </div>
     </section>
 
@@ -327,6 +379,7 @@
   const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
   const LINE_MANAGER_URL = 'https://manager.line.biz/';
+  const GYM_DEMO_RESET_WORKER_URL = 'https://dpro-gym-demo-reset.dpromstk2000.workers.dev';
 
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -1401,6 +1454,79 @@ ${dateText}
     if (error) {
       alert('対応履歴の保存に失敗しました: ' + error.message);
       throw error;
+    }
+  }
+
+  async function resetGymDemoData() {
+    const password = prompt('営業前DEMO準備パスワードを入力してください');
+    if (password === null) return;
+
+    const button = document.getElementById('demoResetButton');
+    const message = document.getElementById('demoResetMessage');
+    const oldButtonText = button ? button.textContent : '';
+    const oldMessageText = message ? message.textContent : '';
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = 'DEMO準備中...';
+      button.classList.add('opacity-70', 'cursor-not-allowed');
+    }
+
+    if (message) {
+      message.textContent = '営業前DEMOデータを準備しています。少しお待ちください...';
+    }
+
+    try {
+      const response = await fetch(GYM_DEMO_RESET_WORKER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-gym-demo-reset-secret': password.trim()
+        },
+        body: JSON.stringify({})
+      });
+
+      const text = await response.text();
+      let result = null;
+
+      try {
+        result = text ? JSON.parse(text) : null;
+      } catch (e) {
+        result = { raw: text };
+      }
+
+      if (!response.ok || !result || result.ok === false) {
+        const detail = result?.detail
+          ? JSON.stringify(result.detail, null, 2)
+          : (result?.error || result?.message || text || 'DEMO準備に失敗しました。');
+        throw new Error(detail);
+      }
+
+      if (message) {
+        const r = result.result || {};
+        message.textContent = `DEMO準備完了：予約/会員 ${r.profiles ?? '-'}件・対応履歴 ${r.notification_logs ?? '-'}件を今日基準で再生成しました。`;
+      }
+
+      await fetchReservations();
+      await fetchInteractionHistory();
+
+      alert('営業前DEMOデータを準備しました。');
+    } catch (error) {
+      console.error(error);
+      if (message) {
+        message.textContent = 'DEMO準備に失敗しました。' + (error.message ? ' ' + error.message : '');
+      }
+      alert('DEMO準備に失敗しました。\n' + (error.message || error));
+    } finally {
+      if (button) {
+        button.disabled = false;
+        button.textContent = oldButtonText || '営業前DEMOを準備する';
+        button.classList.remove('opacity-70', 'cursor-not-allowed');
+      }
+
+      if (message && (!message.textContent || message.textContent === '営業前DEMOデータを準備しています。少しお待ちください...')) {
+        message.textContent = oldMessageText || 'スマホ・iPad・PCから、今日基準の予約・会員・フォロー・対応履歴を作り直せます。';
+      }
     }
   }
 
