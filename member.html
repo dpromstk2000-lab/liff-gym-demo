@@ -217,9 +217,15 @@
 
         <!-- 下部操作 -->
         <section class="space-y-3">
-          <button onclick="reloadMemberData()" class="w-full bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 font-bold py-4 rounded-2xl">
-            最新情報に更新
+          <button onclick="reloadMemberData()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 rounded-2xl">
+            最新の予約状況を確認
           </button>
+
+          <button onclick="toggleDebugBox()" class="w-full bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 font-bold py-4 rounded-2xl">
+            表示情報を確認
+          </button>
+
+          <div id="debugBox" class="hidden bg-gray-950 border border-gray-800 rounded-2xl p-4 text-xs text-gray-400 leading-relaxed space-y-1"></div>
 
           <button onclick="closeLiff()" class="w-full bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 font-bold py-4 rounded-2xl">
             LINEトークに戻る
@@ -670,6 +676,8 @@
     const headerBadge = document.getElementById('headerBadge');
     headerBadge.textContent = getHeaderBadgeText(reservationStatus, memberStatus);
     headerBadge.className = getHeaderBadgeClass(reservationStatus, memberStatus);
+
+    renderDebugInfo(data);
   }
 
   function renderReservationStatus(status, preferredDatetime) {
@@ -694,7 +702,7 @@
     if (status === 'confirmed') {
       box.classList.add('border-green-500/50');
       title.textContent = '予約確定';
-      message.textContent = '予約は確定しています。当日は開始時間の5分前を目安にお越しください。';
+      message.textContent = '予約は確定しています。当日は開始時間の5分前を目安にお越しください。オーナー画面で確定すると、この表示に変わります。';
       badge.textContent = '確定';
       badge.className = 'text-xs font-black px-3 py-1 rounded-full bg-green-500 text-black shrink-0';
       reserveButton.textContent = '予約を変更する';
@@ -712,9 +720,9 @@
     }
 
     box.classList.add('border-yellow-500/50');
-    title.textContent = '承認待ち';
-    message.textContent = '希望日時を受け付けました。オーナー確認後、予約確定のご案内があります。';
-    badge.textContent = '承認待ち';
+    title.textContent = 'オーナー確認中';
+    message.textContent = '希望日時を受け付けました。まだ確定ではありません。オーナー確認後、予約確定のご案内があります。下の「最新情報に更新」で状況を確認できます。';
+    badge.textContent = '確認中';
     badge.className = 'text-xs font-black px-3 py-1 rounded-full bg-yellow-500 text-black shrink-0';
     reserveButton.textContent = '希望日時を変更する';
   }
@@ -812,6 +820,28 @@
     }
 
     return 'text-[11px] bg-yellow-500 text-black font-black px-3 py-1 rounded-full';
+  }
+
+  function renderDebugInfo(data) {
+    const el = document.getElementById('debugBox');
+    if (!el || !data) return;
+
+    el.innerHTML = `
+      <div><strong>表示名：</strong>${escapeHtml(getDisplayName(data))}</div>
+      <div><strong>profile_id：</strong>${escapeHtml(data.id || '-')}</div>
+      <div><strong>LINE ID：</strong>${escapeHtml(data.line_user_id || state.userId || '-')}</div>
+      <div><strong>予約ステータス：</strong>${escapeHtml(data.reservation_status || '-')}</div>
+      <div><strong>会員状態：</strong>${escapeHtml(data.member_status || '-')}</div>
+      <div><strong>希望日時：</strong>${escapeHtml(formatDateTime(data.preferred_datetime) || '-')}</div>
+      <div><strong>最終更新：</strong>${escapeHtml(formatDateTime(data.updated_at) || data.updated_at || '-')}</div>
+    `;
+  }
+
+  function toggleDebugBox() {
+    const el = document.getElementById('debugBox');
+    if (!el) return;
+    el.classList.toggle('hidden');
+    if (state.memberData) renderDebugInfo(state.memberData);
   }
 
   function openCancelModal() {
@@ -1028,6 +1058,16 @@ ${state.memberData.target_goal || state.memberData.goal || '未登録'}
     } catch (e) {
       location.href = 'index.html';
     }
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, char => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[char]));
   }
 </script>
 
