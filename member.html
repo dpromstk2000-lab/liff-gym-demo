@@ -330,8 +330,31 @@
 
   window.addEventListener('load', init);
 
+  function buildMergedRequestParams() {
+    const merged = new URLSearchParams(window.location.search || '');
+
+    // LIFF URL（https://liff.line.me/{LIFF_ID}?uid=...）経由では、
+    // 環境によって query が liff.state に入ることがあります。
+    // その場合も profile_id / uid / name を拾えるようにします。
+    const liffState = merged.get('liff.state') || merged.get('liffState') || '';
+    if (liffState) {
+      try {
+        const decoded = decodeURIComponent(liffState);
+        const queryText = decoded.includes('?') ? decoded.slice(decoded.indexOf('?') + 1) : decoded.replace(/^#|^\//, '');
+        const stateParams = new URLSearchParams(queryText);
+        stateParams.forEach((value, key) => {
+          if (!merged.has(key)) merged.set(key, value);
+        });
+      } catch (e) {
+        console.warn('liff.state parse skipped:', e);
+      }
+    }
+
+    return merged;
+  }
+
   function readMemberRequest() {
-    const params = new URLSearchParams(window.location.search || '');
+    const params = buildMergedRequestParams();
 
     state.targetProfileId = params.get('profile_id') || '';
     state.targetLineUserId = normalizeLineUserId(params.get('uid') || '');
