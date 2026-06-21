@@ -79,6 +79,14 @@
           マイページ確認
         </a>
 
+        <a
+          href="owner-ipad.html"
+          target="_blank"
+          class="bg-blue-600 hover:bg-blue-500 text-white font-black px-4 py-3 rounded-2xl text-sm transition text-center shadow-lg shadow-blue-500/10"
+        >
+          iPad用画面
+        </a>
+
         <button
           onclick="openGymSettingsModal()"
           class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
@@ -1440,21 +1448,12 @@
           <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3"><p class="text-gray-500 font-bold">不安</p><p class="font-bold mt-1">${escapeHtml(concern)}</p></div>
         </div>
 
-        ${taskType === 'pending' ? `
-          <div class="grid sm:grid-cols-4 gap-2 mt-4">
-            <button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-xs font-black">予約確定</button>
-            <button onclick="updateStatus('${escapeAttr(id)}', 'cancelled')" class="bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-xs font-black">再調整</button>
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-yellow-300 py-3 rounded-2xl text-xs font-black">体験前文面</button>
-            <button onclick="copyName('${escapeAttr(name)}')" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">名前コピー</button>
-          </div>
-        ` : `
-          <div class="grid sm:grid-cols-4 gap-2 mt-4">
-            <button onclick="openNotificationModal('${escapeAttr(id)}', '${primaryType}')" class="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-xs font-black">LINE文面</button>
-            <button onclick="markOwnerTaskDone('${escapeAttr(id)}')" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 py-3 rounded-2xl text-xs font-black">対応済み</button>
-            <button onclick="setFollowAfterDays('${escapeAttr(id)}', 3)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">3日後</button>
-            <button onclick="setFollowAfterDays('${escapeAttr(id)}', 7)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">7日後</button>
-          </div>
-        `}
+        <div class="grid sm:grid-cols-4 gap-2 mt-4">
+          ${taskType === 'pending' ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-xs font-black">予約確定</button>` : `<button onclick="openNotificationModal('${escapeAttr(id)}', '${primaryType}')" class="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-xs font-black">LINE文面</button>`}
+          <button onclick="markOwnerTaskDone('${escapeAttr(id)}')" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 py-3 rounded-2xl text-xs font-black">対応済み</button>
+          <button onclick="setFollowAfterDays('${escapeAttr(id)}', 3)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">3日後</button>
+          <button onclick="setFollowAfterDays('${escapeAttr(id)}', 7)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">7日後</button>
+        </div>
       </div>
     `;
   }
