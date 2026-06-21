@@ -377,7 +377,10 @@
         <div>
           <h2 class="text-2xl font-black">予約を受け付けました</h2>
           <p class="text-sm text-gray-400 mt-3 leading-relaxed">
-            予約内容をLINEに送信しました。オーナーが確認後、予約確定のご案内をお送りします。
+            予約内容を保存しました。続けてマイページへ移動します。
+          </p>
+          <p id="memberMoveNotice" class="text-xs text-yellow-400 font-bold mt-3">
+            マイページへ移動中...
           </p>
         </div>
 
@@ -397,9 +400,9 @@
           </ul>
         </div>
 
-        <a href="member.html" class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl">
+        <button onclick="goMemberPage()" class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl">
           マイページを見る
-        </a>
+        </button>
 
         <button onclick="closeLiff()" class="w-full bg-gray-900 border border-gray-800 text-gray-300 font-bold py-4 rounded-2xl">
           LINEトークに戻る
@@ -557,17 +560,19 @@
   }
 
   async function fetchExistingProfile() {
-    const { data, error } = await sbClient
+    const result = await sbClient
       .from('gym_profiles')
       .select('*')
       .eq('line_user_id', state.userId)
-      .maybeSingle();
+      .order('updated_at', { ascending: false })
+      .limit(1);
 
-    if (error) {
-      console.warn(error);
+    if (result.error) {
+      console.warn(result.error);
       return;
     }
 
+    const data = Array.isArray(result.data) && result.data.length ? result.data[0] : null;
     if (!data) return;
 
     state.existingData = data;
@@ -1171,6 +1176,12 @@ ${customerName}様、予約を受け付けました。
       await fetchExistingProfile();
       goStep(6);
 
+      // 初回アンケート完了後は、そのままマイページへ移動します。
+      // 少しだけ完了表示を見せてから移動することで、送信できたことが分かります。
+      setTimeout(() => {
+        goMemberPage();
+      }, 900);
+
     } catch (e) {
       alert('送信に失敗しました: ' + e.message);
       btn.disabled = false;
@@ -1196,15 +1207,26 @@ ${customerName}様、予約を受け付けました。
     return `${m}/${d}(${w}) ${time}`;
   }
 
+  function getMemberPageUrl() {
+    const url = new URL('member.html', window.location.href);
+    url.searchParams.set('from', 'reserve');
+    url.searchParams.set('t', String(Date.now()));
+    return url.toString();
+  }
+
+  function goMemberPage() {
+    window.location.href = getMemberPageUrl();
+  }
+
   function closeLiff() {
     try {
       if (typeof liff !== 'undefined' && liff.isInClient()) {
         liff.closeWindow();
       } else {
-        location.href = 'member.html';
+        goMemberPage();
       }
     } catch (e) {
-      location.href = 'member.html';
+      goMemberPage();
     }
   }
 </script>
