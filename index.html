@@ -144,7 +144,6 @@
           id="topMemberLink"
           data-member-link
           href="./member.html"
-          onclick="return handleMemberLinkClick(event)"
           class="block text-center w-full bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 font-bold py-4 rounded-2xl transition"
         >
           マイページを見る
@@ -410,7 +409,6 @@
           id="completeMemberLink"
           data-member-link
           href="./member.html"
-          onclick="return handleMemberLinkClick(event)"
           class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl"
         >
           マイページを見る
@@ -437,6 +435,7 @@
     customerName: '体験 山田',
     userId: 'demo-user',
     existingData: null,
+    savedProfileId: '',
     isSkippingQuestionnaire: false,
     purpose: '',
     goal: '',
@@ -573,22 +572,41 @@
   }
 
   async function fetchExistingProfile() {
-    const { data, error } = await sbClient
+    let response = await sbClient
       .from('gym_profiles')
       .select('*')
       .eq('line_user_id', state.userId)
       .order('updated_at', { ascending: false })
       .limit(1);
 
-    if (error) {
-      console.warn(error);
+    // updated_at が無い・古い構成でも止めないための保険
+    if (response.error) {
+      const msg = String(response.error.message || '');
+      if (msg.includes('updated_at') || response.error.code === '42703') {
+        response = await sbClient
+          .from('gym_profiles')
+          .select('*')
+          .eq('line_user_id', state.userId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+      }
+    }
+
+    if (response.error) {
+      console.warn(response.error);
+      updateMemberLinks();
       return;
     }
 
-    const profile = Array.isArray(data) && data.length ? data[0] : null;
-    if (!profile) return;
+    const rows = Array.isArray(response.data) ? response.data : [];
+    const profile = rows.length ? rows[0] : null;
+    if (!profile) {
+      updateMemberLinks();
+      return;
+    }
 
     state.existingData = profile;
+    state.savedProfileId = profile.id || '';
 
     const dbName = cleanName(profile.display_name);
     if (dbName && !isDemoLikeName(dbName)) {
@@ -606,6 +624,8 @@
     if (profile.status) state.concern = profile.status;
 
     renderExistingReservation(profile);
+    saveMemberBridge(profile);
+    updateMemberLinks();
   }
 
   function hasAnsweredQuestionnaire(data) {
@@ -1137,14 +1157,20 @@
 
     try {
       let error;
+      let savedProfile = null;
 
       if (state.existingData && state.existingData.id) {
         const result = await sbClient
           .from('gym_profiles')
           .update(basePayload)
-          .eq('id', state.existingData.id);
+          .eq('id', state.existingData.id)
+          .select('*')
+          .limit(1);
 
         error = result.error;
+        savedProfile = Array.isArray(result.data) && result.data.length
+          ? result.data[0]
+          : { ...state.existingData, ...basePayload };
       } else {
         const insertPayload = {
           ...basePayload,
@@ -1156,12 +1182,24 @@
 
         const result = await sbClient
           .from('gym_profiles')
-          .insert([insertPayload]);
+          .insert([insertPayload])
+          .select('*')
+          .limit(1);
 
         error = result.error;
+        savedProfile = Array.isArray(result.data) && result.data.length
+          ? result.data[0]
+          : insertPayload;
       }
 
       if (error) throw error;
+
+      if (savedProfile) {
+        state.existingData = savedProfile;
+        state.savedProfileId = savedProfile.id || '';
+        saveMemberBridge(savedProfile);
+        updateMemberLinks();
+      }
 
       try {
         if (typeof liff !== 'undefined' && liff.isInClient()) {
@@ -1224,9 +1262,6 @@ ${customerName}様、予約を受け付けました。
     const origin = window.location.origin;
     let pathname = window.location.pathname || '/';
 
-    // GitHub Pages を「/repo」までで開いた場合、
-    // new URL('member.html', location.href) だと /member.html に飛ぶことがあります。
-    // そのため、ファイル名あり・なしの両方に対応して安全に同じフォルダを作ります。
     if (pathname.endsWith('/')) {
       return origin + pathname;
     }
@@ -1242,8 +1277,23 @@ ${customerName}様、予約を受け付けました。
 
   function getMemberPageUrl() {
     const url = new URL('member.html', getPageBaseUrl());
+    const name = getCustomerName();
+
     url.searchParams.set('from', 'reserve');
     url.searchParams.set('t', String(Date.now()));
+
+    if (state.savedProfileId || (state.existingData && state.existingData.id)) {
+      url.searchParams.set('profile_id', state.savedProfileId || state.existingData.id);
+    }
+
+    if (state.userId) {
+      url.searchParams.set('uid', state.userId);
+    }
+
+    if (name) {
+      url.searchParams.set('name', name);
+    }
+
     return url.toString();
   }
 
@@ -1251,16 +1301,23 @@ ${customerName}様、予約を受け付けました。
     const url = getMemberPageUrl();
     document.querySelectorAll('[data-member-link]').forEach(link => {
       link.setAttribute('href', url);
+      link.setAttribute('target', '_self');
+      link.setAttribute('rel', 'noopener');
     });
   }
 
-  function handleMemberLinkClick(event) {
-    if (event) {
-      event.preventDefault();
+  function saveMemberBridge(profile) {
+    try {
+      const payload = {
+        profile_id: profile && profile.id ? profile.id : (state.savedProfileId || ''),
+        line_user_id: profile && profile.line_user_id ? profile.line_user_id : state.userId,
+        display_name: getCustomerName(),
+        saved_at: Date.now()
+      };
+      localStorage.setItem('dpro_gym_last_profile', JSON.stringify(payload));
+    } catch (e) {
+      console.warn('member bridge skipped:', e);
     }
-
-    goMemberPage();
-    return false;
   }
 
   function goMemberPage() {
@@ -1268,13 +1325,22 @@ ${customerName}様、予約を受け付けました。
     updateMemberLinks();
 
     try {
-      window.location.assign(url);
-    } catch (error) {
       window.location.href = url;
+    } catch (error) {
+      window.location.assign(url);
     }
 
-    // LINE内ブラウザなどで assign が弱い場合の保険
+    // LINE内ブラウザで location.href が弱い場合の保険
     setTimeout(() => {
+      try {
+        if (typeof liff !== 'undefined' && liff.isInClient() && typeof liff.openWindow === 'function') {
+          liff.openWindow({ url, external: false });
+          return;
+        }
+      } catch (e) {
+        console.warn('liff.openWindow skipped:', e);
+      }
+
       try {
         window.open(url, '_self');
       } catch (error) {
