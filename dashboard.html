@@ -80,8 +80,9 @@
         </a>
 
         <a
-          href="owner-ipad.html"
+          href="./owner-ipad.html"
           target="_blank"
+          onclick="openIpadPage(event)"
           class="bg-blue-600 hover:bg-blue-500 text-white font-black px-4 py-3 rounded-2xl text-sm transition text-center shadow-lg shadow-blue-500/10"
         >
           iPad用画面
@@ -2594,6 +2595,20 @@ ${dateText}
 
   function safeId(value) {
     return String(value).replace(/[^a-zA-Z0-9_-]/g, '_');
+  }
+
+
+  function openIpadPage(event) {
+    // iPad画面からPC管理画面へ戻るとき、LIFF/LINE内でも確実にこのPC画面へ戻れるように、現在のURLを渡します。
+    try {
+      if (event) event.preventDefault();
+      const currentUrl = window.location.href;
+      const ipadUrl = new URL('./owner-ipad.html', window.location.href);
+      ipadUrl.searchParams.set('pc', currentUrl);
+      window.open(ipadUrl.toString(), '_blank', 'noopener');
+    } catch (error) {
+      window.open('./owner-ipad.html', '_blank', 'noopener');
+    }
   }
 
   function escapeHtml(value) {
