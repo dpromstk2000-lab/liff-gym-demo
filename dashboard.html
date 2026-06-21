@@ -15,7 +15,8 @@
     }
 
     .card-bg {
-      background: linear-gradient(180deg, rgba(31,41,55,.98), rgba(17,24,39,.98));
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.98));
+      box-shadow: 0 10px 30px rgba(15,23,42,0.06);
     }
 
     .fade-in {
@@ -32,12 +33,13 @@
     }
 
     .modal-backdrop {
-      background: rgba(0,0,0,.78);
+      background: rgba(15,23,42,.45);
       backdrop-filter: blur(8px);
     }
 
     .soft-card {
-      background: radial-gradient(circle at top left, rgba(250,204,21,.12), rgba(17,24,39,.98) 42%, rgba(3,7,18,.98));
+      background: linear-gradient(135deg, rgba(239,246,255,0.98), rgba(255,255,255,0.98));
+      box-shadow: 0 16px 40px rgba(59,130,246,0.08);
     }
 
     .scroll-thin::-webkit-scrollbar {
@@ -52,21 +54,21 @@
   </style>
 </head>
 
-<body class="bg-gray-950 text-white min-h-screen">
+<body class="bg-slate-50 text-slate-800 min-h-screen">
 
-  <header class="sticky top-0 z-30 bg-black/90 backdrop-blur border-b border-yellow-500/30">
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-sm">
     <div class="max-w-7xl mx-auto px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DPRO GYM</p>
+        <p class="text-[10px] tracking-[0.35em] text-blue-700 font-black">DPRO GYM</p>
         <h1 class="text-2xl font-black mt-1">オーナーダッシュボード</h1>
-        <p class="text-xs text-gray-400 mt-1">今日の接客・体験フォロー・継続案内を迷わず進める画面</p>
+        <p class="text-xs text-slate-500 mt-1">今日の接客・体験フォロー・継続案内を迷わず進める画面</p>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2">
         <a
           href="index.html"
           target="_blank"
-          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
+          class="bg-white border border-slate-200 hover:border-yellow-500/60 text-slate-700 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
         >
           予約画面を確認
         </a>
@@ -74,7 +76,7 @@
         <a
           href="member.html"
           target="_blank"
-          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
+          class="bg-white border border-slate-200 hover:border-yellow-500/60 text-slate-700 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
         >
           マイページ確認
         </a>
@@ -83,28 +85,28 @@
           href="./owner-ipad.html"
           target="_blank"
           onclick="openIpadPage(event)"
-          class="bg-blue-600 hover:bg-blue-500 text-white font-black px-4 py-3 rounded-2xl text-sm transition text-center shadow-lg shadow-blue-500/10"
+          class="bg-blue-600 hover:bg-blue-500 text-white font-black px-4 py-3 rounded-2xl text-sm transition text-center shadow-md shadow-blue-200"
         >
           iPad用画面
         </a>
 
         <button
           onclick="openGymSettingsModal()"
-          class="bg-gray-900 border border-gray-800 hover:border-yellow-500/60 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
+          class="bg-white border border-slate-200 hover:border-yellow-500/60 text-slate-700 font-bold px-4 py-3 rounded-2xl text-sm transition text-center"
         >
           休み・営業時間設定
         </button>
 
         <button
           onclick="resetGymDemoData()"
-          class="bg-red-500 hover:bg-red-400 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-red-500/10"
+          class="bg-rose-500 hover:bg-rose-400 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-rose-500/10"
         >
           営業前DEMO準備
         </button>
 
         <button
           onclick="fetchReservations()"
-          class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
+          class="bg-blue-600 hover:bg-blue-500 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-md shadow-blue-200"
         >
           🔄 最新情報を取得
         </button>
@@ -115,24 +117,24 @@
   <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6">
 
     <!-- STEP GYM-1-9：今日やること中心ダッシュボード -->
-    <section class="soft-card border border-yellow-500/30 rounded-[2rem] p-4 md:p-6 space-y-5 shadow-2xl shadow-yellow-500/5">
+    <section class="soft-card border border-slate-200 rounded-[2rem] p-4 md:p-6 space-y-5 shadow-xl shadow-blue-100">
       <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
         <div>
-          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">TODAY'S WORK</p>
+          <p class="text-[10px] tracking-[0.35em] text-blue-700 font-black">TODAY'S WORK</p>
           <h2 class="text-2xl md:text-3xl font-black mt-2">今日やること</h2>
-          <p id="dailyCockpitSummary" class="text-sm text-gray-400 mt-2 leading-relaxed">本日の接客・承認待ち・フォロー対象を読み込み中...</p>
+          <p id="dailyCockpitSummary" class="text-sm text-slate-500 mt-2 leading-relaxed">本日の接客・承認待ち・フォロー対象を読み込み中...</p>
         </div>
 
         <div class="flex flex-col sm:flex-row gap-2 shrink-0">
           <button
             onclick="setToday()"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition"
+            class="bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-bold px-4 py-3 rounded-2xl text-sm transition"
           >
             今日を見る
           </button>
           <button
             onclick="fetchReservations(); fetchInteractionHistory();"
-            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-md shadow-blue-200"
           >
             最新情報に更新
           </button>
@@ -142,35 +144,35 @@
       <div id="dailyActionStats" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
 
       <div class="grid xl:grid-cols-[1.2fr_.8fr] gap-4">
-        <div class="bg-gray-950/80 border border-gray-800 rounded-3xl p-4 md:p-5">
+        <div class="bg-white/95 border border-slate-200 rounded-3xl p-4 md:p-5">
           <div class="flex items-center justify-between gap-3 mb-4">
             <div>
               <h3 class="font-black text-lg">優先対応カード</h3>
-              <p class="text-xs text-gray-500 mt-1">上から順に対応すれば、予約承認・体験前後・継続案内の抜けを防げます。</p>
+              <p class="text-xs text-slate-500 mt-1">上から順に対応すれば、予約承認・体験前後・継続案内の抜けを防げます。</p>
             </div>
           </div>
           <div id="ownerActionList" class="space-y-3"></div>
         </div>
 
         <div class="space-y-4">
-          <div class="bg-gray-950/80 border border-gray-800 rounded-3xl p-4 md:p-5">
+          <div class="bg-white/95 border border-slate-200 rounded-3xl p-4 md:p-5">
             <div class="flex items-center justify-between gap-3 mb-3">
               <div>
                 <h3 class="font-black">本日の予約</h3>
-                <p class="text-xs text-gray-500 mt-1">来店前に目的・不安を確認</p>
+                <p class="text-xs text-slate-500 mt-1">来店前に目的・不安を確認</p>
               </div>
-              <button onclick="filterMode('all'); setToday();" class="text-xs font-black text-yellow-400 hover:text-yellow-300">一覧へ</button>
+              <button onclick="filterMode('all'); setToday();" class="text-xs font-black text-blue-700 hover:text-blue-600">一覧へ</button>
             </div>
             <div id="todayReservationList" class="space-y-2"></div>
           </div>
 
-          <div class="bg-gray-950/80 border border-gray-800 rounded-3xl p-4 md:p-5">
+          <div class="bg-white/95 border border-slate-200 rounded-3xl p-4 md:p-5">
             <div class="flex items-center justify-between gap-3 mb-3">
               <div>
                 <h3 class="font-black">承認待ち</h3>
-                <p class="text-xs text-gray-500 mt-1">見落とすと機会損失になりやすい予約</p>
+                <p class="text-xs text-slate-500 mt-1">見落とすと機会損失になりやすい予約</p>
               </div>
-              <button onclick="filterMode('pending')" class="text-xs font-black text-yellow-400 hover:text-yellow-300">一覧へ</button>
+              <button onclick="filterMode('pending')" class="text-xs font-black text-blue-700 hover:text-blue-600">一覧へ</button>
             </div>
             <div id="pendingReservationList" class="space-y-2"></div>
           </div>
@@ -180,44 +182,44 @@
 
     <!-- メトリクス -->
     <section class="grid grid-cols-2 lg:grid-cols-6 gap-3 md:gap-4">
-      <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">本日の予約</p>
-        <p id="metricToday" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      <div class="card-bg border border-slate-200 rounded-3xl p-4">
+        <p class="text-xs text-slate-500 font-bold">本日の予約</p>
+        <p id="metricToday" class="text-3xl font-black text-blue-700 mt-2">-</p>
       </div>
 
-      <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">承認待ち</p>
-        <p id="metricPending" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      <div class="card-bg border border-slate-200 rounded-3xl p-4">
+        <p class="text-xs text-slate-500 font-bold">承認待ち</p>
+        <p id="metricPending" class="text-3xl font-black text-blue-700 mt-2">-</p>
       </div>
 
-      <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">選択日の予約</p>
-        <p id="metricSelected" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      <div class="card-bg border border-slate-200 rounded-3xl p-4">
+        <p class="text-xs text-slate-500 font-bold">選択日の予約</p>
+        <p id="metricSelected" class="text-3xl font-black text-blue-700 mt-2">-</p>
       </div>
 
-      <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">残り1回以下</p>
-        <p id="metricLowCount" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      <div class="card-bg border border-slate-200 rounded-3xl p-4">
+        <p class="text-xs text-slate-500 font-bold">残り1回以下</p>
+        <p id="metricLowCount" class="text-3xl font-black text-blue-700 mt-2">-</p>
       </div>
 
-      <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">フォロー予定</p>
-        <p id="metricFollow" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      <div class="card-bg border border-slate-200 rounded-3xl p-4">
+        <p class="text-xs text-slate-500 font-bold">フォロー予定</p>
+        <p id="metricFollow" class="text-3xl font-black text-blue-700 mt-2">-</p>
       </div>
 
-      <div class="card-bg border border-gray-800 rounded-3xl p-4">
-        <p class="text-xs text-gray-400 font-bold">対応履歴</p>
-        <p id="metricHistory" class="text-3xl font-black text-yellow-400 mt-2">-</p>
+      <div class="card-bg border border-slate-200 rounded-3xl p-4">
+        <p class="text-xs text-slate-500 font-bold">対応履歴</p>
+        <p id="metricHistory" class="text-3xl font-black text-blue-700 mt-2">-</p>
       </div>
     </section>
 
     <!-- 営業前DEMO準備 -->
-    <section class="card-bg border border-yellow-500/25 rounded-3xl p-4 md:p-5 space-y-4">
+    <section class="card-bg border border-blue-200 rounded-3xl p-4 md:p-5 space-y-4">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DEMO RESET</p>
+          <p class="text-[10px] tracking-[0.35em] text-blue-700 font-black">DEMO RESET</p>
           <h2 class="text-lg font-black mt-1">営業前DEMO準備</h2>
-          <p id="demoResetMessage" class="text-sm text-gray-400 mt-2 leading-relaxed">
+          <p id="demoResetMessage" class="text-sm text-slate-500 mt-2 leading-relaxed">
             スマホ・iPad・PCから、今日基準の予約・会員・フォロー・対応履歴を作り直せます。
           </p>
         </div>
@@ -226,14 +228,14 @@
           <button
             id="demoResetButton"
             onclick="resetGymDemoData()"
-            class="bg-red-500 hover:bg-red-400 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-red-500/10"
+            class="bg-rose-500 hover:bg-rose-400 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-rose-500/10"
           >
             営業前DEMOを準備する
           </button>
 
           <button
             onclick="fetchReservations(); fetchInteractionHistory();"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-5 py-3 rounded-2xl text-sm transition"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold px-5 py-3 rounded-2xl text-sm transition"
           >
             表示を更新
           </button>
@@ -241,28 +243,28 @@
       </div>
 
       <div class="grid md:grid-cols-3 gap-3 text-sm">
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-          <p class="font-black text-yellow-400">予約データ</p>
-          <p class="text-gray-500 text-xs mt-2 leading-relaxed">本日・次営業日・先の日付に、承認待ち/確定/再調整の予約を作成</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="font-black text-blue-700">予約データ</p>
+          <p class="text-slate-500 text-xs mt-2 leading-relaxed">本日・次営業日・先の日付に、承認待ち/確定/再調整の予約を作成</p>
         </div>
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-          <p class="font-black text-yellow-400">会員データ</p>
-          <p class="text-gray-500 text-xs mt-2 leading-relaxed">体験予約・入会済・残り回数少・継続提案の見本を作成</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="font-black text-blue-700">会員データ</p>
+          <p class="text-slate-500 text-xs mt-2 leading-relaxed">体験予約・入会済・残り回数少・継続提案の見本を作成</p>
         </div>
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-          <p class="font-black text-yellow-400">対応履歴</p>
-          <p class="text-gray-500 text-xs mt-2 leading-relaxed">LINE案内文のコピー履歴を初期化して見やすく再生成</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="font-black text-blue-700">対応履歴</p>
+          <p class="text-slate-500 text-xs mt-2 leading-relaxed">LINE案内文のコピー履歴を初期化して見やすく再生成</p>
         </div>
       </div>
     </section>
 
     <!-- 休み・営業時間設定 -->
-    <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5 space-y-4">
+    <section class="card-bg border border-slate-200 rounded-3xl p-4 md:p-5 space-y-4">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">GYM SETTINGS</p>
+          <p class="text-[10px] tracking-[0.35em] text-blue-700 font-black">GYM SETTINGS</p>
           <h2 class="text-lg font-black mt-1">休み・営業時間設定</h2>
-          <p id="gymSettingsSummary" class="text-sm text-gray-400 mt-2 leading-relaxed">
+          <p id="gymSettingsSummary" class="text-sm text-slate-500 mt-2 leading-relaxed">
             設定を読み込み中...
           </p>
         </div>
@@ -270,14 +272,14 @@
         <div class="flex flex-col sm:flex-row gap-2 shrink-0">
           <button
             onclick="openGymSettingsModal()"
-            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-black px-5 py-3 rounded-2xl text-sm transition shadow-md shadow-blue-200"
           >
             休み・営業時間を変更
           </button>
 
           <button
             onclick="loadGymSettings(true)"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-5 py-3 rounded-2xl text-sm transition"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold px-5 py-3 rounded-2xl text-sm transition"
           >
             設定を再読み込み
           </button>
@@ -285,33 +287,33 @@
       </div>
 
       <div class="grid md:grid-cols-4 gap-3 text-sm">
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-          <p class="text-xs text-gray-500 font-bold">営業時間</p>
-          <p id="gymSettingsHours" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="text-xs text-slate-500 font-bold">営業時間</p>
+          <p id="gymSettingsHours" class="text-lg font-black text-blue-700 mt-2">-</p>
         </div>
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-          <p class="text-xs text-gray-500 font-bold">予約枠</p>
-          <p id="gymSettingsSlot" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="text-xs text-slate-500 font-bold">予約枠</p>
+          <p id="gymSettingsSlot" class="text-lg font-black text-blue-700 mt-2">-</p>
         </div>
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-          <p class="text-xs text-gray-500 font-bold">定休日</p>
-          <p id="gymSettingsHolidays" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="text-xs text-slate-500 font-bold">定休日</p>
+          <p id="gymSettingsHolidays" class="text-lg font-black text-blue-700 mt-2">-</p>
         </div>
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
-          <p class="text-xs text-gray-500 font-bold">予約可能期間</p>
-          <p id="gymSettingsMaxDays" class="text-lg font-black text-yellow-400 mt-2">-</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+          <p class="text-xs text-slate-500 font-bold">予約可能期間</p>
+          <p id="gymSettingsMaxDays" class="text-lg font-black text-blue-700 mt-2">-</p>
         </div>
       </div>
 
-      <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4">
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4">
         <div class="flex flex-col md:flex-row md:items-start justify-between gap-3">
           <div>
-            <p class="text-xs text-gray-500 font-bold">臨時休業日</p>
+            <p class="text-xs text-slate-500 font-bold">臨時休業日</p>
             <div id="gymSettingsClosedDates" class="mt-2 flex flex-wrap gap-2 text-sm text-gray-300">
               -
             </div>
           </div>
-          <p class="text-xs text-gray-500 leading-relaxed max-w-md">
+          <p class="text-xs text-slate-500 leading-relaxed max-w-md">
             ここで設定した休み・営業時間は、予約画面 index.html の日付/時間選択に反映されます。
           </p>
         </div>
@@ -319,35 +321,35 @@
     </section>
 
     <!-- 操作パネル -->
-    <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5 space-y-4">
+    <section class="card-bg border border-slate-200 rounded-3xl p-4 md:p-5 space-y-4">
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div class="flex items-center gap-2 overflow-x-auto pb-1">
           <button
             onclick="changeDate(-1)"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-blue-700 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
           >
             ◀ 前日
           </button>
 
           <button
             onclick="setToday()"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
           >
             今日
           </button>
 
           <button
             onclick="changeDate(1)"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-400 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-blue-700 font-black px-4 py-3 rounded-2xl text-sm whitespace-nowrap"
           >
             翌日 ▶
           </button>
         </div>
 
         <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div id="dateDisplay" class="text-xl font-black text-yellow-400">-</div>
+          <div id="dateDisplay" class="text-xl font-black text-blue-700">-</div>
 
-          <label class="inline-flex items-center gap-2 bg-gray-900 border border-gray-800 px-3 py-2 rounded-2xl text-sm text-gray-300">
+          <label class="inline-flex items-center gap-2 bg-white border border-slate-200 px-3 py-2 rounded-2xl text-sm text-gray-300">
             <input type="checkbox" id="showAllDates" onchange="toggleShowAllDates()" class="accent-yellow-500">
             全日程を表示
           </label>
@@ -356,35 +358,35 @@
 
       <div class="grid lg:grid-cols-[1fr_auto] gap-4">
         <div class="relative">
-          <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500">🔍</span>
+          <span class="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-500">🔍</span>
           <input
             id="searchInput"
             type="text"
             oninput="applyFilters()"
             placeholder="会員名・目的・悩み・メモで検索"
-            class="w-full bg-gray-950 border border-gray-800 rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-yellow-500 placeholder-gray-600"
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-yellow-500 placeholder-gray-600"
           >
         </div>
 
-        <div class="flex bg-gray-950 border border-gray-800 p-1 rounded-2xl overflow-x-auto">
-          <button onclick="filterMode('all')" id="tab-all" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-yellow-500 text-black">すべて</button>
-          <button onclick="filterMode('pending')" id="tab-pending" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">承認待ち</button>
-          <button onclick="filterMode('confirmed')" id="tab-confirmed" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">確定</button>
-          <button onclick="filterMode('cancelled')" id="tab-cancelled" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">再調整</button>
-          <button onclick="filterMode('low')" id="tab-low" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">残り少</button>
-          <button onclick="filterMode('follow')" id="tab-follow" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">フォロー</button>
-          <button onclick="filterMode('trial')" id="tab-trial" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">体験</button>
-          <button onclick="filterMode('member')" id="tab-member" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400">入会済</button>
+        <div class="flex bg-slate-50 border border-slate-200 p-1 rounded-2xl overflow-x-auto">
+          <button onclick="filterMode('all')" id="tab-all" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-blue-600 text-white">すべて</button>
+          <button onclick="filterMode('pending')" id="tab-pending" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500">承認待ち</button>
+          <button onclick="filterMode('confirmed')" id="tab-confirmed" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500">確定</button>
+          <button onclick="filterMode('cancelled')" id="tab-cancelled" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500">再調整</button>
+          <button onclick="filterMode('low')" id="tab-low" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500">残り少</button>
+          <button onclick="filterMode('follow')" id="tab-follow" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500">フォロー</button>
+          <button onclick="filterMode('trial')" id="tab-trial" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500">体験</button>
+          <button onclick="filterMode('member')" id="tab-member" class="tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500">入会済</button>
         </div>
       </div>
     </section>
 
     <!-- 今日の対応 -->
-    <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5">
+    <section class="card-bg border border-slate-200 rounded-3xl p-4 md:p-5">
       <div class="flex items-center justify-between gap-4 mb-4">
         <div>
           <h2 class="text-lg font-black">クイック分類</h2>
-          <p id="todoSummary" class="text-sm text-gray-400 mt-1">数字を押すと対象だけに絞り込めます。</p>
+          <p id="todoSummary" class="text-sm text-slate-500 mt-1">数字を押すと対象だけに絞り込めます。</p>
         </div>
       </div>
 
@@ -392,11 +394,11 @@
     </section>
 
     <!-- 対応履歴：折りたたみ -->
-    <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5">
+    <section class="card-bg border border-slate-200 rounded-3xl p-4 md:p-5">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-black">最近の対応履歴</h2>
-          <p id="historySummaryText" class="text-sm text-gray-400 mt-1">
+          <p id="historySummaryText" class="text-sm text-slate-500 mt-1">
             お客様へのLINE案内を作成した履歴
           </p>
         </div>
@@ -404,7 +406,7 @@
         <div class="flex gap-2">
           <button
             onclick="fetchInteractionHistory()"
-            class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 font-bold px-4 py-2 rounded-2xl text-sm"
+            class="bg-white border border-slate-200 hover:border-yellow-500/50 text-gray-300 font-bold px-4 py-2 rounded-2xl text-sm"
           >
             更新
           </button>
@@ -412,26 +414,26 @@
           <button
             id="historyToggleButton"
             onclick="toggleInteractionHistory()"
-            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-4 py-2 rounded-2xl text-sm"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-black px-4 py-2 rounded-2xl text-sm"
           >
             開く
           </button>
         </div>
       </div>
 
-      <div id="historyClosedPreview" class="mt-4 bg-gray-950 border border-gray-800 rounded-2xl p-4 text-sm text-gray-400">
+      <div id="historyClosedPreview" class="mt-4 bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm text-slate-500">
         対応履歴は折りたたまれています。必要な時だけ開いて確認できます。
       </div>
 
       <div id="interactionHistoryList" class="hidden mt-4 space-y-2">
-        <div class="text-sm text-gray-500">読み込み中...</div>
+        <div class="text-sm text-slate-500">読み込み中...</div>
       </div>
     </section>
 
     <!-- 一覧 -->
     <section>
       <div id="dataContainer" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <div class="col-span-full text-center py-16 text-gray-500">読み込み中...</div>
+        <div class="col-span-full text-center py-16 text-slate-500">読み込み中...</div>
       </div>
     </section>
 
@@ -440,16 +442,16 @@
   <!-- 休み・営業時間設定モーダル -->
   <div id="gymSettingsModal" class="hidden fixed inset-0 z-50 modal-backdrop p-4 overflow-y-auto">
     <div class="max-w-3xl mx-auto my-8 card-bg border border-yellow-500/40 rounded-3xl shadow-2xl fade-in">
-      <div class="p-5 border-b border-gray-800 flex items-start justify-between gap-4">
+      <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-4">
         <div>
-          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">GYM SETTINGS</p>
+          <p class="text-[10px] tracking-[0.35em] text-blue-700 font-black">GYM SETTINGS</p>
           <h2 class="text-xl font-black mt-1">休み・営業時間設定</h2>
-          <p class="text-sm text-gray-400 mt-2">予約画面で選べる日付・時間に反映されます。</p>
+          <p class="text-sm text-slate-500 mt-2">予約画面で選べる日付・時間に反映されます。</p>
         </div>
 
         <button
           onclick="closeGymSettingsModal()"
-          class="bg-gray-900 hover:bg-gray-800 border border-gray-800 w-10 h-10 rounded-2xl font-black text-gray-400"
+          class="bg-white hover:bg-slate-100 border border-slate-200 w-10 h-10 rounded-2xl font-black text-slate-500"
         >
           ×
         </button>
@@ -458,20 +460,20 @@
       <div class="p-5 space-y-5">
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-xs text-gray-500 font-bold mb-2">店舗名</label>
+            <label class="block text-xs text-slate-500 font-bold mb-2">店舗名</label>
             <input
               id="settingShopName"
               type="text"
-              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
               placeholder="DPRO GYM"
             >
           </div>
 
           <div>
-            <label class="block text-xs text-gray-500 font-bold mb-2">予約可能期間</label>
+            <label class="block text-xs text-slate-500 font-bold mb-2">予約可能期間</label>
             <select
               id="settingMaxReservationDays"
-              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
             >
               <option value="30">30日先まで</option>
               <option value="45">45日先まで</option>
@@ -483,26 +485,26 @@
 
         <div class="grid sm:grid-cols-3 gap-4">
           <div>
-            <label class="block text-xs text-gray-500 font-bold mb-2">営業開始</label>
+            <label class="block text-xs text-slate-500 font-bold mb-2">営業開始</label>
             <select
               id="settingOpenTime"
-              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
             ></select>
           </div>
 
           <div>
-            <label class="block text-xs text-gray-500 font-bold mb-2">営業終了</label>
+            <label class="block text-xs text-slate-500 font-bold mb-2">営業終了</label>
             <select
               id="settingCloseTime"
-              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
             ></select>
           </div>
 
           <div>
-            <label class="block text-xs text-gray-500 font-bold mb-2">予約枠</label>
+            <label class="block text-xs text-slate-500 font-bold mb-2">予約枠</label>
             <select
               id="settingSlotMinutes"
-              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
             >
               <option value="15">15分枠</option>
               <option value="30">30分枠</option>
@@ -512,34 +514,34 @@
           </div>
         </div>
 
-        <div class="bg-gray-950 border border-gray-800 rounded-3xl p-4">
-          <p class="text-xs text-gray-500 font-bold mb-3">曜日定休日</p>
+        <div class="bg-slate-50 border border-slate-200 rounded-3xl p-4">
+          <p class="text-xs text-slate-500 font-bold mb-3">曜日定休日</p>
           <div id="settingHolidayCheckboxes" class="grid grid-cols-4 sm:grid-cols-7 gap-2">
-            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="0" class="accent-yellow-500 mr-1">日</label>
-            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="1" class="accent-yellow-500 mr-1">月</label>
-            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="2" class="accent-yellow-500 mr-1">火</label>
-            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="3" class="accent-yellow-500 mr-1">水</label>
-            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="4" class="accent-yellow-500 mr-1">木</label>
-            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="5" class="accent-yellow-500 mr-1">金</label>
-            <label class="bg-gray-900 border border-gray-800 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="6" class="accent-yellow-500 mr-1">土</label>
+            <label class="bg-white border border-slate-200 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="0" class="accent-yellow-500 mr-1">日</label>
+            <label class="bg-white border border-slate-200 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="1" class="accent-yellow-500 mr-1">月</label>
+            <label class="bg-white border border-slate-200 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="2" class="accent-yellow-500 mr-1">火</label>
+            <label class="bg-white border border-slate-200 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="3" class="accent-yellow-500 mr-1">水</label>
+            <label class="bg-white border border-slate-200 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="4" class="accent-yellow-500 mr-1">木</label>
+            <label class="bg-white border border-slate-200 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="5" class="accent-yellow-500 mr-1">金</label>
+            <label class="bg-white border border-slate-200 rounded-2xl p-3 text-center text-sm font-bold cursor-pointer"><input type="checkbox" value="6" class="accent-yellow-500 mr-1">土</label>
           </div>
         </div>
 
-        <div class="bg-gray-950 border border-gray-800 rounded-3xl p-4 space-y-4">
+        <div class="bg-slate-50 border border-slate-200 rounded-3xl p-4 space-y-4">
           <div>
-            <p class="text-xs text-gray-500 font-bold">臨時休業日</p>
-            <p class="text-xs text-gray-500 mt-1">年末年始、研修、臨時休などを追加できます。</p>
+            <p class="text-xs text-slate-500 font-bold">臨時休業日</p>
+            <p class="text-xs text-slate-500 mt-1">年末年始、研修、臨時休などを追加できます。</p>
           </div>
 
           <div class="grid sm:grid-cols-[1fr_auto] gap-2">
             <input
               id="settingClosedDateInput"
               type="date"
-              class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
             >
             <button
               onclick="addGymClosedDate()"
-              class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-bold px-5 py-3 rounded-2xl text-sm"
+              class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold px-5 py-3 rounded-2xl text-sm"
             >
               追加
             </button>
@@ -549,41 +551,41 @@
         </div>
 
         <div>
-          <label class="block text-xs text-gray-500 font-bold mb-2">予約画面に表示するメモ</label>
+          <label class="block text-xs text-slate-500 font-bold mb-2">予約画面に表示するメモ</label>
           <textarea
             id="settingNotice"
             rows="3"
-            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm leading-relaxed focus:outline-none focus:border-yellow-500"
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm leading-relaxed focus:outline-none focus:border-yellow-500"
             placeholder="例：日曜定休。臨時休業日はオーナー画面から変更できます。"
           ></textarea>
         </div>
 
-        <div id="gymSettingsModalMessage" class="hidden bg-yellow-500/10 border border-yellow-500/30 text-yellow-100 rounded-2xl p-3 text-sm leading-relaxed"></div>
+        <div id="gymSettingsModalMessage" class="hidden bg-yellow-500/10 border border-slate-200 text-yellow-100 rounded-2xl p-3 text-sm leading-relaxed"></div>
 
         <div class="grid sm:grid-cols-3 gap-2">
           <button
             onclick="saveGymSettings()"
-            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-2xl text-sm"
           >
             保存する
           </button>
 
           <button
             onclick="loadGymSettings(true)"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-black py-3 rounded-2xl text-sm"
           >
             再読み込み
           </button>
 
           <button
             onclick="closeGymSettingsModal()"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-black py-3 rounded-2xl text-sm"
           >
             閉じる
           </button>
         </div>
 
-        <p class="text-xs text-gray-500 leading-relaxed">
+        <p class="text-xs text-slate-500 leading-relaxed">
           ※ この設定は gym_settings テーブルだけを更新します。他業種のテーブルや予約データには触りません。
         </p>
       </div>
@@ -594,90 +596,90 @@
   <div id="notificationModal" class="hidden fixed inset-0 z-50 modal-backdrop p-4 overflow-y-auto">
     <div class="max-w-2xl mx-auto my-8 card-bg border border-yellow-500/40 rounded-3xl shadow-2xl fade-in">
 
-      <div class="p-5 border-b border-gray-800 flex items-start justify-between gap-4">
+      <div class="p-5 border-b border-slate-200 flex items-start justify-between gap-4">
         <div>
-          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">MESSAGE TEMPLATE</p>
+          <p class="text-[10px] tracking-[0.35em] text-blue-700 font-black">MESSAGE TEMPLATE</p>
           <h2 id="modalTitle" class="text-xl font-black mt-1">LINE案内文を作成</h2>
-          <p id="modalSubTitle" class="text-sm text-gray-400 mt-2">文面をコピーしてLINEで送信できます。</p>
+          <p id="modalSubTitle" class="text-sm text-slate-500 mt-2">文面をコピーしてLINEで送信できます。</p>
         </div>
 
         <button
           onclick="closeNotificationModal()"
-          class="bg-gray-900 hover:bg-gray-800 border border-gray-800 w-10 h-10 rounded-2xl font-black text-gray-400"
+          class="bg-white hover:bg-slate-100 border border-slate-200 w-10 h-10 rounded-2xl font-black text-slate-500"
         >
           ×
         </button>
       </div>
 
       <div class="p-5 space-y-4">
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 text-sm">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-sm">
           <div class="grid sm:grid-cols-2 gap-3">
             <div>
-              <p class="text-xs text-gray-500 font-bold">お客様</p>
-              <p id="modalCustomerName" class="font-black text-yellow-400 mt-1">-</p>
+              <p class="text-xs text-slate-500 font-bold">お客様</p>
+              <p id="modalCustomerName" class="font-black text-blue-700 mt-1">-</p>
             </div>
 
             <div>
-              <p class="text-xs text-gray-500 font-bold">予約日時</p>
-              <p id="modalReservationDate" class="font-black text-yellow-400 mt-1">-</p>
+              <p class="text-xs text-slate-500 font-bold">予約日時</p>
+              <p id="modalReservationDate" class="font-black text-blue-700 mt-1">-</p>
             </div>
           </div>
         </div>
 
         <div>
-          <label class="block text-xs text-gray-500 font-bold mb-2">案内タイトル</label>
+          <label class="block text-xs text-slate-500 font-bold mb-2">案内タイトル</label>
           <input
             id="notificationTitleInput"
             type="text"
-            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
           >
         </div>
 
         <div>
-          <label class="block text-xs text-gray-500 font-bold mb-2">メッセージ本文</label>
+          <label class="block text-xs text-slate-500 font-bold mb-2">メッセージ本文</label>
           <textarea
             id="notificationBodyInput"
             rows="12"
-            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm leading-relaxed focus:outline-none focus:border-yellow-500"
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm leading-relaxed focus:outline-none focus:border-yellow-500"
           ></textarea>
         </div>
 
         <div>
-          <label class="block text-xs text-gray-500 font-bold mb-2">オーナーメモ</label>
+          <label class="block text-xs text-slate-500 font-bold mb-2">オーナーメモ</label>
           <input
             id="notificationOwnerNoteInput"
             type="text"
             placeholder="例：予約確定後にLINEで手動送信"
-            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
+            class="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-yellow-500"
           >
         </div>
 
-        <div id="modalActionStatus" class="hidden bg-yellow-500/10 border border-yellow-500/30 text-yellow-100 rounded-2xl p-3 text-sm leading-relaxed"></div>
+        <div id="modalActionStatus" class="hidden bg-yellow-500/10 border border-slate-200 text-yellow-100 rounded-2xl p-3 text-sm leading-relaxed"></div>
 
         <div class="grid sm:grid-cols-3 gap-2">
           <button
             onclick="copyMessageAndSaveHistory()"
-            class="bg-gray-900 hover:bg-gray-800 border border-yellow-500/40 text-yellow-300 font-black py-3 rounded-2xl text-sm"
+            class="bg-white hover:bg-slate-100 border border-yellow-500/40 text-yellow-300 font-black py-3 rounded-2xl text-sm"
           >
             文面をコピーする
           </button>
 
           <button
             onclick="copyMessageSaveAndOpenLineManager()"
-            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-2xl text-sm"
+            class="bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-2xl text-sm"
           >
             コピーしてLINE管理画面へ
           </button>
 
           <button
             onclick="closeNotificationModal()"
-            class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-gray-200 font-black py-3 rounded-2xl text-sm"
+            class="bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 font-black py-3 rounded-2xl text-sm"
           >
             閉じる
           </button>
         </div>
 
-        <p class="text-xs text-gray-500 leading-relaxed">
+        <p class="text-xs text-slate-500 leading-relaxed">
           ※ おすすめは「コピーしてLINE管理画面へ」です。文面をコピーし、対応履歴に保存したうえで、LINE公式アカウント管理画面を開きます。
         </p>
       </div>
@@ -785,8 +787,8 @@
       const btn = document.getElementById(`tab-${t}`);
 
       btn.className = t === mode
-        ? 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-yellow-500 text-black'
-        : 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-gray-400 hover:text-white';
+        ? 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap bg-blue-600 text-white'
+        : 'tab px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap text-slate-500 hover:text-white';
     });
 
     applyFilters();
@@ -911,11 +913,11 @@
 
     const closedDatesText = gymSettings.closed_dates.length
       ? gymSettings.closed_dates.map(date => `
-          <span class="inline-flex items-center rounded-full bg-gray-900 border border-gray-800 px-3 py-1 text-xs font-bold text-gray-200">
+          <span class="inline-flex items-center rounded-full bg-white border border-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
             ${escapeHtml(formatDateLabel(date))}
           </span>
         `).join('')
-      : '<span class="text-gray-500 text-sm">臨時休業日はありません。</span>';
+      : '<span class="text-slate-500 text-sm">臨時休業日はありません。</span>';
 
     const summary = document.getElementById('gymSettingsSummary');
     if (summary) {
@@ -976,14 +978,14 @@
     if (!wrap) return;
 
     if (!editingClosedDates.length) {
-      wrap.innerHTML = '<span class="text-sm text-gray-500">臨時休業日はまだありません。</span>';
+      wrap.innerHTML = '<span class="text-sm text-slate-500">臨時休業日はまだありません。</span>';
       return;
     }
 
     wrap.innerHTML = editingClosedDates.map(date => `
-      <span class="inline-flex items-center gap-2 rounded-full bg-gray-900 border border-gray-800 px-3 py-2 text-sm font-bold text-gray-200">
+      <span class="inline-flex items-center gap-2 rounded-full bg-white border border-slate-200 px-3 py-2 text-sm font-bold text-slate-700">
         ${escapeHtml(formatDateLabel(date))}
-        <button onclick="removeGymClosedDate('${escapeAttr(date)}')" class="text-gray-500 hover:text-red-400">×</button>
+        <button onclick="removeGymClosedDate('${escapeAttr(date)}')" class="text-slate-500 hover:text-red-400">×</button>
       </span>
     `).join('');
   }
@@ -1065,7 +1067,7 @@
 
   async function fetchReservations() {
     const container = document.getElementById('dataContainer');
-    container.innerHTML = '<div class="col-span-full text-center py-16 text-gray-400">データを同期中...</div>';
+    container.innerHTML = '<div class="col-span-full text-center py-16 text-slate-500">データを同期中...</div>';
 
     const { data, error } = await sbClient
       .from('gym_profiles')
@@ -1089,7 +1091,7 @@
     const list = document.getElementById('interactionHistoryList');
     const preview = document.getElementById('historyClosedPreview');
 
-    list.innerHTML = '<div class="text-sm text-gray-500">対応履歴を読み込み中...</div>';
+    list.innerHTML = '<div class="text-sm text-slate-500">対応履歴を読み込み中...</div>';
 
     const { data, error, count } = await sbClient
       .from('dpro_gym_notification_logs')
@@ -1156,7 +1158,7 @@
     const list = document.getElementById('interactionHistoryList');
 
     if (!interactionHistory.length) {
-      list.innerHTML = '<div class="text-sm text-gray-500">対応履歴はまだありません。</div>';
+      list.innerHTML = '<div class="text-sm text-slate-500">対応履歴はまだありません。</div>';
       return;
     }
 
@@ -1171,31 +1173,31 @@
       const created = formatLogDate(item.created_at);
 
       return `
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3 text-sm">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 text-sm">
           <div class="flex items-start justify-between gap-3">
             <div>
-              <p class="font-black text-yellow-400">${escapeHtml(item.display_name || 'ゲスト様')}</p>
-              <p class="text-xs text-gray-500 mt-1">
+              <p class="font-black text-blue-700">${escapeHtml(item.display_name || 'ゲスト様')}</p>
+              <p class="text-xs text-slate-500 mt-1">
                 ${escapeHtml(typeLabel)} / ${escapeHtml(statusLabel)} / ${escapeHtml(created)}
               </p>
             </div>
 
             <button
               onclick="copyHistoryMessage(${index})"
-              class="bg-gray-900 border border-gray-800 hover:border-yellow-500/50 text-gray-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0"
+              class="bg-white border border-slate-200 hover:border-yellow-500/50 text-gray-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0"
             >
               再コピー
             </button>
           </div>
 
-          <p class="text-xs text-gray-400 mt-2">${escapeHtml(item.title || '')}</p>
+          <p class="text-xs text-slate-500 mt-2">${escapeHtml(item.title || '')}</p>
         </div>
       `;
     }).join('');
 
     if (interactionHistoryTotal > interactionHistory.length) {
       list.innerHTML += `
-        <div class="text-xs text-gray-500 text-center pt-2">
+        <div class="text-xs text-slate-500 text-center pt-2">
           最新${interactionHistory.length}件のみ表示中です。過去の履歴はSupabaseに保存されています。
         </div>
       `;
@@ -1332,13 +1334,13 @@
       ];
 
       stats.innerHTML = statItems.map(item => `
-        <button onclick="filterMode('${item.filter}')" class="text-left bg-gray-950/80 hover:bg-gray-900 border border-gray-800 hover:border-yellow-500/50 rounded-3xl p-4 transition">
+        <button onclick="filterMode('${item.filter}')" class="text-left bg-white/95 hover:bg-white border border-slate-200 hover:border-yellow-500/50 rounded-3xl p-4 transition">
           <div class="flex items-center justify-between gap-3">
             <span class="text-2xl">${item.icon}</span>
-            <span class="text-3xl font-black text-yellow-400">${item.value}</span>
+            <span class="text-3xl font-black text-blue-700">${item.value}</span>
           </div>
           <p class="font-black mt-3">${item.label}</p>
-          <p class="text-xs text-gray-500 mt-1">${item.hint}</p>
+          <p class="text-xs text-slate-500 mt-1">${item.hint}</p>
         </button>
       `).join('');
     }
@@ -1405,11 +1407,11 @@
 
   function taskLabel(taskType, row) {
     const count = Number(row.remaining_count || 0);
-    if (taskType === 'pending') return { badge: '承認待ち', title: '予約を確定する', color: 'bg-yellow-500 text-black' };
+    if (taskType === 'pending') return { badge: '承認待ち', title: '予約を確定する', color: 'bg-blue-600 text-white' };
     if (taskType === 'today_visit') return { badge: '本日来店', title: '来店前に目的・不安を確認', color: 'bg-blue-500 text-white' };
     if (taskType === 'low_count' && count <= 0) return { badge: '残り0回', title: '継続・回数追加を案内', color: 'bg-red-500 text-white' };
-    if (taskType === 'low_count') return { badge: '残り1回', title: '次回更新の声かけ', color: 'bg-orange-500 text-black' };
-    if (taskType === 'follow_due') return { badge: 'フォロー', title: 'LINEで状況確認', color: 'bg-green-500 text-black' };
+    if (taskType === 'low_count') return { badge: '残り1回', title: '次回更新の声かけ', color: 'bg-amber-500 text-white' };
+    if (taskType === 'follow_due') return { badge: 'フォロー', title: 'LINEで状況確認', color: 'bg-emerald-500 text-white' };
     return { badge: '体験見込み', title: '体験前の安心案内', color: 'bg-purple-500 text-white' };
   }
 
@@ -1426,34 +1428,34 @@
     const primaryType = recommendedMessageType(row, taskType);
 
     return `
-      <div class="bg-gray-900/80 border border-gray-800 hover:border-yellow-500/50 rounded-3xl p-4 transition">
+      <div class="bg-white/80 border border-slate-200 hover:border-yellow-500/50 rounded-3xl p-4 transition">
         <div class="flex flex-col md:flex-row md:items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-2">
               <span class="${label.color} text-[11px] font-black px-3 py-1 rounded-full">${escapeHtml(label.badge)}</span>
-              <h4 class="text-lg font-black text-yellow-400">${escapeHtml(name)}</h4>
-              <span class="text-xs text-gray-500">${escapeHtml(date)}</span>
+              <h4 class="text-lg font-black text-blue-700">${escapeHtml(name)}</h4>
+              <span class="text-xs text-slate-500">${escapeHtml(date)}</span>
             </div>
             <p class="text-sm font-bold mt-2">${escapeHtml(label.title)}</p>
-            <p class="text-xs text-gray-500 mt-1">${escapeHtml(nextAction)}</p>
+            <p class="text-xs text-slate-500 mt-1">${escapeHtml(nextAction)}</p>
           </div>
           <div class="text-right shrink-0">
-            <p class="text-xs text-gray-500 font-bold">残り</p>
-            <p class="text-2xl font-black ${count <= 0 ? 'text-red-400' : 'text-yellow-400'}">${count}<span class="text-xs text-gray-500">回</span></p>
+            <p class="text-xs text-slate-500 font-bold">残り</p>
+            <p class="text-2xl font-black ${count <= 0 ? 'text-red-400' : 'text-blue-700'}">${count}<span class="text-xs text-slate-500">回</span></p>
           </div>
         </div>
 
         <div class="grid md:grid-cols-3 gap-2 mt-4 text-xs">
-          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3"><p class="text-gray-500 font-bold">目的</p><p class="font-bold mt-1">${escapeHtml(purpose)}</p></div>
-          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3"><p class="text-gray-500 font-bold">目標</p><p class="font-bold mt-1">${escapeHtml(goal)}</p></div>
-          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3"><p class="text-gray-500 font-bold">不安</p><p class="font-bold mt-1">${escapeHtml(concern)}</p></div>
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3"><p class="text-slate-500 font-bold">目的</p><p class="font-bold mt-1">${escapeHtml(purpose)}</p></div>
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3"><p class="text-slate-500 font-bold">目標</p><p class="font-bold mt-1">${escapeHtml(goal)}</p></div>
+          <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3"><p class="text-slate-500 font-bold">不安</p><p class="font-bold mt-1">${escapeHtml(concern)}</p></div>
         </div>
 
         <div class="grid sm:grid-cols-4 gap-2 mt-4">
-          ${taskType === 'pending' ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-xs font-black">予約確定</button>` : `<button onclick="openNotificationModal('${escapeAttr(id)}', '${primaryType}')" class="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-xs font-black">LINE文面</button>`}
-          <button onclick="markOwnerTaskDone('${escapeAttr(id)}')" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 py-3 rounded-2xl text-xs font-black">対応済み</button>
-          <button onclick="setFollowAfterDays('${escapeAttr(id)}', 3)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">3日後</button>
-          <button onclick="setFollowAfterDays('${escapeAttr(id)}', 7)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">7日後</button>
+          ${taskType === 'pending' ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-2xl text-xs font-black">予約確定</button>` : `<button onclick="openNotificationModal('${escapeAttr(id)}', '${primaryType}')" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-xs font-black">LINE文面</button>`}
+          <button onclick="markOwnerTaskDone('${escapeAttr(id)}')" class="bg-gray-800 hover:bg-gray-700 border border-slate-300 text-slate-700 py-3 rounded-2xl text-xs font-black">対応済み</button>
+          <button onclick="setFollowAfterDays('${escapeAttr(id)}', 3)" class="bg-slate-50 hover:bg-white border border-slate-200 text-gray-300 py-3 rounded-2xl text-xs font-bold">3日後</button>
+          <button onclick="setFollowAfterDays('${escapeAttr(id)}', 7)" class="bg-slate-50 hover:bg-white border border-slate-200 text-gray-300 py-3 rounded-2xl text-xs font-bold">7日後</button>
         </div>
       </div>
     `;
@@ -1466,16 +1468,16 @@
     const purpose = row.purpose || '目的未入力';
     const concern = row.status || '不安未入力';
     const button = mode === 'pending'
-      ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black px-3 py-2 rounded-xl text-xs font-black shrink-0">確定</button>`
-      : `<button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-300 px-3 py-2 rounded-xl text-xs font-black shrink-0">文面</button>`;
+      ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-2 rounded-xl text-xs font-black shrink-0">確定</button>`
+      : `<button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-white hover:bg-slate-100 border border-slate-200 text-yellow-300 px-3 py-2 rounded-xl text-xs font-black shrink-0">文面</button>`;
 
     return `
-      <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-3 text-sm">
+      <div class="bg-white/80 border border-slate-200 rounded-2xl p-3 text-sm">
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
-            <p class="font-black text-yellow-400 truncate">${escapeHtml(name)}</p>
-            <p class="text-xs text-gray-500 mt-1">${escapeHtml(date)}</p>
-            <p class="text-xs text-gray-400 mt-2 line-clamp-2">${escapeHtml(purpose)} / ${escapeHtml(concern)}</p>
+            <p class="font-black text-blue-700 truncate">${escapeHtml(name)}</p>
+            <p class="text-xs text-slate-500 mt-1">${escapeHtml(date)}</p>
+            <p class="text-xs text-slate-500 mt-2 line-clamp-2">${escapeHtml(purpose)} / ${escapeHtml(concern)}</p>
           </div>
           ${button}
         </div>
@@ -1484,7 +1486,7 @@
   }
 
   function emptyMiniState(text) {
-    return `<div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 text-sm text-gray-500">${escapeHtml(text)}</div>`;
+    return `<div class="bg-white/60 border border-slate-200 rounded-2xl p-4 text-sm text-slate-500">${escapeHtml(text)}</div>`;
   }
 
   function recommendedMessageType(row, taskType) {
@@ -1634,14 +1636,14 @@
     document.getElementById('todoList').innerHTML = items.map(item => `
       <button
         onclick="filterMode('${item.filter}')"
-        class="text-left bg-gray-950 hover:bg-gray-900 border border-gray-800 hover:border-yellow-500/50 rounded-2xl p-4 transition"
+        class="text-left bg-slate-50 hover:bg-white border border-slate-200 hover:border-yellow-500/50 rounded-2xl p-4 transition"
       >
         <div class="flex items-center justify-between">
           <span class="text-2xl">${item.icon}</span>
-          <span class="text-2xl font-black text-yellow-400">${item.count}</span>
+          <span class="text-2xl font-black text-blue-700">${item.count}</span>
         </div>
         <p class="font-black mt-3">${item.title}</p>
-        <p class="text-xs text-gray-500 mt-1">${item.text}</p>
+        <p class="text-xs text-slate-500 mt-1">${item.text}</p>
       </button>
     `).join('');
   }
@@ -1651,7 +1653,7 @@
 
     if (!rows.length) {
       container.innerHTML = `
-        <div class="col-span-full text-center py-16 text-gray-500 border-2 border-dashed border-gray-800 rounded-3xl bg-gray-900/30">
+        <div class="col-span-full text-center py-16 text-slate-500 border-2 border-dashed border-slate-200 rounded-3xl bg-white/30">
           📭 条件に一致する予約・会員データはありません。
         </div>
       `;
@@ -1686,7 +1688,7 @@
       ? 'border-red-500/70'
       : count === 1
         ? 'border-yellow-500/60'
-        : 'border-gray-800';
+        : 'border-slate-200';
 
     return `
       <article class="card-bg border ${cardBorder} hover:border-yellow-500/50 rounded-3xl p-5 fade-in transition flex flex-col gap-4">
@@ -1694,51 +1696,51 @@
         <div class="flex items-start justify-between gap-3">
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <h3 class="text-xl font-black text-yellow-400 truncate">${escapeHtml(name)}</h3>
+              <h3 class="text-xl font-black text-blue-700 truncate">${escapeHtml(name)}</h3>
               ${memberStatusBadge(memberStatus)}
             </div>
-            <p class="text-xs text-gray-500 mt-1">${escapeHtml(nextAction)}</p>
+            <p class="text-xs text-slate-500 mt-1">${escapeHtml(nextAction)}</p>
           </div>
           ${reservationStatusBadge(reservationStatus)}
         </div>
 
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3 text-sm">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3 text-sm">
           <div class="flex gap-3">
-            <span class="text-gray-500 w-20 shrink-0">日時</span>
+            <span class="text-slate-500 w-20 shrink-0">日時</span>
             <strong class="text-white">${escapeHtml(date)}</strong>
           </div>
 
           <div class="flex gap-3">
-            <span class="text-gray-500 w-20 shrink-0">目的</span>
+            <span class="text-slate-500 w-20 shrink-0">目的</span>
             <span>${escapeHtml(purpose)}</span>
           </div>
 
           <div class="flex gap-3">
-            <span class="text-gray-500 w-20 shrink-0">目標</span>
+            <span class="text-slate-500 w-20 shrink-0">目標</span>
             <span>${escapeHtml(goal)}</span>
           </div>
 
           <div class="flex gap-3">
-            <span class="text-gray-500 w-20 shrink-0">悩み</span>
+            <span class="text-slate-500 w-20 shrink-0">悩み</span>
             <span>${escapeHtml(concern)}</span>
           </div>
 
           <div class="flex gap-3">
-            <span class="text-gray-500 w-20 shrink-0">最終来店</span>
+            <span class="text-slate-500 w-20 shrink-0">最終来店</span>
             <span>${escapeHtml(lastVisit)}</span>
           </div>
 
           <div class="flex gap-3">
-            <span class="text-gray-500 w-20 shrink-0">来店回数</span>
+            <span class="text-slate-500 w-20 shrink-0">来店回数</span>
             <span>${visitCount}回</span>
           </div>
         </div>
 
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 flex items-center justify-between">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p class="text-xs text-gray-500 font-bold">残り回数</p>
-            <p class="text-3xl font-black ${count <= 0 ? 'text-red-400' : 'text-yellow-400'}">
-              ${count}<span class="text-sm text-gray-500 ml-1">回</span>
+            <p class="text-xs text-slate-500 font-bold">残り回数</p>
+            <p class="text-3xl font-black ${count <= 0 ? 'text-red-400' : 'text-blue-700'}">
+              ${count}<span class="text-sm text-slate-500 ml-1">回</span>
             </p>
           </div>
 
@@ -1749,11 +1751,11 @@
         </div>
 
         <div class="grid grid-cols-2 gap-2">
-          <button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-sm font-black">
+          <button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-2xl text-sm font-black">
             OK 承認
           </button>
 
-          <button onclick="markVisited('${escapeAttr(id)}', ${count}, ${visitCount})" class="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-sm font-black">
+          <button onclick="markVisited('${escapeAttr(id)}', ${count}, ${visitCount})" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-sm font-black">
             来店済み
           </button>
         </div>
@@ -1763,13 +1765,13 @@
             再調整
           </button>
 
-          <button onclick="copyName('${escapeAttr(name)}')" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300">
+          <button onclick="copyName('${escapeAttr(name)}')" class="bg-white hover:bg-slate-100 border border-slate-200 py-3 rounded-2xl text-sm font-bold text-gray-300">
             名前をコピー
           </button>
         </div>
 
-        <div class="bg-gray-950 border border-yellow-500/20 rounded-2xl p-4 space-y-3">
-          <p class="text-sm font-black text-yellow-400">LINE案内文を作成</p>
+        <div class="bg-slate-50 border border-yellow-500/20 rounded-2xl p-4 space-y-3">
+          <p class="text-sm font-black text-blue-700">LINE案内文を作成</p>
 
           <div class="grid grid-cols-2 gap-2">
             <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 py-3 rounded-2xl text-xs font-black">
@@ -1798,56 +1800,56 @@
           </div>
         </div>
 
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs text-gray-500 font-bold mb-1">会員ステータス</label>
-              <select id="member-${sid}" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
+              <label class="block text-xs text-slate-500 font-bold mb-1">会員ステータス</label>
+              <select id="member-${sid}" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
                 ${optionHtml(['体験予約', '入会済', '継続提案', '休眠', '退会'], memberStatus)}
               </select>
             </div>
 
             <div>
-              <label class="block text-xs text-gray-500 font-bold mb-1">フォロー状態</label>
-              <select id="follow-${sid}" class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
+              <label class="block text-xs text-slate-500 font-bold mb-1">フォロー状態</label>
+              <select id="follow-${sid}" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500">
                 ${optionHtml(['未対応', '要連絡', 'フォロー中', '完了'], followStatus)}
               </select>
             </div>
           </div>
 
           <div>
-            <label class="block text-xs text-gray-500 font-bold mb-1">次回フォロー日</label>
+            <label class="block text-xs text-slate-500 font-bold mb-1">次回フォロー日</label>
             <input
               id="next-follow-${sid}"
               type="date"
               value="${escapeHtml(nextFollow)}"
-              class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
             >
           </div>
 
           <div>
-            <label class="block text-xs text-gray-500 font-bold mb-1">オーナーメモ</label>
+            <label class="block text-xs text-slate-500 font-bold mb-1">オーナーメモ</label>
             <textarea
               id="memo-${sid}"
               rows="3"
               placeholder="接客内容・注意点・次回提案など"
-              class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
+              class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-yellow-500"
             >${escapeHtml(ownerMemo)}</textarea>
           </div>
 
-          <button onclick="saveManagement('${escapeAttr(id)}', '${sid}')" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-sm font-black">
+          <button onclick="saveManagement('${escapeAttr(id)}', '${sid}')" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-sm font-black">
             管理情報を保存
           </button>
         </div>
 
-        <div class="bg-gray-950 border border-gray-800 rounded-2xl p-4 space-y-3">
-          <label class="block text-xs text-gray-500 font-bold">キャンセル・再調整理由</label>
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+          <label class="block text-xs text-slate-500 font-bold">キャンセル・再調整理由</label>
 
           <textarea
             id="cancel-${sid}"
             rows="2"
             placeholder="例：都合が合わない、別日希望など"
-            class="w-full bg-gray-900 border border-gray-800 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-red-500"
+            class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-red-500"
           >${escapeHtml(cancelReason)}</textarea>
 
           <button onclick="saveCancelReason('${escapeAttr(id)}', '${sid}')" class="w-full bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-sm font-black">
@@ -1858,7 +1860,7 @@
         <a
           href="https://manager.line.biz/"
           target="_blank"
-          class="block text-center bg-gray-900 hover:bg-gray-800 border border-gray-800 py-3 rounded-2xl text-sm font-bold text-gray-300"
+          class="block text-center bg-white hover:bg-slate-100 border border-slate-200 py-3 rounded-2xl text-sm font-bold text-gray-300"
         >
           LINE管理画面を開く
         </a>
@@ -1869,14 +1871,14 @@
 
   function reservationStatusBadge(status) {
     if (status === 'confirmed') {
-      return '<span class="bg-green-500 text-black text-xs font-black px-3 py-1 rounded-full shrink-0">確定</span>';
+      return '<span class="bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full shrink-0">確定</span>';
     }
 
     if (status === 'cancelled') {
       return '<span class="bg-red-500 text-white text-xs font-black px-3 py-1 rounded-full shrink-0">再調整</span>';
     }
 
-    return '<span class="bg-yellow-500 text-black text-xs font-black px-3 py-1 rounded-full shrink-0">承認待ち</span>';
+    return '<span class="bg-blue-600 text-white text-xs font-black px-3 py-1 rounded-full shrink-0">承認待ち</span>';
   }
 
   function memberStatusBadge(status) {
