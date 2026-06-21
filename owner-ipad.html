@@ -853,10 +853,23 @@
               <p>${badge}｜${escapeHtml(formatDateTime(row.preferred_datetime) || '日時未設定')}</p>
               <p>${escapeHtml(row.purpose || '目的未入力')} / ${escapeHtml(row.status || '不安未入力')}</p>
             </div>
-            ${actionButton}
+            <div style="display:flex; flex-direction:column; gap:8px; flex-shrink:0;">
+              ${actionButton}
+              <a class="btn btn-ghost" href="${escapeHtml(buildMemberPageUrl(row))}" target="_blank">会員証</a>
+            </div>
           </div>
         `;
       }).join('');
+    }
+
+
+    function buildMemberPageUrl(row) {
+      const params = new URLSearchParams();
+      if (row && row.id) params.set('profile_id', String(row.id));
+      if (row && row.line_user_id) params.set('uid', String(row.line_user_id));
+      if (row && row.display_name) params.set('name', String(row.display_name));
+      const query = params.toString();
+      return `member.html${query ? '?' + query : ''}`;
     }
 
     function buildActionCard(row, taskType) {
@@ -891,6 +904,7 @@
 
           <div class="card-actions">
             ${primaryButton}
+            <a class="btn btn-ghost" href="${escapeHtml(buildMemberPageUrl(row))}" target="_blank">会員証</a>
             <button class="btn btn-dark" onclick="markDone('${escapeAttr(row.id)}')">対応済み</button>
             <button class="btn btn-orange" onclick="setFollow('${escapeAttr(row.id)}', 3)">3日後</button>
             <button class="btn btn-purple" onclick="setFollow('${escapeAttr(row.id)}', 7)">7日後</button>
