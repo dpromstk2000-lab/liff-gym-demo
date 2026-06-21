@@ -426,14 +426,20 @@
   const MY_LIFF_ID = '2010341851-Qez3SffP';
   const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
+
+  // PC / iPad / LINE外ブラウザで確認する時も、demo-user ではなく
+  // 岩口さんのLINEユーザーIDを使って、スマホLINE内と同じ会員データを見ます。
+  const PC_DEMO_LINE_USER_ID = 'U09f3a54d1f41575fe6f6968e7b17a075';
+  const PC_DEMO_DISPLAY_NAME = '体験 山田';
+
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const state = {
     step: 0,
-    displayName: '体験 山田',
+    displayName: PC_DEMO_DISPLAY_NAME,
     lineDisplayName: '',
-    customerName: '体験 山田',
-    userId: 'demo-user',
+    customerName: PC_DEMO_DISPLAY_NAME,
+    userId: PC_DEMO_LINE_USER_ID,
     existingData: null,
     savedProfileId: '',
     isSkippingQuestionnaire: false,
@@ -479,16 +485,18 @@
         state.lineDisplayName = lineName;
         state.displayName = lineName || 'ゲスト様';
         state.customerName = lineName || state.customerName || 'ゲスト様';
-        state.userId = profile.userId || 'demo-user';
+        state.userId = profile.userId || PC_DEMO_LINE_USER_ID;
       }
 
       if (!liff.isInClient()) {
-        showNotice('LINEアプリ外で表示中のため、デモ用のお名前で動作します。LINE内ではLINE名を自動取得します。');
+        state.userId = state.userId || PC_DEMO_LINE_USER_ID;
+        showNotice('PC / iPad確認用として、岩口さんのLINEアカウントIDで動作しています。スマホLINE内と同じ会員データを確認できます。');
       }
 
     } catch (e) {
       console.warn('LIFF demo mode:', e);
-      showNotice('LIFF初期化に失敗しました。デモ表示として続行します。');
+      state.userId = PC_DEMO_LINE_USER_ID;
+      showNotice('LIFF初期化に失敗しました。PC確認用として岩口さんのLINEアカウントIDで続行します。');
     }
 
     syncNameInput();
@@ -497,6 +505,12 @@
 
   function cleanName(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
+  }
+
+  function normalizeLineUserId(value) {
+    const id = String(value || '').trim();
+    if (!id || id === 'demo-user') return PC_DEMO_LINE_USER_ID;
+    return id;
   }
 
   function isDemoLikeName(value) {
@@ -550,8 +564,8 @@
 
   async function syncProfileDisplayNameIfNeeded(data) {
     if (!data || !data.id) return;
-    if (!state.userId || state.userId === 'demo-user') return;
-    if (data.line_user_id !== state.userId) return;
+    if (!state.userId) return;
+    if (data.line_user_id !== normalizeLineUserId(state.userId)) return;
 
     const dbName = cleanName(data.display_name);
     const lineName = cleanName(state.lineDisplayName || state.displayName);
@@ -575,7 +589,7 @@
     let response = await sbClient
       .from('gym_profiles')
       .select('*')
-      .eq('line_user_id', state.userId)
+      .eq('line_user_id', normalizeLineUserId(state.userId))
       .order('updated_at', { ascending: false })
       .limit(1);
 
@@ -586,7 +600,7 @@
         response = await sbClient
           .from('gym_profiles')
           .select('*')
-          .eq('line_user_id', state.userId)
+          .eq('line_user_id', normalizeLineUserId(state.userId))
           .order('created_at', { ascending: false })
           .limit(1);
       }
@@ -611,7 +625,7 @@
     const dbName = cleanName(profile.display_name);
     if (dbName && !isDemoLikeName(dbName)) {
       state.customerName = dbName;
-    } else if (state.userId !== 'demo-user' && cleanName(state.lineDisplayName)) {
+    } else if (normalizeLineUserId(state.userId) && cleanName(state.lineDisplayName)) {
       state.customerName = cleanName(state.lineDisplayName);
       await syncProfileDisplayNameIfNeeded(profile);
     } else if (dbName) {
@@ -1031,7 +1045,7 @@
     }
 
     data.forEach(row => {
-      if (row.line_user_id === state.userId) return;
+      if (row.line_user_id === normalizeLineUserId(state.userId)) return;
 
       const reservationStatus = row.reservation_status || 'pending';
 
@@ -1174,7 +1188,7 @@
       } else {
         const insertPayload = {
           ...basePayload,
-          line_user_id: state.userId,
+          line_user_id: normalizeLineUserId(state.userId),
           member_status: '体験予約',
           remaining_count: 0,
           visit_count: 0
@@ -1286,8 +1300,9 @@ ${customerName}様、予約を受け付けました。
       url.searchParams.set('profile_id', state.savedProfileId || state.existingData.id);
     }
 
-    if (state.userId) {
-      url.searchParams.set('uid', state.userId);
+    const memberUserId = normalizeLineUserId(state.userId);
+    if (memberUserId) {
+      url.searchParams.set('uid', memberUserId);
     }
 
     if (name) {
@@ -1310,7 +1325,7 @@ ${customerName}様、予約を受け付けました。
     try {
       const payload = {
         profile_id: profile && profile.id ? profile.id : (state.savedProfileId || ''),
-        line_user_id: profile && profile.line_user_id ? profile.line_user_id : state.userId,
+        line_user_id: profile && profile.line_user_id ? normalizeLineUserId(profile.line_user_id) : normalizeLineUserId(state.userId),
         display_name: getCustomerName(),
         saved_at: Date.now()
       };
