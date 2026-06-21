@@ -1451,8 +1451,9 @@
           <div class="bg-slate-100 border border-slate-300 rounded-2xl p-3"><p class="text-slate-500 font-bold">不安</p><p class="font-bold mt-1">${escapeHtml(concern)}</p></div>
         </div>
 
-        <div class="grid sm:grid-cols-4 gap-2 mt-4">
+        <div class="grid sm:grid-cols-5 gap-2 mt-4">
           ${taskType === 'pending' ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-emerald-500 hover:bg-emerald-400 text-white py-3 rounded-2xl text-xs font-black">予約確定</button>` : `<button onclick="openNotificationModal('${escapeAttr(id)}', '${primaryType}')" class="bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-2xl text-xs font-black">LINE文面</button>`}
+          <a href="${escapeHtml(buildMemberPageUrl(row))}" target="_blank" class="block text-center bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 py-3 rounded-2xl text-xs font-black">会員証</a>
           <button onclick="markOwnerTaskDone('${escapeAttr(id)}')" class="bg-slate-200 hover:bg-slate-300 border border-slate-300 text-slate-700 py-3 rounded-2xl text-xs font-black">対応済み</button>
           <button onclick="setFollowAfterDays('${escapeAttr(id)}', 3)" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-600 py-3 rounded-2xl text-xs font-bold">3日後</button>
           <button onclick="setFollowAfterDays('${escapeAttr(id)}', 7)" class="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-600 py-3 rounded-2xl text-xs font-bold">7日後</button>
@@ -1469,7 +1470,7 @@
     const concern = row.status || '不安未入力';
     const button = mode === 'pending'
       ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-2 rounded-xl text-xs font-black shrink-0">確定</button>`
-      : `<button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-white hover:bg-slate-100 border border-slate-300 text-yellow-300 px-3 py-2 rounded-xl text-xs font-black shrink-0">文面</button>`;
+      : `<button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-white hover:bg-slate-100 border border-slate-300 text-blue-700 px-3 py-2 rounded-xl text-xs font-black shrink-0">文面</button>`;
 
     return `
       <div class="bg-white/80 border border-slate-300 rounded-2xl p-3 text-sm">
@@ -1479,7 +1480,10 @@
             <p class="text-xs text-slate-500 mt-1">${escapeHtml(date)}</p>
             <p class="text-xs text-slate-500 mt-2 line-clamp-2">${escapeHtml(purpose)} / ${escapeHtml(concern)}</p>
           </div>
-          ${button}
+          <div class="flex flex-col gap-2 shrink-0">
+            ${button}
+            <a href="${escapeHtml(buildMemberPageUrl(row))}" target="_blank" class="block text-center bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 px-3 py-2 rounded-xl text-xs font-black">会員証</a>
+          </div>
         </div>
       </div>
     `;
@@ -1487,6 +1491,19 @@
 
   function emptyMiniState(text) {
     return `<div class="bg-white/60 border border-slate-300 rounded-2xl p-4 text-sm text-slate-500">${escapeHtml(text)}</div>`;
+  }
+
+
+  function buildMemberPageUrl(row) {
+    const profileId = row && row.id ? String(row.id) : '';
+    const uid = row && row.line_user_id ? String(row.line_user_id) : '';
+    const name = row && row.display_name ? String(row.display_name) : '';
+    const params = new URLSearchParams();
+    if (profileId) params.set('profile_id', profileId);
+    if (uid) params.set('uid', uid);
+    if (name) params.set('name', name);
+    const query = params.toString();
+    return `member.html${query ? '?' + query : ''}`;
   }
 
   function recommendedMessageType(row, taskType) {
@@ -1707,7 +1724,7 @@
         <div class="bg-slate-100 border border-slate-300 rounded-2xl p-4 space-y-3 text-sm">
           <div class="flex gap-3">
             <span class="text-slate-500 w-20 shrink-0">日時</span>
-            <strong class="text-white">${escapeHtml(date)}</strong>
+            <strong class="text-slate-900">${escapeHtml(date)}</strong>
           </div>
 
           <div class="flex gap-3">
@@ -1774,19 +1791,19 @@
           <p class="text-sm font-black text-blue-700">LINE案内文を作成</p>
 
           <div class="grid grid-cols-2 gap-2">
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 py-3 rounded-2xl text-xs font-black">
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-700 py-3 rounded-2xl text-xs font-black">
               体験前確認
             </button>
 
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_after')" class="bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 py-3 rounded-2xl text-xs font-black">
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_after')" class="bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-700 py-3 rounded-2xl text-xs font-black">
               体験後お礼
             </button>
 
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'join_offer')" class="bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-300 py-3 rounded-2xl text-xs font-black">
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'join_offer')" class="bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-700 py-3 rounded-2xl text-xs font-black">
               入会案内
             </button>
 
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'continuation')" class="bg-yellow-500/15 hover:bg-yellow-500/25 border border-blue-300/40 text-yellow-300 py-3 rounded-2xl text-xs font-black">
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'continuation')" class="bg-yellow-500/15 hover:bg-yellow-500/25 border border-blue-300/40 text-amber-700 py-3 rounded-2xl text-xs font-black">
               継続提案
             </button>
 
@@ -1794,7 +1811,7 @@
               前日確認
             </button>
 
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'sleeping_follow')" class="bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 py-3 rounded-2xl text-xs font-black">
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'sleeping_follow')" class="bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-700 py-3 rounded-2xl text-xs font-black">
               休眠フォロー
             </button>
           </div>
@@ -1857,13 +1874,23 @@
           </button>
         </div>
 
-        <a
-          href="https://manager.line.biz/"
-          target="_blank"
-          class="block text-center bg-white hover:bg-slate-100 border border-slate-300 py-3 rounded-2xl text-sm font-bold text-slate-500"
-        >
-          LINE管理画面を開く
-        </a>
+        <div class="grid grid-cols-2 gap-2">
+          <a
+            href="${escapeHtml(buildMemberPageUrl(row))}"
+            target="_blank"
+            class="block text-center bg-blue-50 hover:bg-blue-100 border border-blue-200 py-3 rounded-2xl text-sm font-black text-blue-700"
+          >
+            会員証を確認
+          </a>
+
+          <a
+            href="https://manager.line.biz/"
+            target="_blank"
+            class="block text-center bg-white hover:bg-slate-100 border border-slate-300 py-3 rounded-2xl text-sm font-bold text-slate-500"
+          >
+            LINE管理画面
+          </a>
+        </div>
 
       </article>
     `;
@@ -1883,11 +1910,11 @@
 
   function memberStatusBadge(status) {
     if (status === '入会済') {
-      return '<span class="bg-blue-500/20 text-blue-300 border border-blue-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">入会済</span>';
+      return '<span class="bg-blue-500/20 text-blue-700 border border-blue-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">入会済</span>';
     }
 
     if (status === '継続提案') {
-      return '<span class="bg-yellow-500/20 text-yellow-300 border border-blue-300/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">継続提案</span>';
+      return '<span class="bg-yellow-500/20 text-amber-700 border border-blue-300/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">継続提案</span>';
     }
 
     if (status === '休眠') {
@@ -1895,10 +1922,10 @@
     }
 
     if (status === '退会') {
-      return '<span class="bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">退会</span>';
+      return '<span class="bg-red-500/20 text-red-700 border border-red-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">退会</span>';
     }
 
-    return '<span class="bg-green-500/20 text-green-300 border border-green-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">体験</span>';
+    return '<span class="bg-green-500/20 text-green-700 border border-green-500/40 text-[10px] font-black px-2 py-1 rounded-full shrink-0">体験</span>';
   }
 
   function getNextAction(row) {
