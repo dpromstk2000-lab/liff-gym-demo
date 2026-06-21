@@ -35,6 +35,20 @@
       background: rgba(0,0,0,.78);
       backdrop-filter: blur(8px);
     }
+
+    .soft-card {
+      background: radial-gradient(circle at top left, rgba(250,204,21,.12), rgba(17,24,39,.98) 42%, rgba(3,7,18,.98));
+    }
+
+    .scroll-thin::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+
+    .scroll-thin::-webkit-scrollbar-thumb {
+      background: rgba(107,114,128,.45);
+      border-radius: 999px;
+    }
   </style>
 </head>
 
@@ -45,7 +59,7 @@
       <div>
         <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DPRO GYM</p>
         <h1 class="text-2xl font-black mt-1">オーナーダッシュボード</h1>
-        <p class="text-xs text-gray-400 mt-1">予約・会員・回数・フォロー・対応履歴管理</p>
+        <p class="text-xs text-gray-400 mt-1">今日の接客・体験フォロー・継続案内を迷わず進める画面</p>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-2">
@@ -90,6 +104,70 @@
   </header>
 
   <main class="max-w-7xl mx-auto px-4 md:px-6 py-6 space-y-6">
+
+    <!-- STEP GYM-1-9：今日やること中心ダッシュボード -->
+    <section class="soft-card border border-yellow-500/30 rounded-[2rem] p-4 md:p-6 space-y-5 shadow-2xl shadow-yellow-500/5">
+      <div class="flex flex-col xl:flex-row xl:items-end justify-between gap-4">
+        <div>
+          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">TODAY'S WORK</p>
+          <h2 class="text-2xl md:text-3xl font-black mt-2">今日やること</h2>
+          <p id="dailyCockpitSummary" class="text-sm text-gray-400 mt-2 leading-relaxed">本日の接客・承認待ち・フォロー対象を読み込み中...</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 shrink-0">
+          <button
+            onclick="setToday()"
+            class="bg-gray-900 hover:bg-gray-800 border border-gray-700 text-gray-200 font-bold px-4 py-3 rounded-2xl text-sm transition"
+          >
+            今日を見る
+          </button>
+          <button
+            onclick="fetchReservations(); fetchInteractionHistory();"
+            class="bg-yellow-500 hover:bg-yellow-400 text-black font-black px-5 py-3 rounded-2xl text-sm transition shadow-lg shadow-yellow-500/10"
+          >
+            最新情報に更新
+          </button>
+        </div>
+      </div>
+
+      <div id="dailyActionStats" class="grid grid-cols-2 lg:grid-cols-5 gap-3"></div>
+
+      <div class="grid xl:grid-cols-[1.2fr_.8fr] gap-4">
+        <div class="bg-gray-950/80 border border-gray-800 rounded-3xl p-4 md:p-5">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 class="font-black text-lg">優先対応カード</h3>
+              <p class="text-xs text-gray-500 mt-1">上から順に対応すれば、予約承認・体験前後・継続案内の抜けを防げます。</p>
+            </div>
+          </div>
+          <div id="ownerActionList" class="space-y-3"></div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="bg-gray-950/80 border border-gray-800 rounded-3xl p-4 md:p-5">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 class="font-black">本日の予約</h3>
+                <p class="text-xs text-gray-500 mt-1">来店前に目的・不安を確認</p>
+              </div>
+              <button onclick="filterMode('all'); setToday();" class="text-xs font-black text-yellow-400 hover:text-yellow-300">一覧へ</button>
+            </div>
+            <div id="todayReservationList" class="space-y-2"></div>
+          </div>
+
+          <div class="bg-gray-950/80 border border-gray-800 rounded-3xl p-4 md:p-5">
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 class="font-black">承認待ち</h3>
+                <p class="text-xs text-gray-500 mt-1">見落とすと機会損失になりやすい予約</p>
+              </div>
+              <button onclick="filterMode('pending')" class="text-xs font-black text-yellow-400 hover:text-yellow-300">一覧へ</button>
+            </div>
+            <div id="pendingReservationList" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <!-- メトリクス -->
     <section class="grid grid-cols-2 lg:grid-cols-6 gap-3 md:gap-4">
@@ -296,8 +374,8 @@
     <section class="card-bg border border-gray-800 rounded-3xl p-4 md:p-5">
       <div class="flex items-center justify-between gap-4 mb-4">
         <div>
-          <h2 class="text-lg font-black">今日の対応</h2>
-          <p id="todoSummary" class="text-sm text-gray-400 mt-1">読み込み中...</p>
+          <h2 class="text-lg font-black">クイック分類</h2>
+          <p id="todoSummary" class="text-sm text-gray-400 mt-1">数字を押すと対象だけに絞り込めます。</p>
         </div>
       </div>
 
@@ -1169,6 +1247,7 @@
     });
 
     renderMetrics();
+    renderDailyCockpit();
     renderTodo();
     renderCards(filtered);
   }
@@ -1193,6 +1272,314 @@
     document.getElementById('metricSelected').textContent = selectedCount;
     document.getElementById('metricLowCount').textContent = lowCount;
     document.getElementById('metricFollow').textContent = followCount;
+  }
+
+  function renderDailyCockpit() {
+    const today = todayString();
+
+    const todayVisits = allReservations
+      .filter(r => (r.preferred_datetime || '').includes(today))
+      .sort(sortByPreferredDatetime);
+
+    const pending = allReservations
+      .filter(r => (r.reservation_status || 'pending') === 'pending')
+      .sort(sortByPreferredDatetime);
+
+    const followDue = allReservations
+      .filter(isFollowDue)
+      .sort(sortByPriority);
+
+    const lowCount = allReservations
+      .filter(r => Number(r.remaining_count || 0) <= 1 && (r.follow_status || '未対応') !== '完了')
+      .sort(sortByPriority);
+
+    const trialLeads = allReservations
+      .filter(r => (r.member_status || '体験予約') === '体験予約' && (r.follow_status || '未対応') !== '完了')
+      .sort(sortByPreferredDatetime);
+
+    const actionCandidates = uniqueRows([
+      ...pending.map(r => ({ row: r, taskType: 'pending' })),
+      ...todayVisits
+        .filter(r => !((r.last_visit_date || '') === today))
+        .map(r => ({ row: r, taskType: 'today_visit' })),
+      ...lowCount.map(r => ({ row: r, taskType: 'low_count' })),
+      ...followDue.map(r => ({ row: r, taskType: 'follow_due' })),
+      ...trialLeads.map(r => ({ row: r, taskType: 'trial_lead' }))
+    ]).slice(0, 6);
+
+    const summary = document.getElementById('dailyCockpitSummary');
+    if (summary) {
+      summary.textContent = `本日予約 ${todayVisits.length}件・承認待ち ${pending.length}件・フォロー予定 ${followDue.length}件・残り1回以下 ${lowCount.length}名。上から順に対応できます。`;
+    }
+
+    const stats = document.getElementById('dailyActionStats');
+    if (stats) {
+      const statItems = [
+        { label: '本日の予約', value: todayVisits.length, hint: '来店準備', icon: '📅', filter: 'all' },
+        { label: '承認待ち', value: pending.length, hint: '予約確定', icon: '✅', filter: 'pending' },
+        { label: '体験見込み', value: trialLeads.length, hint: '入会前フォロー', icon: '🔥', filter: 'trial' },
+        { label: '残り1回以下', value: lowCount.length, hint: '継続案内', icon: '🔁', filter: 'low' },
+        { label: 'フォロー予定', value: followDue.length, hint: '今日連絡', icon: '💬', filter: 'follow' }
+      ];
+
+      stats.innerHTML = statItems.map(item => `
+        <button onclick="filterMode('${item.filter}')" class="text-left bg-gray-950/80 hover:bg-gray-900 border border-gray-800 hover:border-yellow-500/50 rounded-3xl p-4 transition">
+          <div class="flex items-center justify-between gap-3">
+            <span class="text-2xl">${item.icon}</span>
+            <span class="text-3xl font-black text-yellow-400">${item.value}</span>
+          </div>
+          <p class="font-black mt-3">${item.label}</p>
+          <p class="text-xs text-gray-500 mt-1">${item.hint}</p>
+        </button>
+      `).join('');
+    }
+
+    const actionList = document.getElementById('ownerActionList');
+    if (actionList) {
+      actionList.innerHTML = actionCandidates.length
+        ? actionCandidates.map(item => buildOwnerActionCard(item.row, item.taskType)).join('')
+        : emptyMiniState('今日の優先対応はありません。予約・フォローが入るとここに表示されます。');
+    }
+
+    const todayList = document.getElementById('todayReservationList');
+    if (todayList) {
+      todayList.innerHTML = todayVisits.length
+        ? todayVisits.slice(0, 4).map(row => buildCompactReservationRow(row, 'today')).join('')
+        : emptyMiniState('本日の予約はありません。');
+    }
+
+    const pendingList = document.getElementById('pendingReservationList');
+    if (pendingList) {
+      pendingList.innerHTML = pending.length
+        ? pending.slice(0, 4).map(row => buildCompactReservationRow(row, 'pending')).join('')
+        : emptyMiniState('承認待ちはありません。');
+    }
+  }
+
+  function uniqueRows(items) {
+    const seen = new Set();
+    const result = [];
+    for (const item of items) {
+      const key = String(item.row.id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      result.push(item);
+    }
+    return result;
+  }
+
+  function sortByPreferredDatetime(a, b) {
+    return String(a.preferred_datetime || '').localeCompare(String(b.preferred_datetime || ''));
+  }
+
+  function sortByPriority(a, b) {
+    const score = row => {
+      const count = Number(row.remaining_count || 0);
+      const status = row.reservation_status || 'pending';
+      if (status === 'pending') return 1;
+      if (count <= 0) return 2;
+      if (count === 1) return 3;
+      if (isFollowDue(row)) return 4;
+      return 9;
+    };
+    return score(a) - score(b) || sortByPreferredDatetime(a, b);
+  }
+
+  function isFollowDue(row) {
+    const today = todayString();
+    const follow = row.follow_status || '未対応';
+    if (follow === '完了') return false;
+    if (row.next_follow_date && row.next_follow_date <= today) return true;
+    if ((row.member_status || '体験予約') === '休眠') return true;
+    return false;
+  }
+
+  function taskLabel(taskType, row) {
+    const count = Number(row.remaining_count || 0);
+    if (taskType === 'pending') return { badge: '承認待ち', title: '予約を確定する', color: 'bg-yellow-500 text-black' };
+    if (taskType === 'today_visit') return { badge: '本日来店', title: '来店前に目的・不安を確認', color: 'bg-blue-500 text-white' };
+    if (taskType === 'low_count' && count <= 0) return { badge: '残り0回', title: '継続・回数追加を案内', color: 'bg-red-500 text-white' };
+    if (taskType === 'low_count') return { badge: '残り1回', title: '次回更新の声かけ', color: 'bg-orange-500 text-black' };
+    if (taskType === 'follow_due') return { badge: 'フォロー', title: 'LINEで状況確認', color: 'bg-green-500 text-black' };
+    return { badge: '体験見込み', title: '体験前の安心案内', color: 'bg-purple-500 text-white' };
+  }
+
+  function buildOwnerActionCard(row, taskType) {
+    const label = taskLabel(taskType, row);
+    const id = String(row.id);
+    const name = row.display_name || 'ゲスト様';
+    const date = formatDateTime(row.preferred_datetime) || '未設定';
+    const purpose = row.purpose || '未入力';
+    const goal = row.target_goal || '未入力';
+    const concern = row.status || '未入力';
+    const count = Number(row.remaining_count || 0);
+    const nextAction = getNextAction(row);
+    const primaryType = recommendedMessageType(row, taskType);
+
+    return `
+      <div class="bg-gray-900/80 border border-gray-800 hover:border-yellow-500/50 rounded-3xl p-4 transition">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="${label.color} text-[11px] font-black px-3 py-1 rounded-full">${escapeHtml(label.badge)}</span>
+              <h4 class="text-lg font-black text-yellow-400">${escapeHtml(name)}</h4>
+              <span class="text-xs text-gray-500">${escapeHtml(date)}</span>
+            </div>
+            <p class="text-sm font-bold mt-2">${escapeHtml(label.title)}</p>
+            <p class="text-xs text-gray-500 mt-1">${escapeHtml(nextAction)}</p>
+          </div>
+          <div class="text-right shrink-0">
+            <p class="text-xs text-gray-500 font-bold">残り</p>
+            <p class="text-2xl font-black ${count <= 0 ? 'text-red-400' : 'text-yellow-400'}">${count}<span class="text-xs text-gray-500">回</span></p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-2 mt-4 text-xs">
+          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3"><p class="text-gray-500 font-bold">目的</p><p class="font-bold mt-1">${escapeHtml(purpose)}</p></div>
+          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3"><p class="text-gray-500 font-bold">目標</p><p class="font-bold mt-1">${escapeHtml(goal)}</p></div>
+          <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3"><p class="text-gray-500 font-bold">不安</p><p class="font-bold mt-1">${escapeHtml(concern)}</p></div>
+        </div>
+
+        ${taskType === 'pending' ? `
+          <div class="grid sm:grid-cols-4 gap-2 mt-4">
+            <button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black py-3 rounded-2xl text-xs font-black">予約確定</button>
+            <button onclick="updateStatus('${escapeAttr(id)}', 'cancelled')" class="bg-red-500/90 hover:bg-red-500 text-white py-3 rounded-2xl text-xs font-black">再調整</button>
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-yellow-300 py-3 rounded-2xl text-xs font-black">体験前文面</button>
+            <button onclick="copyName('${escapeAttr(name)}')" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">名前コピー</button>
+          </div>
+        ` : `
+          <div class="grid sm:grid-cols-4 gap-2 mt-4">
+            <button onclick="openNotificationModal('${escapeAttr(id)}', '${primaryType}')" class="bg-yellow-500 hover:bg-yellow-400 text-black py-3 rounded-2xl text-xs font-black">LINE文面</button>
+            <button onclick="markOwnerTaskDone('${escapeAttr(id)}')" class="bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-200 py-3 rounded-2xl text-xs font-black">対応済み</button>
+            <button onclick="setFollowAfterDays('${escapeAttr(id)}', 3)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">3日後</button>
+            <button onclick="setFollowAfterDays('${escapeAttr(id)}', 7)" class="bg-gray-950 hover:bg-gray-900 border border-gray-800 text-gray-300 py-3 rounded-2xl text-xs font-bold">7日後</button>
+          </div>
+        `}
+      </div>
+    `;
+  }
+
+  function buildCompactReservationRow(row, mode) {
+    const id = String(row.id);
+    const name = row.display_name || 'ゲスト様';
+    const date = formatDateTime(row.preferred_datetime) || '未設定';
+    const purpose = row.purpose || '目的未入力';
+    const concern = row.status || '不安未入力';
+    const button = mode === 'pending'
+      ? `<button onclick="updateStatus('${escapeAttr(id)}', 'confirmed')" class="bg-green-500 hover:bg-green-400 text-black px-3 py-2 rounded-xl text-xs font-black shrink-0">確定</button>`
+      : `<button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-gray-900 hover:bg-gray-800 border border-gray-800 text-yellow-300 px-3 py-2 rounded-xl text-xs font-black shrink-0">文面</button>`;
+
+    return `
+      <div class="bg-gray-900/80 border border-gray-800 rounded-2xl p-3 text-sm">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="font-black text-yellow-400 truncate">${escapeHtml(name)}</p>
+            <p class="text-xs text-gray-500 mt-1">${escapeHtml(date)}</p>
+            <p class="text-xs text-gray-400 mt-2 line-clamp-2">${escapeHtml(purpose)} / ${escapeHtml(concern)}</p>
+          </div>
+          ${button}
+        </div>
+      </div>
+    `;
+  }
+
+  function emptyMiniState(text) {
+    return `<div class="bg-gray-900/60 border border-gray-800 rounded-2xl p-4 text-sm text-gray-500">${escapeHtml(text)}</div>`;
+  }
+
+  function recommendedMessageType(row, taskType) {
+    const memberStatus = row.member_status || '体験予約';
+    const count = Number(row.remaining_count || 0);
+    if (taskType === 'pending') return 'reservation_confirmed';
+    if (taskType === 'today_visit') return 'trial_before';
+    if (taskType === 'low_count' || count <= 1) return 'continuation';
+    if (memberStatus === '休眠') return 'sleeping_follow';
+    if (memberStatus === '体験予約') return 'trial_before';
+    return 'follow_up';
+  }
+
+  async function markOwnerTaskDone(id) {
+    const row = allReservations.find(item => String(item.id) === String(id));
+    const ok = confirm('対応済みにしますか？\n今日やること・フォロー対象から外れます。');
+    if (!ok) return;
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update({
+        follow_status: '完了',
+        next_follow_date: null,
+        owner_memo: appendMemo(row?.owner_memo, `対応済み：${todayString()}`)
+      })
+      .eq('id', id);
+
+    if (error) {
+      alert('対応済み処理に失敗しました: ' + error.message);
+      return;
+    }
+
+    if (row) {
+      await saveQuickInteractionHistory(row, 'task_done', '対応済み', `${row.display_name || 'お客様'}を対応済みにしました。`, 'done', '今日やることから対応済み');
+    }
+
+    await fetchReservations();
+    await fetchInteractionHistory();
+  }
+
+  async function setFollowAfterDays(id, days) {
+    const row = allReservations.find(item => String(item.id) === String(id));
+    const d = new Date();
+    d.setDate(d.getDate() + Number(days || 3));
+    const followDate = localDateString(d);
+
+    const { error } = await sbClient
+      .from('gym_profiles')
+      .update({
+        follow_status: 'フォロー中',
+        next_follow_date: followDate,
+        owner_memo: appendMemo(row?.owner_memo, `${days}日後フォロー：${followDate}`)
+      })
+      .eq('id', id);
+
+    if (error) {
+      alert('再フォロー設定に失敗しました: ' + error.message);
+      return;
+    }
+
+    if (row) {
+      await saveQuickInteractionHistory(row, 'follow_later', `${days}日後フォロー設定`, `${row.display_name || 'お客様'}を${followDate}に再フォロー予定にしました。`, 'scheduled', `${days}日後に再表示`);
+    }
+
+    await fetchReservations();
+    await fetchInteractionHistory();
+    alert(`${days}日後のフォローに設定しました。`);
+  }
+
+  function appendMemo(currentMemo, addition) {
+    const base = String(currentMemo || '').trim();
+    const add = String(addition || '').trim();
+    if (!base) return add;
+    if (base.includes(add)) return base;
+    return `${base}\n${add}`;
+  }
+
+  async function saveQuickInteractionHistory(row, type, title, body, status, note) {
+    const { error } = await sbClient
+      .from('dpro_gym_notification_logs')
+      .insert([{
+        profile_id: row.id,
+        line_user_id: row.line_user_id || null,
+        display_name: row.display_name || null,
+        notification_type: type,
+        title: title,
+        message_body: body,
+        send_method: 'owner_action',
+        send_status: status,
+        owner_note: note || null
+      }]);
+
+    if (error) {
+      console.warn('対応履歴の保存に失敗しました', error);
+    }
   }
 
   function renderTodo() {
@@ -1385,20 +1772,28 @@
           <p class="text-sm font-black text-yellow-400">LINE案内文を作成</p>
 
           <div class="grid grid-cols-2 gap-2">
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'reservation_confirmed')" class="bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 py-3 rounded-2xl text-xs font-black">
-              予約確定文
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_before')" class="bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 py-3 rounded-2xl text-xs font-black">
+              体験前確認
             </button>
 
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'reservation_cancelled')" class="bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 py-3 rounded-2xl text-xs font-black">
-              再調整文
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'trial_after')" class="bg-green-500/15 hover:bg-green-500/25 border border-green-500/40 text-green-300 py-3 rounded-2xl text-xs font-black">
+              体験後お礼
             </button>
 
-            <button onclick="openNotificationModal('${escapeAttr(id)}', 'reminder')" class="bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/40 text-blue-300 py-3 rounded-2xl text-xs font-black">
-              リマインド
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'join_offer')" class="bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 text-purple-300 py-3 rounded-2xl text-xs font-black">
+              入会案内
             </button>
 
             <button onclick="openNotificationModal('${escapeAttr(id)}', 'continuation')" class="bg-yellow-500/15 hover:bg-yellow-500/25 border border-yellow-500/40 text-yellow-300 py-3 rounded-2xl text-xs font-black">
               継続提案
+            </button>
+
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'reminder')" class="bg-gray-500/15 hover:bg-gray-500/25 border border-gray-500/40 text-gray-300 py-3 rounded-2xl text-xs font-black">
+              前日確認
+            </button>
+
+            <button onclick="openNotificationModal('${escapeAttr(id)}', 'sleeping_follow')" class="bg-red-500/15 hover:bg-red-500/25 border border-red-500/40 text-red-300 py-3 rounded-2xl text-xs font-black">
+              休眠フォロー
             </button>
           </div>
         </div>
@@ -1775,6 +2170,103 @@
     const goal = row.target_goal || '';
     const count = Number(row.remaining_count || 0);
 
+    const concern = row.status || '';
+    const memberStatus = row.member_status || '体験予約';
+
+    if (type === 'trial_before') {
+      return {
+        title: '体験前の確認案内',
+        note: '体験予約前の安心案内',
+        body:
+`${name}様
+
+体験予約ありがとうございます。
+
+【予約日時】
+${dateText}
+
+【目的】
+${purpose}
+
+${concern ? `「${concern}」とのことでしたので、当日は無理のない内容から始めていきます。` : '初回は無理のない内容から始めていきます。'}
+
+動きやすい服装・室内シューズ・飲み物・タオルをご持参ください。
+開始時間の5分前を目安にお越しください。
+
+お待ちしております。`
+      };
+    }
+
+    if (type === 'trial_after') {
+      return {
+        title: '体験後のお礼',
+        note: '体験後の入会フォロー',
+        body:
+`${name}様
+
+本日は体験にお越しいただきありがとうございました。
+
+【目的】
+${purpose}
+
+${goal ? `目標の「${goal}」に向けて、無理なく続けられる形でサポートできます。` : '無理なく続けられる形でサポートできます。'}
+
+ご不明点や不安な点があれば、このLINEにそのままご返信ください。
+次回以降の進め方もお気軽にご相談ください。`
+      };
+    }
+
+    if (type === 'join_offer') {
+      return {
+        title: '入会・継続のご案内',
+        note: '体験後の入会案内',
+        body:
+`${name}様
+
+体験後のご案内です。
+
+${goal ? `目標の「${goal}」に向けて、` : ''}最初は週1回ペースなど、続けやすい形から始めるのがおすすめです。
+
+入会や回数券について気になる点があれば、このLINEでお気軽にご相談ください。
+無理なご案内はしませんので、ご自身のペースでご検討ください。`
+      };
+    }
+
+    if (type === 'sleeping_follow') {
+      return {
+        title: '再来店フォロー',
+        note: '休眠・期間が空いた会員への案内',
+        body:
+`${name}様
+
+お久しぶりです。DPRO GYMです。
+
+最近の体調やトレーニング状況はいかがでしょうか。
+期間が空いた場合も、無理のない軽めの内容から再開できます。
+
+また再開したいタイミングがありましたら、このLINEにそのままご返信ください。`
+      };
+    }
+
+    if (type === 'follow_up') {
+      return {
+        title: 'フォロー連絡',
+        note: '状況確認のLINE',
+        body:
+`${name}様
+
+DPRO GYMです。
+その後のご状況はいかがでしょうか。
+
+【目的】
+${purpose}
+
+${goal ? `目標の「${goal}」に合わせて、次回の内容も調整できます。` : '次回の内容も状態に合わせて調整できます。'}
+
+ご希望や不安な点があれば、このLINEにそのままご返信ください。`
+      };
+    }
+
     if (type === 'reservation_confirmed') {
       return {
         title: '予約確定のご案内',
@@ -2013,7 +2505,8 @@ ${dateText}
 
       if (message) {
         const r = result.result || {};
-        message.textContent = `DEMO準備完了：予約/会員 ${r.profiles ?? '-'}件・対応履歴 ${r.notification_logs ?? '-'}件を今日基準で再生成しました。`;
+        const demo = r.demo_data || r || {};
+        message.textContent = `DEMO準備完了：予約/会員 ${demo.profiles ?? '-'}件・対応履歴 ${demo.notification_logs ?? '-'}件を今日基準で再生成しました。`;
       }
 
       await loadGymSettings(false);
@@ -2050,10 +2543,17 @@ ${dateText}
 
   function notificationTypeLabel(type) {
     const map = {
+      trial_before: '体験前の確認メッセージ',
+      trial_after: '体験後のお礼メッセージ',
+      join_offer: '入会案内メッセージ',
+      sleeping_follow: '休眠フォローメッセージ',
+      follow_up: 'フォロー連絡メッセージ',
       reservation_confirmed: '予約確定メッセージ',
       reservation_cancelled: '再調整メッセージ',
       reminder: '来店前リマインド',
       continuation: '継続提案メッセージ',
+      task_done: '対応済み',
+      follow_later: '再フォロー設定',
       consultation: '相談メッセージ',
       manual: '手動メッセージ'
     };
