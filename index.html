@@ -140,7 +140,13 @@
           予約をはじめる
         </button>
 
-        <a href="member.html" class="block text-center w-full bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 font-bold py-4 rounded-2xl transition">
+        <a
+          id="topMemberLink"
+          data-member-link
+          href="./member.html"
+          onclick="return handleMemberLinkClick(event)"
+          class="block text-center w-full bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 font-bold py-4 rounded-2xl transition"
+        >
           マイページを見る
         </a>
 
@@ -400,9 +406,15 @@
           </ul>
         </div>
 
-        <button onclick="goMemberPage()" class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl">
+        <a
+          id="completeMemberLink"
+          data-member-link
+          href="./member.html"
+          onclick="return handleMemberLinkClick(event)"
+          class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl"
+        >
           マイページを見る
-        </button>
+        </a>
 
         <button onclick="closeLiff()" class="w-full bg-gray-900 border border-gray-800 text-gray-300 font-bold py-4 rounded-2xl">
           LINEトークに戻る
@@ -450,6 +462,7 @@
   window.addEventListener('load', init);
 
   async function init() {
+    updateMemberLinks();
     await loadGymSettings();
     buildDateButtons();
 
@@ -560,39 +573,39 @@
   }
 
   async function fetchExistingProfile() {
-    const result = await sbClient
+    const { data, error } = await sbClient
       .from('gym_profiles')
       .select('*')
       .eq('line_user_id', state.userId)
       .order('updated_at', { ascending: false })
       .limit(1);
 
-    if (result.error) {
-      console.warn(result.error);
+    if (error) {
+      console.warn(error);
       return;
     }
 
-    const data = Array.isArray(result.data) && result.data.length ? result.data[0] : null;
-    if (!data) return;
+    const profile = Array.isArray(data) && data.length ? data[0] : null;
+    if (!profile) return;
 
-    state.existingData = data;
+    state.existingData = profile;
 
-    const dbName = cleanName(data.display_name);
+    const dbName = cleanName(profile.display_name);
     if (dbName && !isDemoLikeName(dbName)) {
       state.customerName = dbName;
     } else if (state.userId !== 'demo-user' && cleanName(state.lineDisplayName)) {
       state.customerName = cleanName(state.lineDisplayName);
-      await syncProfileDisplayNameIfNeeded(data);
+      await syncProfileDisplayNameIfNeeded(profile);
     } else if (dbName) {
       state.customerName = dbName;
     }
     syncNameInput();
 
-    if (data.purpose) state.purpose = data.purpose;
-    if (data.target_goal) state.goal = data.target_goal;
-    if (data.status) state.concern = data.status;
+    if (profile.purpose) state.purpose = profile.purpose;
+    if (profile.target_goal) state.goal = profile.target_goal;
+    if (profile.status) state.concern = profile.status;
 
-    renderExistingReservation(data);
+    renderExistingReservation(profile);
   }
 
   function hasAnsweredQuestionnaire(data) {
@@ -1207,15 +1220,67 @@ ${customerName}様、予約を受け付けました。
     return `${m}/${d}(${w}) ${time}`;
   }
 
+  function getPageBaseUrl() {
+    const origin = window.location.origin;
+    let pathname = window.location.pathname || '/';
+
+    // GitHub Pages を「/repo」までで開いた場合、
+    // new URL('member.html', location.href) だと /member.html に飛ぶことがあります。
+    // そのため、ファイル名あり・なしの両方に対応して安全に同じフォルダを作ります。
+    if (pathname.endsWith('/')) {
+      return origin + pathname;
+    }
+
+    const lastPart = pathname.split('/').pop() || '';
+
+    if (lastPart.includes('.')) {
+      return origin + pathname.slice(0, pathname.lastIndexOf('/') + 1);
+    }
+
+    return origin + pathname + '/';
+  }
+
   function getMemberPageUrl() {
-    const url = new URL('member.html', window.location.href);
+    const url = new URL('member.html', getPageBaseUrl());
     url.searchParams.set('from', 'reserve');
     url.searchParams.set('t', String(Date.now()));
     return url.toString();
   }
 
+  function updateMemberLinks() {
+    const url = getMemberPageUrl();
+    document.querySelectorAll('[data-member-link]').forEach(link => {
+      link.setAttribute('href', url);
+    });
+  }
+
+  function handleMemberLinkClick(event) {
+    if (event) {
+      event.preventDefault();
+    }
+
+    goMemberPage();
+    return false;
+  }
+
   function goMemberPage() {
-    window.location.href = getMemberPageUrl();
+    const url = getMemberPageUrl();
+    updateMemberLinks();
+
+    try {
+      window.location.assign(url);
+    } catch (error) {
+      window.location.href = url;
+    }
+
+    // LINE内ブラウザなどで assign が弱い場合の保険
+    setTimeout(() => {
+      try {
+        window.open(url, '_self');
+      } catch (error) {
+        window.location.href = url;
+      }
+    }, 250);
   }
 
   function closeLiff() {
