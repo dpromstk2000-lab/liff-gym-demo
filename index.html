@@ -424,6 +424,7 @@
 
 <script>
   const MY_LIFF_ID = '2010341851-Qez3SffP';
+  const MEMBER_LIFF_ID = '2010362463-80AFWCcm';
   const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
 
@@ -564,8 +565,8 @@
 
   async function syncProfileDisplayNameIfNeeded(data) {
     if (!data || !data.id) return;
-    if (!state.userId) return;
-    if (data.line_user_id !== normalizeLineUserId(state.userId)) return;
+    if (!state.userId || state.userId === 'demo-user') return;
+    if (data.line_user_id !== state.userId) return;
 
     const dbName = cleanName(data.display_name);
     const lineName = cleanName(state.lineDisplayName || state.displayName);
@@ -625,7 +626,7 @@
     const dbName = cleanName(profile.display_name);
     if (dbName && !isDemoLikeName(dbName)) {
       state.customerName = dbName;
-    } else if (normalizeLineUserId(state.userId) && cleanName(state.lineDisplayName)) {
+    } else if (state.userId !== 'demo-user' && cleanName(state.lineDisplayName)) {
       state.customerName = cleanName(state.lineDisplayName);
       await syncProfileDisplayNameIfNeeded(profile);
     } else if (dbName) {
@@ -1045,7 +1046,7 @@
     }
 
     data.forEach(row => {
-      if (row.line_user_id === normalizeLineUserId(state.userId)) return;
+      if (row.line_user_id === state.userId) return;
 
       const reservationStatus = row.reservation_status || 'pending';
 
@@ -1289,8 +1290,15 @@ ${customerName}様、予約を受け付けました。
     return origin + pathname + '/';
   }
 
-  function getMemberPageUrl() {
-    const url = new URL('member.html', getPageBaseUrl());
+  function isLineInApp() {
+    try {
+      return typeof liff !== 'undefined' && liff.isInClient && liff.isInClient();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function appendMemberParams(url) {
     const name = getCustomerName();
 
     url.searchParams.set('from', 'reserve');
@@ -1309,7 +1317,19 @@ ${customerName}様、予約を受け付けました。
       url.searchParams.set('name', name);
     }
 
-    return url.toString();
+    return url;
+  }
+
+  function getMemberPageUrl() {
+    // LINEアプリ内では member.html へ直接移動すると
+    // 「外部サイトに移動したため」と表示されることがあります。
+    // そのため、マイページ専用の LIFF URL で開きます。
+    if (isLineInApp()) {
+      return appendMemberParams(new URL(`https://liff.line.me/${MEMBER_LIFF_ID}`)).toString();
+    }
+
+    // PC / iPad / LINE外ブラウザでは、通常のGitHub Pages上の member.html を開きます。
+    return appendMemberParams(new URL('member.html', getPageBaseUrl())).toString();
   }
 
   function updateMemberLinks() {
@@ -1339,29 +1359,22 @@ ${customerName}様、予約を受け付けました。
     const url = getMemberPageUrl();
     updateMemberLinks();
 
+    // LINEアプリ内では先にマイページ専用 LIFF URL を開く。
+    // これで「外部サイトに移動したため」を避けます。
     try {
-      window.location.href = url;
-    } catch (error) {
-      window.location.assign(url);
+      if (isLineInApp() && typeof liff.openWindow === 'function') {
+        liff.openWindow({ url, external: false });
+        return;
+      }
+    } catch (e) {
+      console.warn('liff.openWindow skipped:', e);
     }
 
-    // LINE内ブラウザで location.href が弱い場合の保険
-    setTimeout(() => {
-      try {
-        if (typeof liff !== 'undefined' && liff.isInClient() && typeof liff.openWindow === 'function') {
-          liff.openWindow({ url, external: false });
-          return;
-        }
-      } catch (e) {
-        console.warn('liff.openWindow skipped:', e);
-      }
-
-      try {
-        window.open(url, '_self');
-      } catch (error) {
-        window.location.href = url;
-      }
-    }, 250);
+    try {
+      window.location.assign(url);
+    } catch (error) {
+      window.location.href = url;
+    }
   }
 
   function closeLiff() {
