@@ -307,12 +307,17 @@
   const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
 
+  // PC / iPad / LINE外ブラウザで確認する時も、demo-user ではなく
+  // 岩口さんのLINEユーザーIDを使って、スマホLINE内と同じ会員データを見ます。
+  const PC_DEMO_LINE_USER_ID = 'U09f3a54d1f41575fe6f6968e7b17a075';
+  const PC_DEMO_DISPLAY_NAME = '体験 山田';
+
   const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   const state = {
-    displayName: '体験 山田',
+    displayName: PC_DEMO_DISPLAY_NAME,
     lineDisplayName: '',
-    userId: 'demo-user',
+    userId: PC_DEMO_LINE_USER_ID,
     targetProfileId: '',
     targetLineUserId: '',
     requestedDisplayName: '',
@@ -329,7 +334,7 @@
     const params = new URLSearchParams(window.location.search || '');
 
     state.targetProfileId = params.get('profile_id') || '';
-    state.targetLineUserId = params.get('uid') || '';
+    state.targetLineUserId = normalizeLineUserId(params.get('uid') || '');
     state.requestedDisplayName = cleanName(params.get('name') || '');
 
     try {
@@ -345,7 +350,7 @@
         }
 
         if (!state.targetLineUserId && bridge.line_user_id) {
-          state.targetLineUserId = bridge.line_user_id;
+          state.targetLineUserId = normalizeLineUserId(bridge.line_user_id);
         }
 
         if (!state.requestedDisplayName && bridge.display_name) {
@@ -376,16 +381,19 @@
         const lineName = cleanName(profile.displayName || '');
         state.lineDisplayName = lineName;
         state.displayName = lineName || 'ゲスト様';
-        state.userId = profile.userId || 'demo-user';
+        state.userId = profile.userId || PC_DEMO_LINE_USER_ID;
       } else if (liff.isInClient()) {
-        showNotice('LINEプロフィールを取得できなかったため、デモ用の会員情報を表示します。');
+        state.userId = PC_DEMO_LINE_USER_ID;
+        showNotice('LINEプロフィールを取得できなかったため、岩口さんのLINEアカウントIDで会員情報を表示します。');
       } else {
-        showNotice('LINEアプリ外で表示中のため、デモ用の会員情報を表示します。LINE内ではLINE名を自動取得します。');
+        state.userId = PC_DEMO_LINE_USER_ID;
+        showNotice('PC / iPad確認用として、岩口さんのLINEアカウントIDで会員情報を表示しています。');
       }
 
     } catch (e) {
       console.warn('LIFF demo mode:', e);
-      showNotice('LIFF初期化に失敗しました。デモ表示として続行します。');
+      state.userId = PC_DEMO_LINE_USER_ID;
+      showNotice('LIFF初期化に失敗しました。PC確認用として岩口さんのLINEアカウントIDで続行します。');
     }
 
     await reloadMemberData();
@@ -402,7 +410,7 @@
       }
 
       if (!data) {
-        const lookupUserId = state.targetLineUserId || state.userId;
+        const lookupUserId = normalizeLineUserId(state.targetLineUserId || state.userId);
         data = await fetchLatestProfileByLineUserId(lookupUserId);
       }
     } catch (error) {
@@ -410,17 +418,17 @@
       showNotice('会員情報の取得に失敗しました。デモ用会員情報で再表示します。詳細: ' + (error.message || error));
     }
 
-    // LINE内の本人データが見つからない場合でも、営業デモで画面が空にならないようにする。
-    if (!data && state.userId !== 'demo-user') {
+    // 以前の demo-user ではなく、PC確認用も岩口さんのLINE IDに統一します。
+    if (!data) {
       try {
-        const fallback = await fetchLatestProfileByLineUserId('demo-user');
+        const fallback = await fetchLatestProfileByLineUserId(PC_DEMO_LINE_USER_ID);
         if (fallback) {
           data = fallback;
-          state.isFallbackDemo = true;
-          showNotice('本人用の会員データがまだ無いため、デモ用の会員情報を表示しています。予約すると本人用データに切り替わります。');
+          state.isFallbackDemo = false;
+          showNotice('予約直後の情報が見つからなかったため、岩口さんのLINEアカウントIDの最新会員情報を表示しています。');
         }
       } catch (error) {
-        console.warn('demo-user fallback failed:', error);
+        console.warn('pc line account fallback failed:', error);
       }
     }
 
@@ -459,7 +467,7 @@
   }
 
   async function fetchLatestProfileByLineUserId(lineUserId) {
-    const id = lineUserId || 'demo-user';
+    const id = normalizeLineUserId(lineUserId);
 
     // maybeSingle() は同じLINE IDのデータが複数あるとエラーになるため使いません。
     // まず updated_at の新しいものを1件取得します。
@@ -494,6 +502,12 @@
     return String(value || '').replace(/\s+/g, ' ').trim();
   }
 
+  function normalizeLineUserId(value) {
+    const id = String(value || '').trim();
+    if (!id || id === 'demo-user') return PC_DEMO_LINE_USER_ID;
+    return id;
+  }
+
   function isDemoLikeName(value) {
     const text = cleanName(value).replace(/\s/g, '').toLowerCase();
     return [
@@ -511,12 +525,12 @@
     const requestedName = cleanName(state.requestedDisplayName);
 
     if (requestedName && !isDemoLikeName(requestedName)) {
-      if (!dbName || isDemoLikeName(dbName) || state.targetProfileId || state.targetLineUserId === 'demo-user') {
+      if (!dbName || isDemoLikeName(dbName) || state.targetProfileId || normalizeLineUserId(state.targetLineUserId) === PC_DEMO_LINE_USER_ID) {
         return requestedName;
       }
     }
 
-    if (!state.isFallbackDemo && state.userId !== 'demo-user' && isDemoLikeName(dbName) && lineName && !isDemoLikeName(lineName)) {
+    if (!state.isFallbackDemo && normalizeLineUserId(state.userId) && isDemoLikeName(dbName) && lineName && !isDemoLikeName(lineName)) {
       return lineName;
     }
 
@@ -526,8 +540,8 @@
   async function syncProfileDisplayNameIfNeeded(data) {
     try {
       if (!data || !data.id) return;
-      if (!state.userId || state.userId === 'demo-user') return;
-      if (data.line_user_id !== state.userId) return;
+      if (!state.userId) return;
+      if (data.line_user_id !== normalizeLineUserId(state.userId)) return;
 
       const dbName = cleanName(data.display_name);
       const lineName = cleanName(state.lineDisplayName || state.displayName);
