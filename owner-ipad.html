@@ -496,7 +496,7 @@
         <div class="hero-actions">
           <button class="btn btn-primary" onclick="runDemoReset()">営業前DEMO準備</button>
           <button class="btn btn-soft" onclick="reloadAll()">再読み込み</button>
-          <a class="btn btn-soft" href="owner.html">PC管理画面へ戻る</a>
+          <a class="btn btn-soft" id="pcOwnerLink" href="./owner.html" onclick="goToPcOwner(event)">PC管理画面へ戻る</a>
           <a class="btn btn-soft" href="https://manager.line.biz/" target="_blank" rel="noopener">LINE管理</a>
         </div>
       </div>
@@ -619,10 +619,64 @@
     let selectedMessageType = 'trial_before';
 
     document.addEventListener('DOMContentLoaded', async () => {
+      setupPcOwnerLink();
       renderTodayLabel();
       await reloadAll();
     });
 
+
+
+    function setupPcOwnerLink() {
+      const link = document.getElementById('pcOwnerLink');
+      if (!link) return;
+
+      const pcUrl = resolvePcOwnerUrl();
+      link.href = pcUrl;
+    }
+
+    function resolvePcOwnerUrl() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const fromParam = params.get('pc');
+
+        if (fromParam && /^https?:\/\//.test(fromParam)) {
+          localStorage.setItem('dproGymPcOwnerUrl', fromParam);
+          return fromParam;
+        }
+
+        const saved = localStorage.getItem('dproGymPcOwnerUrl');
+        if (saved && /^https?:\/\//.test(saved)) {
+          return saved;
+        }
+
+        if (document.referrer && /^https?:\/\//.test(document.referrer)) {
+          const ref = new URL(document.referrer);
+          const refPath = ref.pathname || '';
+          const isBadRef = ref.hostname.includes('liff.line.me') || refPath.endsWith('/index.html') || refPath.endsWith('/member.html') || refPath.endsWith('/owner-ipad.html');
+          if (!isBadRef) {
+            localStorage.setItem('dproGymPcOwnerUrl', document.referrer);
+            return document.referrer;
+          }
+        }
+
+        if (!location.hostname.includes('liff.line.me')) {
+          return new URL('./owner.html', window.location.href).toString();
+        }
+      } catch (error) {
+        console.warn('PC管理画面URLの解決に失敗しました', error);
+      }
+
+      return './owner.html';
+    }
+
+    function goToPcOwner(event) {
+      try {
+        if (event) event.preventDefault();
+        window.location.href = resolvePcOwnerUrl();
+      } catch (error) {
+        window.location.href = './owner.html';
+      }
+    }
     function renderTodayLabel() {
       const now = new Date();
       const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
