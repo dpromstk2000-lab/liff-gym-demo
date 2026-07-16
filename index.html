@@ -1,1413 +1,516 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DPRO GYM｜無料体験予約</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DPRO パーソナルジム｜予約</title>
+  <meta name="theme-color" content="#13213c">
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    :root {
+      --navy: #13213c;
+      --navy2: #1c3158;
+      --blue: #2563eb;
+      --blue2: #174bb8;
+      --yellow: #f5c244;
+      --green: #087a55;
+      --red: #c93444;
+      --text: #182235;
+      --muted: #617086;
+      --line: #d6dfeb;
+      --bg: #f2f5f9;
+      --card: #fff;
     }
-    .glass {
-      background: linear-gradient(180deg, rgba(31,41,55,.96), rgba(17,24,39,.96));
-    }
-    .safe-bottom {
-      padding-bottom: max(24px, env(safe-area-inset-bottom));
-    }
-    .fade-in {
-      animation: fadeIn .18s ease-out;
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
+    * { box-sizing: border-box; }
+    html { font-size: 18px; }
+    body { margin: 0; color: var(--text); background: var(--bg); font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height: 1.65; }
+    button,input,textarea,select { font: inherit; }
+    button { cursor: pointer; }
+    .top { background: linear-gradient(135deg,var(--navy),var(--navy2)); color: #fff; padding: 18px 16px 26px; }
+    .top-inner,.main { max-width: 760px; margin: 0 auto; }
+    .brand { margin: 0; color: #bdd3ff; font-weight: 900; font-size: .75rem; letter-spacing: .16em; }
+    .top h1 { margin: 4px 0 0; font-size: clamp(1.45rem,6vw,2rem); line-height: 1.3; }
+    .top-sub { margin: 8px 0 0; color: #dce7fb; font-size: .92rem; }
+    .member-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; color: #fff; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 7px 13px; text-decoration: none; font-weight: 800; font-size: .82rem; }
+    .main { padding: 16px 14px 48px; }
+    .progress { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; margin: -8px 0 16px; }
+    .progress-item { min-width: 0; text-align: center; color: #8792a5; font-size: .68rem; font-weight: 900; }
+    .progress-item span { display: grid; place-items: center; width: 31px; height: 31px; margin: 0 auto 4px; border-radius: 50%; color: #6d788a; background: #dfe5ed; }
+    .progress-item.active { color: var(--blue); }
+    .progress-item.active span { color: #fff; background: var(--blue); }
+    .progress-item.done { color: var(--green); }
+    .progress-item.done span { color: #fff; background: var(--green); }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 21px; padding: 19px; box-shadow: 0 8px 25px rgba(20,38,70,.07); margin-bottom: 15px; }
+    .step { display: none; }
+    .step.active { display: block; animation: fade .2s ease; }
+    @keyframes fade { from { opacity: .25; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .eyebrow { margin: 0; color: var(--blue); font-size: .72rem; font-weight: 950; letter-spacing: .14em; }
+    h2 { margin: 3px 0 0; font-size: 1.35rem; line-height: 1.35; }
+    .lead { margin: 7px 0 0; color: var(--muted); font-size: .9rem; }
+    .option-list { display: grid; gap: 10px; margin-top: 17px; }
+    .option-card { width: 100%; text-align: left; border: 2px solid var(--line); border-radius: 17px; background: #fff; padding: 14px 15px; color: var(--text); }
+    .option-card.selected { border-color: var(--blue); background: #edf4ff; box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+    .option-card strong { display: block; font-size: .98rem; }
+    .option-card small { display: block; color: var(--muted); margin-top: 3px; font-size: .8rem; }
+    .option-meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; }
+    .tag { display: inline-flex; align-items: center; border-radius: 999px; padding: 3px 9px; background: #e9eef6; color: #45546b; font-weight: 850; font-size: .7rem; }
+    .tag.yellow { background: #fff2c8; color: #7d5600; }
+    .section-title { margin: 20px 0 8px; font-size: 1rem; }
+    .trainer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .trainer-btn { min-height: 70px; border: 2px solid var(--line); border-radius: 15px; background: #fff; padding: 10px; color: var(--text); font-weight: 850; }
+    .trainer-btn.selected { border-color: var(--blue); background: #edf4ff; color: var(--blue2); }
+    .date-strip { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; margin-top: 13px; scrollbar-width: thin; }
+    .date-btn { flex: 0 0 77px; min-height: 73px; border: 2px solid var(--line); border-radius: 15px; background: #fff; color: var(--text); padding: 8px 5px; font-weight: 850; }
+    .date-btn small { display: block; color: var(--muted); font-size: .68rem; }
+    .date-btn.selected { border-color: var(--blue); color: var(--blue2); background: #edf4ff; }
+    .date-btn.closed { color: #9ca5b3; background: #f2f3f5; }
+    .slot-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 12px; }
+    .slot-btn { min-height: 50px; border: 2px solid var(--line); border-radius: 14px; background: #fff; color: var(--text); font-weight: 900; }
+    .slot-btn.selected { border-color: var(--blue); color: #fff; background: var(--blue); }
+    .slot-btn:disabled { cursor: not-allowed; border-color: #e2e5e9; background: #f0f2f5; color: #9aa3b0; }
+    .loading { text-align: center; color: var(--muted); padding: 20px 5px; }
+    .field { margin-top: 14px; }
+    label { display: block; margin-bottom: 6px; font-weight: 900; font-size: .88rem; }
+    .required { color: var(--red); font-size: .72rem; margin-left: 5px; }
+    input,textarea { width: 100%; min-height: 52px; border: 2px solid var(--line); border-radius: 14px; padding: 11px 13px; color: var(--text); background: #fff; }
+    textarea { min-height: 100px; resize: vertical; }
+    input:focus,textarea:focus { outline: 3px solid rgba(37,99,235,.13); border-color: var(--blue); }
+    .profile-found { display: none; margin-top: 15px; border: 1px solid #9bd7c1; border-radius: 16px; background: #ecfaf4; padding: 14px; }
+    .profile-found.show { display: block; }
+    .profile-found strong { color: var(--green); }
+    .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+    .choice-btn { min-height: 50px; border: 2px solid var(--line); border-radius: 14px; background: #fff; color: var(--text); padding: 8px; font-weight: 850; }
+    .choice-btn.selected { border-color: var(--blue); color: var(--blue2); background: #edf4ff; }
+    .summary { display: grid; gap: 10px; margin-top: 16px; }
+    .summary-row { border-bottom: 1px solid var(--line); padding-bottom: 10px; }
+    .summary-row:last-child { border: 0; padding-bottom: 0; }
+    .summary-row span { display: block; color: var(--muted); font-size: .75rem; font-weight: 800; }
+    .summary-row strong { display: block; margin-top: 2px; }
+    .notice { border-radius: 14px; padding: 11px 13px; margin-top: 14px; background: #fff5d9; color: #765200; font-size: .83rem; }
+    .error { display: none; margin-top: 12px; border-radius: 14px; padding: 11px 13px; background: #fff0f1; color: var(--red); font-weight: 800; }
+    .error.show { display: block; }
+    .actions { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 10px; margin-top: 18px; }
+    .btn { min-height: 54px; border: 0; border-radius: 15px; padding: 10px 18px; font-weight: 950; }
+    .btn-main { color: #fff; background: var(--blue); }
+    .btn-back { color: var(--navy); background: #e8edf4; }
+    .btn:disabled { cursor: wait; opacity: .6; }
+    .complete { text-align: center; padding: 9px 0 4px; }
+    .complete-icon { display: grid; place-items: center; width: 68px; height: 68px; margin: 0 auto 12px; border-radius: 50%; color: #fff; background: var(--green); font-size: 2rem; font-weight: 950; }
+    .complete h2 { font-size: 1.5rem; }
+    .complete-actions { display: grid; gap: 9px; margin-top: 18px; }
+    .complete-actions a { display: grid; place-items: center; min-height: 54px; border-radius: 15px; text-decoration: none; font-weight: 950; }
+    .complete-actions .primary { color: #fff; background: var(--blue); }
+    .complete-actions .secondary { color: var(--navy); background: #e8edf4; }
+    .hidden { display: none !important; }
+    @media (max-width: 520px) {
+      html { font-size: 17px; }
+      .trainer-grid,.choice-grid { grid-template-columns: 1fr; }
+      .slot-grid { grid-template-columns: repeat(3,1fr); }
+      .card { padding: 17px; }
     }
   </style>
 </head>
+<body>
+  <header class="top">
+    <div class="top-inner">
+      <p class="brand">DPRO PERSONAL GYM LINE</p>
+      <h1 id="pageTitle">無料体験・トレーニング予約</h1>
+      <p class="top-sub">空き時間を確認して、LINEから簡単に予約できます。</p>
+      <a class="member-link" id="memberLink" href="member.html">会員マイページを見る →</a>
+    </div>
+  </header>
 
-<body class="bg-gray-950 text-white min-h-screen">
+  <main class="main">
+    <nav class="progress" aria-label="予約手順">
+      <div class="progress-item active" data-progress="1"><span>1</span>メニュー</div>
+      <div class="progress-item" data-progress="2"><span>2</span>日時</div>
+      <div class="progress-item" data-progress="3"><span>3</span>お客様情報</div>
+      <div class="progress-item" data-progress="4"><span>4</span>確認</div>
+    </nav>
 
-  <main class="max-w-md mx-auto min-h-screen glass shadow-2xl border-x border-gray-800 flex flex-col">
+    <section class="card step active" data-step="1">
+      <p class="eyebrow">STEP 1</p>
+      <h2>メニューを選んでください</h2>
+      <p class="lead">初めての方は「無料体験・カウンセリング」がおすすめです。</p>
+      <div class="option-list" id="serviceList"><div class="loading">メニューを読み込んでいます…</div></div>
+      <h3 class="section-title">担当トレーナー</h3>
+      <div class="trainer-grid" id="trainerList"></div>
+      <div class="error" id="step1Error"></div>
+      <div class="actions"><span></span><button class="btn btn-main" type="button" onclick="nextStep(2)">日時を選ぶ</button></div>
+    </section>
 
-    <header class="sticky top-0 z-20 bg-black/90 backdrop-blur border-b border-yellow-500/30">
-      <div class="px-5 py-4 flex items-center justify-between">
-        <div>
-          <p class="text-[10px] tracking-[0.35em] text-yellow-500 font-black">DPRO GYM</p>
-          <h1 class="text-lg font-black mt-1">無料体験予約</h1>
-        </div>
-        <span id="headerBadge" class="text-[11px] bg-yellow-500 text-black font-black px-3 py-1 rounded-full">
-          LINE DEMO
-        </span>
+    <section class="card step" data-step="2">
+      <p class="eyebrow">STEP 2</p>
+      <h2>希望日時を選んでください</h2>
+      <p class="lead">予約開始時刻は30分単位です。満席の時間は選択できません。</p>
+      <div class="date-strip" id="dateStrip"></div>
+      <div id="slotArea"><div class="loading">日付を選択してください。</div></div>
+      <div class="error" id="step2Error"></div>
+      <div class="actions"><button class="btn btn-back" type="button" onclick="nextStep(1)">戻る</button><button class="btn btn-main" type="button" onclick="nextStep(3)">お客様情報へ</button></div>
+    </section>
+
+    <section class="card step" data-step="3">
+      <p class="eyebrow">STEP 3</p>
+      <h2>お客様情報を確認してください</h2>
+      <p class="lead" id="customerLead">初回のみ、お名前と電話番号を登録します。</p>
+      <div class="profile-found" id="profileFound"></div>
+      <div id="firstTimeFields">
+        <div class="field"><label for="fullName">お名前<span class="required">必須</span></label><input id="fullName" type="text" autocomplete="name" maxlength="100" placeholder="例：田中 美咲"></div>
+        <div class="field"><label for="phone">電話番号<span class="required">必須</span></label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="例：090-1234-5678"></div>
       </div>
-
-      <div class="h-1 bg-gray-800">
-        <div id="progressBar" class="h-1 bg-yellow-500 transition-all duration-300" style="width: 14%"></div>
+      <div class="field">
+        <label>今回の目的</label>
+        <div class="choice-grid" id="purposeChoices">
+          <button class="choice-btn" type="button" data-value="ダイエット・引き締め">ダイエット・引き締め</button>
+          <button class="choice-btn" type="button" data-value="筋力アップ・ボディメイク">筋力アップ・ボディメイク</button>
+          <button class="choice-btn" type="button" data-value="運動不足・健康維持">運動不足・健康維持</button>
+          <button class="choice-btn" type="button" data-value="姿勢改善・不調予防">姿勢改善・不調予防</button>
+        </div>
       </div>
-    </header>
+      <div class="field"><label for="goal">目標・希望</label><textarea id="goal" maxlength="500" placeholder="例：3か月で無理なく引き締めたい"></textarea></div>
+      <div class="field"><label for="concern">不安なこと・事前に伝えたいこと</label><textarea id="concern" maxlength="1000" placeholder="例：運動経験が少ない、腰に不安がある"></textarea></div>
+      <div class="error" id="step3Error"></div>
+      <div class="actions"><button class="btn btn-back" type="button" onclick="nextStep(2)">戻る</button><button class="btn btn-main" type="button" onclick="nextStep(4)">内容を確認</button></div>
+    </section>
 
-    <section class="p-5 flex-1 safe-bottom">
+    <section class="card step" data-step="4">
+      <p class="eyebrow">STEP 4</p>
+      <h2>予約内容を確認してください</h2>
+      <div class="summary" id="confirmSummary"></div>
+      <p class="notice">送信後は「承認待ち」になります。店舗が確認後、予約確定のご案内があります。</p>
+      <div class="error" id="step4Error"></div>
+      <div class="actions"><button class="btn btn-back" type="button" onclick="nextStep(3)">戻る</button><button class="btn btn-main" id="submitButton" type="button" onclick="submitReservation()">予約希望を送信</button></div>
+    </section>
 
-      <div id="notice" class="hidden mb-4 rounded-2xl border border-yellow-500/30 bg-yellow-500/10 p-3 text-xs text-yellow-100 leading-relaxed"></div>
-
-      <!-- STEP 0 -->
-      <div id="step0" class="step fade-in space-y-5">
-
-        <div class="rounded-3xl bg-gradient-to-br from-yellow-500 to-yellow-300 p-5 text-black shadow-xl shadow-yellow-500/10">
-          <p class="text-xs font-black tracking-widest opacity-80">60秒で完了</p>
-          <h2 class="text-2xl font-black mt-2 leading-tight">
-            あなたに合った<br>体験メニューを提案します
-          </h2>
-          <p class="text-sm font-bold mt-3 opacity-80">
-            目的・悩み・希望日時を選ぶだけ。予約内容はLINEにも届きます。
-          </p>
+    <section class="card step" data-step="5">
+      <div class="complete">
+        <div class="complete-icon">✓</div>
+        <h2>予約希望を受け付けました</h2>
+        <p class="lead">まだ確定ではありません。店舗からの予約確定案内をお待ちください。</p>
+        <div class="summary" id="completeSummary"></div>
+        <div class="complete-actions">
+          <a class="primary" id="completeMemberLink" href="member.html">マイページで確認</a>
+          <a class="secondary" href="javascript:location.reload()">別の予約をする</a>
         </div>
-
-        <div id="existingReservationBox" class="hidden bg-gray-900 border border-yellow-500/40 rounded-3xl p-5 space-y-3">
-          <div class="flex items-start justify-between gap-3">
-            <div>
-              <p class="text-xs text-yellow-400 font-black">現在の予約状況</p>
-              <p id="existingReservationText" class="text-lg font-black mt-2">-</p>
-              <p id="existingReservationStatusText" class="text-sm text-gray-400 mt-2 leading-relaxed">-</p>
-            </div>
-            <div class="text-3xl">📅</div>
-          </div>
-        </div>
-
-
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 space-y-3">
-          <div>
-            <label for="customerNameInput" class="text-sm font-black text-yellow-400">お名前</label>
-            <p id="nameHelpText" class="text-xs text-gray-500 mt-1 leading-relaxed">
-              LINE名を取得できる場合は最初だけ自動入力されます。ここで変更した名前を予約名・マイページ名として優先します。
-            </p>
-          </div>
-          <input
-            id="customerNameInput"
-            type="text"
-            inputmode="text"
-            autocomplete="name"
-            oninput="handleNameInput()"
-            class="w-full bg-gray-950 border border-gray-800 rounded-2xl px-4 py-3 text-base font-bold focus:outline-none focus:border-yellow-500"
-            placeholder="例：山田 太郎"
-          />
-        </div>
-
-        <div class="grid grid-cols-3 gap-2 text-center text-xs">
-          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3">
-            <div class="text-xl">①</div>
-            <p class="mt-1 text-gray-300">目的選択</p>
-          </div>
-          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3">
-            <div class="text-xl">②</div>
-            <p class="mt-1 text-gray-300">日時選択</p>
-          </div>
-          <div class="bg-gray-900 border border-gray-800 rounded-2xl p-3">
-            <div class="text-xl">③</div>
-            <p class="mt-1 text-gray-300">LINE通知</p>
-          </div>
-        </div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5">
-          <p class="font-black text-yellow-400">当日の流れ</p>
-          <div class="mt-4 space-y-3 text-sm">
-            <div class="flex gap-3">
-              <span class="bg-yellow-500 text-black font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">1</span>
-              <div>
-                <p class="font-bold">カウンセリング</p>
-                <p class="text-gray-500 text-xs mt-1">目的・悩み・生活習慣を確認します。</p>
-              </div>
-            </div>
-            <div class="flex gap-3">
-              <span class="bg-yellow-500 text-black font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">2</span>
-              <div>
-                <p class="font-bold">体力・姿勢チェック</p>
-                <p class="text-gray-500 text-xs mt-1">無理のない範囲で状態を確認します。</p>
-              </div>
-            </div>
-            <div class="flex gap-3">
-              <span class="bg-yellow-500 text-black font-black w-7 h-7 rounded-full flex items-center justify-center shrink-0">3</span>
-              <div>
-                <p class="font-bold">体験トレーニング</p>
-                <p class="text-gray-500 text-xs mt-1">目的に合わせたメニューを体験できます。</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <button id="startButton" onclick="startReservationFlow()" class="w-full bg-yellow-500 hover:bg-yellow-400 active:bg-yellow-600 text-black font-black py-4 rounded-2xl shadow-lg shadow-yellow-500/10 transition">
-          予約をはじめる
-        </button>
-
-        <a
-          id="topMemberLink"
-          data-member-link
-          href="./member.html"
-          class="block text-center w-full bg-gray-900 border border-gray-800 hover:bg-gray-800 text-gray-300 font-bold py-4 rounded-2xl transition"
-        >
-          マイページを見る
-        </a>
-
       </div>
-
-      <!-- STEP 1 -->
-      <div id="step1" class="step hidden fade-in space-y-4">
-        <div>
-          <p class="text-xs text-yellow-500 font-bold">STEP 1 / 4</p>
-          <h2 class="text-xl font-black mt-1">今回の目的を選んでください</h2>
-          <p class="text-sm text-gray-400 mt-2">
-            選んだ内容はオーナー画面にも表示され、初回接客がスムーズになります。
-          </p>
-        </div>
-
-        <div class="space-y-3">
-          <button onclick="selectPurpose('ダイエット・シェイプアップ')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="text-lg font-black">🔥 ダイエット</div>
-            <p class="text-sm text-gray-400 mt-1">体重・体型を変えたい</p>
-          </button>
-
-          <button onclick="selectPurpose('筋力アップ・ボディメイク')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="text-lg font-black">💪 ボディメイク</div>
-            <p class="text-sm text-gray-400 mt-1">筋力アップ・引き締め</p>
-          </button>
-
-          <button onclick="selectPurpose('運動不足の解消・健康維持')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="text-lg font-black">🏃 健康維持</div>
-            <p class="text-sm text-gray-400 mt-1">運動習慣を作りたい</p>
-          </button>
-
-          <button onclick="selectPurpose('姿勢改善・不調予防')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="text-lg font-black">🧘 姿勢改善</div>
-            <p class="text-sm text-gray-400 mt-1">肩こり・腰の不安・姿勢を整えたい</p>
-          </button>
-        </div>
-
-        <button onclick="goStep(0)" class="text-sm text-gray-400 underline">戻る</button>
-      </div>
-
-      <!-- STEP 2 -->
-      <div id="step2" class="step hidden fade-in space-y-4">
-        <div>
-          <p class="text-xs text-yellow-500 font-bold">STEP 2 / 4</p>
-          <h2 class="text-xl font-black mt-1">目標に近いものを選んでください</h2>
-        </div>
-
-        <div class="space-y-3">
-          <button onclick="selectGoal('3ヶ月で変化を出したい')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">🎯 3ヶ月で変化を出したい</div>
-          </button>
-
-          <button onclick="selectGoal('見た目を引き締めたい')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">👕 見た目を引き締めたい</div>
-          </button>
-
-          <button onclick="selectGoal('運動習慣を定着させたい')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">📅 運動習慣を定着させたい</div>
-          </button>
-
-          <button onclick="selectGoal('まずは自分に合うか試したい')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">🔰 まずは体験してみたい</div>
-          </button>
-        </div>
-
-        <button onclick="goStep(1)" class="text-sm text-gray-400 underline">戻る</button>
-      </div>
-
-      <!-- STEP 3 -->
-      <div id="step3" class="step hidden fade-in space-y-4">
-        <div>
-          <p class="text-xs text-yellow-500 font-bold">STEP 3 / 4</p>
-          <h2 class="text-xl font-black mt-1">不安・悩みに近いものは？</h2>
-        </div>
-
-        <div class="space-y-3">
-          <button onclick="selectConcern('過去にジムが続かなかった')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">❌ 過去にジムが続かなかった</div>
-          </button>
-
-          <button onclick="selectConcern('マシンの使い方が不安')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">😟 マシンの使い方が不安</div>
-          </button>
-
-          <button onclick="selectConcern('リバウンドが心配')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">🔁 リバウンドが心配</div>
-          </button>
-
-          <button onclick="selectConcern('体力に自信がない')" class="w-full text-left bg-gray-900 hover:bg-gray-800 border border-gray-800 hover:border-yellow-500/60 rounded-2xl p-4 transition">
-            <div class="font-black">💦 体力に自信がない</div>
-          </button>
-        </div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4">
-          <label for="customConcern" class="text-sm font-bold text-gray-300">
-            その他の悩み・要望
-          </label>
-          <textarea
-            id="customConcern"
-            rows="3"
-            class="mt-2 w-full bg-gray-950 border border-gray-800 rounded-xl p-3 text-sm focus:outline-none focus:border-yellow-500"
-            placeholder="例：腰に不安がある、短時間で通いたい等"
-          ></textarea>
-
-          <button onclick="submitCustomConcern()" class="mt-3 w-full bg-yellow-500 text-black font-black py-3 rounded-xl">
-            入力して次へ
-          </button>
-        </div>
-
-        <button onclick="goStep(2)" class="text-sm text-gray-400 underline">戻る</button>
-      </div>
-
-      <!-- STEP 4 -->
-      <div id="step4" class="step hidden fade-in space-y-4">
-        <div>
-          <p class="text-xs text-yellow-500 font-bold">STEP 4 / 4</p>
-          <h2 class="text-xl font-black mt-1">希望日時を選んでください</h2>
-          <p id="dateStepMessage" class="text-sm text-gray-400 mt-2">
-            予約済みの時間は「満席」として選択できません。
-          </p>
-        </div>
-
-        <div id="skipInfoBox" class="hidden bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-4 text-xs text-yellow-100 leading-relaxed">
-          前回のアンケート回答を使用します。今回は日時を選ぶだけで予約変更できます。
-        </div>
-
-        <div id="businessInfoBox" class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-xs text-gray-300 leading-relaxed">
-          営業時間・定休日・臨時休業日を読み込み中です。
-        </div>
-
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <p class="text-sm font-bold text-gray-300">日付</p>
-            <button onclick="buildDateButtons()" class="text-xs text-yellow-500 font-bold">
-              更新
-            </button>
-          </div>
-          <div id="dateButtons" class="grid grid-cols-2 gap-2"></div>
-        </div>
-
-        <div>
-          <p class="text-sm font-bold text-gray-300 mb-2">時間</p>
-          <div id="timeLoading" class="hidden text-center text-sm text-gray-500 py-4">空き状況を確認中...</div>
-          <div id="timeButtons" class="grid grid-cols-3 gap-2"></div>
-        </div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 text-xs text-gray-400 leading-relaxed">
-          <p class="font-bold text-gray-300 mb-1">予約について</p>
-          <p>送信後は一度「承認待ち」になります。オーナーが確認後、予約確定のご案内があります。</p>
-        </div>
-
-        <button
-          id="confirmBtn"
-          onclick="showConfirm()"
-          disabled
-          class="w-full bg-yellow-500 disabled:bg-gray-700 disabled:text-gray-500 text-black font-black py-4 rounded-2xl transition"
-        >
-          内容確認へ
-        </button>
-
-        <button onclick="goBackFromDateStep()" class="text-sm text-gray-400 underline">戻る</button>
-      </div>
-
-      <!-- STEP 5 -->
-      <div id="step5" class="step hidden fade-in space-y-4">
-        <div>
-          <p class="text-xs text-yellow-500 font-bold">確認</p>
-          <h2 class="text-xl font-black mt-1">この内容で予約しますか？</h2>
-        </div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 space-y-3 text-sm">
-          <div class="flex justify-between gap-4">
-            <span class="text-gray-400">お名前</span>
-            <strong id="confirmName" class="text-right"></strong>
-          </div>
-
-          <div class="flex justify-between gap-4">
-            <span class="text-gray-400">目的</span>
-            <strong id="confirmPurpose" class="text-right"></strong>
-          </div>
-
-          <div class="flex justify-between gap-4">
-            <span class="text-gray-400">目標</span>
-            <strong id="confirmGoal" class="text-right"></strong>
-          </div>
-
-          <div class="flex justify-between gap-4">
-            <span class="text-gray-400">悩み</span>
-            <strong id="confirmConcern" class="text-right"></strong>
-          </div>
-
-          <div class="h-px bg-gray-800 my-3"></div>
-
-          <div class="flex justify-between gap-4 text-base">
-            <span class="text-gray-400">希望日時</span>
-            <strong id="confirmDateTime" class="text-yellow-400 text-right"></strong>
-          </div>
-        </div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 space-y-4">
-          <div>
-            <p class="font-black text-yellow-400">当日の持ち物</p>
-            <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
-              <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3">👕 動きやすい服装</div>
-              <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3">👟 室内シューズ</div>
-              <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3">🥤 飲み物</div>
-              <div class="bg-gray-950 border border-gray-800 rounded-2xl p-3">🧺 タオル</div>
-            </div>
-          </div>
-
-          <div class="h-px bg-gray-800"></div>
-
-          <div class="text-sm text-gray-300 leading-relaxed">
-            <p class="font-black text-white">所要時間の目安</p>
-            <p class="text-gray-400 mt-1">カウンセリングを含めて約60分です。無理な勧誘はなく、目的に合わせてご案内します。</p>
-          </div>
-        </div>
-
-        <button id="submitBtn" onclick="submitReservation()" class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-4 rounded-2xl transition">
-          予約を送信する
-        </button>
-
-        <button onclick="goStep(4)" class="text-sm text-gray-400 underline">
-          日時を変更する
-        </button>
-      </div>
-
-      <!-- STEP 6 -->
-      <div id="step6" class="step hidden fade-in space-y-5 text-center">
-        <div class="mx-auto w-20 h-20 rounded-full bg-yellow-500 text-black flex items-center justify-center text-4xl shadow-lg shadow-yellow-500/20">
-          ✓
-        </div>
-
-        <div>
-          <h2 class="text-2xl font-black">予約を受け付けました</h2>
-          <p class="text-sm text-gray-400 mt-3 leading-relaxed">
-            予約内容を保存しました。続けてマイページへ移動します。
-          </p>
-          <p id="memberMoveNotice" class="text-xs text-yellow-400 font-bold mt-3">
-            マイページへ移動中...
-          </p>
-        </div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 text-left space-y-3">
-          <p class="text-xs text-gray-400 font-bold">予約内容</p>
-          <p id="completeDateTime" class="font-black text-yellow-400 text-xl"></p>
-          <div class="h-px bg-gray-800"></div>
-          <p id="completeSummary" class="text-sm text-gray-300 leading-relaxed"></p>
-        </div>
-
-        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-5 text-left">
-          <p class="font-black text-yellow-400">当日のご案内</p>
-          <ul class="mt-3 space-y-2 text-sm text-gray-300">
-            <li>・動きやすい服装でお越しください</li>
-            <li>・開始時間の5分前を目安にお越しください</li>
-            <li>・変更やキャンセルはマイページから申請できます</li>
-          </ul>
-        </div>
-
-        <a
-          id="completeMemberLink"
-          data-member-link
-          href="./member.html"
-          class="block w-full bg-yellow-500 text-black font-black py-4 rounded-2xl"
-        >
-          マイページを見る
-        </a>
-
-        <button onclick="closeLiff()" class="w-full bg-gray-900 border border-gray-800 text-gray-300 font-bold py-4 rounded-2xl">
-          LINEトークに戻る
-        </button>
-      </div>
-
     </section>
   </main>
 
-<script>
-  const MY_LIFF_ID = '2010341851-Qez3SffP';
-  const MEMBER_LIFF_ID = '2010362463-80AFWCcm';
-  const SUPABASE_URL = 'https://cbknucemarcpbscirzyv.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const CONFIG = window.DPRO_GYM_CONFIG;
+    const API = String(CONFIG.workerBaseUrl || '').replace(/\/$/, '');
+    const FACILITY = CONFIG.facilityCode;
+    const LIFF_ID = '2010341851-Qez3SffP';
+    const params = new URLSearchParams(location.search);
+    const state = {
+      step: 1,
+      facility: null,
+      settings: null,
+      services: [],
+      trainers: [],
+      serviceCode: '',
+      trainerCode: '',
+      date: '',
+      slot: null,
+      lineUserId: params.get('line_user_id') || '',
+      liffAccessToken: '',
+      demo: params.get('demo') === '1',
+      customer: null,
+      memberToken: localStorage.getItem('dpro_gym_member_token') || '',
+      purpose: ''
+    };
 
-  // PC / iPad / LINE外ブラウザで確認する時も、demo-user ではなく
-  // 岩口さんのLINEユーザーIDを使って、スマホLINE内と同じ会員データを見ます。
-  const PC_DEMO_LINE_USER_ID = 'U09f3a54d1f41575fe6f6968e7b17a075';
-  const PC_DEMO_DISPLAY_NAME = '岩口さん';
+    document.addEventListener('DOMContentLoaded', init);
 
-  const sbClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  const state = {
-    step: 0,
-    displayName: PC_DEMO_DISPLAY_NAME,
-    lineDisplayName: '',
-    customerName: PC_DEMO_DISPLAY_NAME,
-    userId: PC_DEMO_LINE_USER_ID,
-    existingData: null,
-    savedProfileId: '',
-    isSkippingQuestionnaire: false,
-    purpose: '',
-    goal: '',
-    concern: '',
-    selectedDate: '',
-    selectedTime: '',
-    reservedSlots: new Set()
-  };
-
-  let gymSettings = {
-    shop_name: 'DPRO GYM',
-    open_time: '10:00',
-    close_time: '19:00',
-    slot_minutes: 30,
-    holidays: [0],
-    closed_dates: [],
-    max_reservation_days: 60,
-    notice: ''
-  };
-
-  let timeSlots = [];
-
-  window.addEventListener('load', init);
-
-  async function init() {
-    updateMemberLinks();
-    await loadGymSettings();
-    buildDateButtons();
-
-    try {
-      await liff.init({ liffId: MY_LIFF_ID });
-
-      if (!liff.isLoggedIn() && liff.isInClient()) {
-        liff.login();
-        return;
-      }
-
-      if (liff.isLoggedIn()) {
-        const profile = await liff.getProfile();
-        const lineName = cleanName(profile.displayName || '');
-        state.lineDisplayName = lineName;
-        state.displayName = lineName || 'ゲスト様';
-        state.customerName = lineName || state.customerName || 'ゲスト様';
-        state.userId = profile.userId || PC_DEMO_LINE_USER_ID;
-      }
-
-      if (!liff.isInClient()) {
-        state.userId = state.userId || PC_DEMO_LINE_USER_ID;
-        showNotice('PC / iPad確認用として、岩口さんのLINEアカウントIDで動作しています。スマホLINE内と同じ会員データを確認できます。');
-      }
-
-    } catch (e) {
-      console.warn('LIFF demo mode:', e);
-      state.userId = PC_DEMO_LINE_USER_ID;
-      showNotice('LIFF初期化に失敗しました。PC確認用として岩口さんのLINEアカウントIDで続行します。');
-    }
-
-    syncNameInput();
-    await fetchExistingProfile();
-  }
-
-  function cleanName(value) {
-    return String(value || '').replace(/\s+/g, ' ').trim();
-  }
-
-  function normalizeLineUserId(value) {
-    const id = String(value || '').trim();
-    if (!id || id === 'demo-user') return PC_DEMO_LINE_USER_ID;
-    return id;
-  }
-
-  function isDemoLikeName(value) {
-    const text = cleanName(value).replace(/\s/g, '').toLowerCase();
-    return [
-      'デモ太郎',
-      'デモユーザー',
-      '体験山田',
-      '体験やまだ',
-      'demouser',
-      'demo',
-      'guest'
-    ].includes(text);
-  }
-
-  function getCustomerName() {
-    // 最重要：お客様が入力欄で変更した名前を最優先します。
-    // LINEプロフィール名は初期値としてだけ使い、送信時・マイページ遷移時は入力欄の値を優先します。
-    const input = document.getElementById('customerNameInput');
-    const inputName = cleanName(input ? input.value : '');
-    return inputName || cleanName(state.customerName) || cleanName(state.displayName) || 'ゲスト様';
-  }
-
-  function syncNameInput() {
-    const input = document.getElementById('customerNameInput');
-    if (!input) return;
-
-    const current = cleanName(input.value);
-    const next = getCustomerName();
-
-    if (!current || isDemoLikeName(current)) {
-      input.value = next;
-    }
-
-    state.customerName = cleanName(input.value) || next;
-  }
-
-  function handleNameInput() {
-    const input = document.getElementById('customerNameInput');
-    state.customerName = cleanName(input ? input.value : '');
-    // 名前変更後の「マイページを見る」リンクにも、入力名を即反映します。
-    updateMemberLinks();
-  }
-
-  function validateCustomerName() {
-    syncNameInput();
-
-    const name = getCustomerName();
-
-    if (!name || name.length < 2) {
-      alert('お名前を入力してください。');
-      const input = document.getElementById('customerNameInput');
-      if (input) input.focus();
-      return false;
-    }
-
-    return true;
-  }
-
-  async function syncProfileDisplayNameIfNeeded(data) {
-    // LINEプロフィール名で display_name を上書きしないための安全処理。
-    // ここでは「DB名が空、かつ入力欄の名前も空」の時だけLINE名を補完します。
-    // 予約フォームで入力した名前がある場合は必ずそちらを優先します。
-    if (!data || !data.id) return;
-    if (!state.userId || state.userId === 'demo-user') return;
-    if (data.line_user_id !== state.userId) return;
-
-    const typedName = cleanName(document.getElementById('customerNameInput')?.value || '');
-    const dbName = cleanName(data.display_name);
-    const lineName = cleanName(state.lineDisplayName || state.displayName);
-
-    if (typedName && !isDemoLikeName(typedName)) return;
-    if (dbName && !isDemoLikeName(dbName)) return;
-    if (!lineName || isDemoLikeName(lineName)) return;
-
-    const { error } = await sbClient
-      .from('gym_profiles')
-      .update({ display_name: lineName })
-      .eq('id', data.id);
-
-    if (!error) {
-      data.display_name = lineName;
-      state.customerName = lineName;
-      syncNameInput();
-    }
-  }
-
-  async function fetchExistingProfile() {
-    let response = await sbClient
-      .from('gym_profiles')
-      .select('*')
-      .eq('line_user_id', normalizeLineUserId(state.userId))
-      .order('updated_at', { ascending: false })
-      .limit(1);
-
-    // updated_at が無い・古い構成でも止めないための保険
-    if (response.error) {
-      const msg = String(response.error.message || '');
-      if (msg.includes('updated_at') || response.error.code === '42703') {
-        response = await sbClient
-          .from('gym_profiles')
-          .select('*')
-          .eq('line_user_id', normalizeLineUserId(state.userId))
-          .order('created_at', { ascending: false })
-          .limit(1);
-      }
-    }
-
-    if (response.error) {
-      console.warn(response.error);
+    async function init() {
+      bindChoices();
       updateMemberLinks();
-      return;
-    }
-
-    const rows = Array.isArray(response.data) ? response.data : [];
-    const profile = rows.length ? rows[0] : null;
-    if (!profile) {
-      updateMemberLinks();
-      return;
-    }
-
-    state.existingData = profile;
-    state.savedProfileId = profile.id || '';
-
-    const dbName = cleanName(profile.display_name);
-    if (dbName && !isDemoLikeName(dbName)) {
-      state.customerName = dbName;
-    } else if (state.userId !== 'demo-user' && cleanName(state.lineDisplayName)) {
-      state.customerName = cleanName(state.lineDisplayName);
-      await syncProfileDisplayNameIfNeeded(profile);
-    } else if (isDemoLikeName(dbName) && normalizeLineUserId(state.userId) === PC_DEMO_LINE_USER_ID) {
-      // PC / iPad確認では、過去の「体験 山田」「デモ太郎」などを残さず、
-      // 岩口さんのGYM用LINE IDの確認名に自動補正します。
-      state.customerName = PC_DEMO_DISPLAY_NAME;
-      await syncProfileDisplayNameIfNeeded(profile);
-    } else if (dbName) {
-      state.customerName = dbName;
-    }
-    syncNameInput();
-
-    if (profile.purpose) state.purpose = profile.purpose;
-    if (profile.target_goal) state.goal = profile.target_goal;
-    if (profile.status) state.concern = profile.status;
-
-    renderExistingReservation(profile);
-    saveMemberBridge(profile);
-    updateMemberLinks();
-  }
-
-  function hasAnsweredQuestionnaire(data) {
-    return !!(
-      data &&
-      data.purpose &&
-      data.target_goal &&
-      data.status
-    );
-  }
-
-  function startReservationFlow() {
-    if (!validateCustomerName()) return;
-
-    if (state.existingData && hasAnsweredQuestionnaire(state.existingData)) {
-      state.purpose = state.existingData.purpose || state.purpose;
-      state.goal = state.existingData.target_goal || state.goal;
-      state.concern = state.existingData.status || state.concern;
-      state.isSkippingQuestionnaire = true;
-
-      document.getElementById('skipInfoBox').classList.remove('hidden');
-      document.getElementById('dateStepMessage').textContent = '前回のアンケート回答を使用して、日時だけ変更できます。';
-
-      goStep(4);
-      return;
-    }
-
-    state.isSkippingQuestionnaire = false;
-    document.getElementById('skipInfoBox').classList.add('hidden');
-    document.getElementById('dateStepMessage').textContent = '予約済みの時間は「満席」として選択できません。';
-
-    goStep(1);
-  }
-
-  function renderExistingReservation(data) {
-    const box = document.getElementById('existingReservationBox');
-    const text = document.getElementById('existingReservationText');
-    const statusText = document.getElementById('existingReservationStatusText');
-    const startButton = document.getElementById('startButton');
-    const headerBadge = document.getElementById('headerBadge');
-
-    box.classList.remove('hidden');
-
-    const dateText = formatDateTime(data.preferred_datetime) || '予約はありません';
-    const status = data.reservation_status || 'pending';
-    const answered = hasAnsweredQuestionnaire(data);
-
-    const skipText = answered
-      ? 'アンケート回答済みのため、次回からは日時選択だけで変更できます。'
-      : 'アンケート未回答のため、最初から入力してください。';
-
-    text.textContent = dateText;
-
-    if (!data.preferred_datetime) {
-      statusText.textContent = answered
-        ? `現在予約はありません。${skipText}`
-        : '新しく予約できます。';
-      startButton.textContent = answered ? '日時だけ予約する' : '予約をはじめる';
-      headerBadge.textContent = answered ? '日時予約' : '新規予約';
-      return;
-    }
-
-    if (status === 'confirmed') {
-      statusText.textContent = `現在の予約は確定済みです。${skipText}`;
-      startButton.textContent = answered ? '日時だけ変更する' : '予約を変更する';
-      headerBadge.textContent = '予約変更';
-    } else if (status === 'cancelled') {
-      statusText.textContent = `現在は再調整中です。${skipText}`;
-      startButton.textContent = answered ? '日時だけ再予約する' : '再予約する';
-      headerBadge.textContent = '再予約';
-    } else {
-      statusText.textContent = `現在の予約は承認待ちです。${skipText}`;
-      startButton.textContent = answered ? '希望日時だけ変更する' : '希望日時を変更する';
-      headerBadge.textContent = '承認待ち';
-    }
-  }
-
-  function showNotice(text) {
-    const el = document.getElementById('notice');
-    el.textContent = text;
-    el.classList.remove('hidden');
-  }
-
-  function goStep(step) {
-    state.step = step;
-
-    document.querySelectorAll('.step').forEach(el => {
-      el.classList.add('hidden');
-    });
-
-    document.getElementById(`step${step}`).classList.remove('hidden');
-
-    const widths = {
-      0: 14,
-      1: 30,
-      2: 46,
-      3: 62,
-      4: 78,
-      5: 92,
-      6: 100
-    };
-
-    document.getElementById('progressBar').style.width = `${widths[step] || 14}%`;
-
-    if (step === 4 && state.selectedDate) {
-      loadReservedSlots(state.selectedDate).then(buildTimeButtons);
-    }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function goBackFromDateStep() {
-    if (state.isSkippingQuestionnaire) {
-      goStep(0);
-    } else {
-      goStep(3);
-    }
-  }
-
-  function selectPurpose(value) {
-    state.purpose = value;
-    goStep(2);
-  }
-
-  function selectGoal(value) {
-    state.goal = value;
-    goStep(3);
-  }
-
-  function selectConcern(value) {
-    state.concern = value;
-    goStep(4);
-  }
-
-  function submitCustomConcern() {
-    const value = document.getElementById('customConcern').value.trim();
-
-    if (!value) {
-      alert('悩み・要望を入力するか、選択肢をお選びください。');
-      return;
-    }
-
-    state.concern = value;
-    goStep(4);
-  }
-
-  function localDateString(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-
-  function pad2(value) {
-    return String(value).padStart(2, '0');
-  }
-
-  function normalizeTime(value, fallback = '10:00') {
-    const text = String(value || '').slice(0, 5);
-    return /^\d{2}:\d{2}$/.test(text) ? text : fallback;
-  }
-
-  function timeToMinutes(time) {
-    const [h, m] = normalizeTime(time).split(':').map(Number);
-    return h * 60 + m;
-  }
-
-  function normalizeNumberArray(value) {
-    if (!Array.isArray(value)) return [];
-    return [...new Set(
-      value
-        .map(v => Number(v))
-        .filter(v => Number.isInteger(v) && v >= 0 && v <= 6)
-    )].sort((a, b) => a - b);
-  }
-
-  function normalizeClosedDates(value) {
-    if (!value) return [];
-
-    if (Array.isArray(value)) {
-      return [...new Set(
-        value
-          .map(v => String(v || '').trim())
-          .filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v))
-      )].sort();
-    }
-
-    if (typeof value === 'string') {
-      return [...new Set(
-        value
-          .split(',')
-          .map(v => v.trim())
-          .filter(v => /^\d{4}-\d{2}-\d{2}$/.test(v))
-      )].sort();
-    }
-
-    return [];
-  }
-
-  function normalizeGymSettings(data = {}) {
-    const openTime = normalizeTime(data.open_time, '10:00');
-    const closeTime = normalizeTime(data.close_time, '19:00');
-    const slotMinutes = Number(data.slot_minutes || 30);
-    const maxDays = Number(data.max_reservation_days || 60);
-
-    return {
-      shop_name: data.shop_name || 'DPRO GYM',
-      open_time: timeToMinutes(openTime) < timeToMinutes(closeTime) ? openTime : '10:00',
-      close_time: timeToMinutes(openTime) < timeToMinutes(closeTime) ? closeTime : '19:00',
-      slot_minutes: [15, 30, 45, 60].includes(slotMinutes) ? slotMinutes : 30,
-      holidays: normalizeNumberArray(data.holidays || [0]),
-      closed_dates: normalizeClosedDates(data.closed_dates || []),
-      max_reservation_days: Number.isInteger(maxDays) && maxDays >= 7 && maxDays <= 180 ? maxDays : 60,
-      notice: data.notice || ''
-    };
-  }
-
-  async function loadGymSettings() {
-    try {
-      const { data, error } = await sbClient
-        .from('gym_settings')
-        .select('*')
-        .eq('id', 1)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        gymSettings = normalizeGymSettings(data);
-      } else {
-        gymSettings = normalizeGymSettings(gymSettings);
-      }
-    } catch (error) {
-      console.warn('gym_settings load skipped:', error);
-      showNotice('営業時間・休業日設定の取得に失敗したため、標準設定（日曜定休 / 10:00〜19:00 / 2か月先まで）で表示します。');
-      gymSettings = normalizeGymSettings(gymSettings);
-    }
-
-    generateTimeSlots();
-    renderBusinessInfo();
-  }
-
-  function generateTimeSlots() {
-    const open = timeToMinutes(gymSettings.open_time);
-    const close = timeToMinutes(gymSettings.close_time);
-    const step = Number(gymSettings.slot_minutes || 30);
-    const slots = [];
-
-    for (let minutes = open; minutes <= close; minutes += step) {
-      const h = Math.floor(minutes / 60);
-      const m = minutes % 60;
-      slots.push(`${pad2(h)}:${pad2(m)}`);
-    }
-
-    timeSlots = slots.length ? slots : ['10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00'];
-  }
-
-  function formatHolidayNames() {
-    const names = ['日', '月', '火', '水', '木', '金', '土'];
-    const holidays = normalizeNumberArray(gymSettings.holidays);
-    return holidays.length ? holidays.map(day => `${names[day]}曜`).join('・') : 'なし';
-  }
-
-  function formatClosedDateNames() {
-    const dates = normalizeClosedDates(gymSettings.closed_dates);
-    if (!dates.length) return 'なし';
-    const first = dates.slice(0, 4).map(displayDate).join('・');
-    return dates.length > 4 ? `${first} ほか${dates.length - 4}日` : first;
-  }
-
-  function renderBusinessInfo() {
-    const box = document.getElementById('businessInfoBox');
-    if (!box) return;
-
-    box.innerHTML = `
-      <p class="font-bold text-gray-200 mb-1">予約可能日について</p>
-      <p>営業時間：${gymSettings.open_time}〜${gymSettings.close_time} / ${gymSettings.slot_minutes}分枠</p>
-      <p>定休日：${formatHolidayNames()} / 臨時休業：${formatClosedDateNames()}</p>
-      <p>予約可能期間：本日から${gymSettings.max_reservation_days}日先まで</p>
-    `;
-  }
-
-  function getDateStatus(dateStr, offset) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
-    const day = dt.getDay();
-
-    if (offset < 0) {
-      return { selectable: false, label: '過去日', reason: '過去日' };
-    }
-
-    if (offset >= gymSettings.max_reservation_days) {
-      return { selectable: false, label: '期間外', reason: '期間外' };
-    }
-
-    if ((gymSettings.closed_dates || []).includes(dateStr)) {
-      return { selectable: false, label: '臨時休業', reason: '臨時休業' };
-    }
-
-    if ((gymSettings.holidays || []).includes(day)) {
-      return { selectable: false, label: '定休日', reason: '定休日' };
-    }
-
-    return { selectable: true, label: '受付中', reason: '' };
-  }
-
-  function displayDate(dateStr) {
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
-    const w = ['日', '月', '火', '水', '木', '金', '土'][dt.getDay()];
-    return `${m}/${d}(${w})`;
-  }
-
-  function buildDateButtons() {
-    const wrap = document.getElementById('dateButtons');
-    if (!wrap) return;
-
-    wrap.innerHTML = '';
-
-    const today = new Date();
-    const maxDays = Number(gymSettings.max_reservation_days || 60);
-
-    for (let i = 0; i < maxDays; i++) {
-      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
-      const dateStr = localDateString(d);
-      const status = getDateStatus(dateStr, i);
-
-      let label = displayDate(dateStr);
-      if (i === 0) label = '今日';
-      if (i === 1) label = '明日';
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.dataset.date = dateStr;
-      btn.disabled = !status.selectable;
-
-      btn.className = status.selectable
-        ? 'date-btn bg-gray-900 border border-gray-800 hover:border-yellow-500/60 rounded-2xl py-3 px-2 text-sm font-black transition'
-        : 'date-btn bg-gray-900 border border-gray-800 text-gray-600 rounded-2xl py-3 px-2 text-sm font-black cursor-not-allowed';
-
-      btn.innerHTML = `
-        <span class="block ${status.selectable ? 'text-yellow-400' : 'text-gray-600'} text-xs">${label}</span>
-        <span class="block text-gray-500 text-[11px] mt-1">${dateStr}</span>
-        <span class="block text-[10px] mt-1 ${status.selectable ? 'text-gray-500' : 'text-gray-600'}">${status.label}</span>
-      `;
-
-      if (status.selectable) {
-        btn.onclick = () => selectDate(dateStr);
-      }
-
-      wrap.appendChild(btn);
-    }
-  }
-
-  async function selectDate(dateStr) {
-    const today = new Date();
-    const diffMs = new Date(`${dateStr}T00:00:00`).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-    const offset = Math.round(diffMs / 86400000);
-    const status = getDateStatus(dateStr, offset);
-
-    if (!status.selectable) {
-      alert(`${status.label}のため、この日は予約できません。`);
-      return;
-    }
-
-    state.selectedDate = dateStr;
-    state.selectedTime = '';
-
-    document.querySelectorAll('.date-btn').forEach(btn => {
-      if (btn.disabled) return;
-
-      if (btn.dataset.date === dateStr) {
-        btn.className = 'date-btn bg-yellow-500 text-black border border-yellow-500 rounded-2xl py-3 px-2 text-sm font-black transition';
-      } else {
-        btn.className = 'date-btn bg-gray-900 border border-gray-800 hover:border-yellow-500/60 rounded-2xl py-3 px-2 text-sm font-black transition';
-      }
-    });
-
-    await loadReservedSlots(dateStr);
-    buildTimeButtons();
-    updateConfirmButton();
-  }
-
-  async function loadReservedSlots(dateStr) {
-    state.reservedSlots = new Set();
-
-    const timeLoading = document.getElementById('timeLoading');
-    const timeButtons = document.getElementById('timeButtons');
-
-    if (timeLoading) timeLoading.classList.remove('hidden');
-    if (timeButtons) timeButtons.innerHTML = '';
-
-    const { data, error } = await sbClient
-      .from('gym_profiles')
-      .select('preferred_datetime,reservation_status,line_user_id')
-      .like('preferred_datetime', `${dateStr}%`);
-
-    if (timeLoading) timeLoading.classList.add('hidden');
-
-    if (error || !data) {
-      console.warn(error);
-      return;
-    }
-
-    data.forEach(row => {
-      if (row.line_user_id === state.userId) return;
-
-      const reservationStatus = row.reservation_status || 'pending';
-
-      if (!['pending', 'confirmed'].includes(reservationStatus)) return;
-
-      const raw = String(row.preferred_datetime || '').replace('T', ' ');
-      const time = raw.split(' ')[1]?.slice(0, 5);
-
-      if (time) {
-        state.reservedSlots.add(time);
-      }
-    });
-  }
-
-  function buildTimeButtons() {
-    const wrap = document.getElementById('timeButtons');
-    if (!wrap) return;
-
-    wrap.innerHTML = '';
-
-    if (!state.selectedDate) {
-      wrap.innerHTML = '<div class="col-span-3 text-center text-gray-500 text-sm py-4">先に日付を選択してください</div>';
-      return;
-    }
-
-    timeSlots.forEach(time => {
-      const isReserved = state.reservedSlots.has(time);
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.disabled = isReserved;
-      btn.dataset.time = time;
-
-      btn.className = isReserved
-        ? 'time-btn bg-gray-800 border border-gray-800 text-gray-600 rounded-xl py-3 text-sm font-black cursor-not-allowed'
-        : 'time-btn bg-gray-900 border border-gray-800 hover:border-yellow-500/60 rounded-xl py-3 text-sm font-black transition';
-
-      btn.innerHTML = `
-        ${time}
-        <span class="block text-[10px] ${isReserved ? 'text-gray-600' : 'text-yellow-500'}">
-          ${isReserved ? '満席' : '予約可'}
-        </span>
-      `;
-
-      btn.onclick = () => selectTime(time);
-
-      wrap.appendChild(btn);
-    });
-  }
-
-  function selectTime(time) {
-    state.selectedTime = time;
-
-    document.querySelectorAll('.time-btn').forEach(btn => {
-      if (btn.disabled) return;
-
-      if (btn.dataset.time === time) {
-        btn.className = 'time-btn bg-yellow-500 text-black border border-yellow-500 rounded-xl py-3 text-sm font-black transition';
-      } else {
-        btn.className = 'time-btn bg-gray-900 border border-gray-800 hover:border-yellow-500/60 rounded-xl py-3 text-sm font-black transition';
-      }
-    });
-
-    updateConfirmButton();
-  }
-
-  function updateConfirmButton() {
-    const btn = document.getElementById('confirmBtn');
-    btn.disabled = !(state.selectedDate && state.selectedTime);
-  }
-
-  function showConfirm() {
-    if (!validateCustomerName()) return;
-
-    document.getElementById('confirmName').textContent = `${getCustomerName()} 様`;
-    document.getElementById('confirmPurpose').textContent = state.purpose;
-    document.getElementById('confirmGoal').textContent = state.goal;
-    document.getElementById('confirmConcern').textContent = state.concern;
-    document.getElementById('confirmDateTime').textContent = `${displayDate(state.selectedDate)} ${state.selectedTime}`;
-
-    goStep(5);
-  }
-
-  async function submitReservation() {
-    const btn = document.getElementById('submitBtn');
-
-    if (!validateCustomerName()) return;
-
-    if (!state.purpose || !state.goal || !state.concern || !state.selectedDate || !state.selectedTime) {
-      alert('未入力の項目があります。');
-      return;
-    }
-
-    const todayForSubmit = new Date();
-    const diffMs = new Date(`${state.selectedDate}T00:00:00`).getTime() - new Date(todayForSubmit.getFullYear(), todayForSubmit.getMonth(), todayForSubmit.getDate()).getTime();
-    const offsetForSubmit = Math.round(diffMs / 86400000);
-    const dateStatus = getDateStatus(state.selectedDate, offsetForSubmit);
-
-    if (!dateStatus.selectable) {
-      alert(`${dateStatus.label}のため、この日は予約できません。別の日を選択してください。`);
-      goStep(4);
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = '送信中...';
-
-    const fullDate = `${state.selectedDate} ${state.selectedTime}`;
-    const customerName = getCustomerName();
-    state.customerName = customerName;
-
-    const basePayload = {
-      display_name: customerName,
-      purpose: state.purpose,
-      target_goal: state.goal,
-      status: state.concern,
-      preferred_datetime: fullDate,
-      reservation_status: 'pending',
-      cancel_reason: null,
-      cancel_requested_at: null,
-      follow_status: '未対応',
-      next_follow_date: null
-    };
-
-    try {
-      let error;
-      let savedProfile = null;
-
-      if (state.existingData && state.existingData.id) {
-        const result = await sbClient
-          .from('gym_profiles')
-          .update(basePayload)
-          .eq('id', state.existingData.id)
-          .select('*')
-          .limit(1);
-
-        error = result.error;
-        savedProfile = Array.isArray(result.data) && result.data.length
-          ? result.data[0]
-          : { ...state.existingData, ...basePayload };
-      } else {
-        const insertPayload = {
-          ...basePayload,
-          line_user_id: normalizeLineUserId(state.userId),
-          member_status: '体験予約',
-          remaining_count: 0,
-          visit_count: 0
-        };
-
-        const result = await sbClient
-          .from('gym_profiles')
-          .insert([insertPayload])
-          .select('*')
-          .limit(1);
-
-        error = result.error;
-        savedProfile = Array.isArray(result.data) && result.data.length
-          ? result.data[0]
-          : insertPayload;
-      }
-
-      if (error) throw error;
-
-      if (savedProfile) {
-        state.existingData = savedProfile;
-        state.savedProfileId = savedProfile.id || '';
-        saveMemberBridge(savedProfile);
-        updateMemberLinks();
-      }
-
+      await initLineIdentity();
       try {
-        if (typeof liff !== 'undefined' && liff.isInClient()) {
-          await liff.sendMessages([{
-            type: 'text',
-            text:
-`【予約受付】
-${customerName}様、予約を受け付けました。
-
-日時：${fullDate}
-目的：${state.purpose}
-目標：${state.goal}
-
-オーナー確認後、予約確定のご案内をお送りします。`
-          }]);
-        }
-      } catch (messageError) {
-        console.warn('LINE message skipped:', messageError);
+        const facility = await api(`/api/public/facility?facility_code=${encodeURIComponent(FACILITY)}`);
+        state.facility = facility.facility;
+        state.settings = facility.settings;
+        state.services = facility.services || [];
+        state.trainers = facility.trainers || [];
+        document.getElementById('pageTitle').textContent = `${state.facility.facility_name}｜予約`;
+        renderServices();
+        renderTrainers();
+        buildDates();
+        await tryLoadMember();
+      } catch (error) {
+        showError('step1Error', error.message);
       }
-
-      document.getElementById('completeDateTime').textContent = `${displayDate(state.selectedDate)} ${state.selectedTime}`;
-      document.getElementById('completeSummary').textContent =
-        `${state.purpose}を目的に、${state.goal}という目標で予約を受け付けました。オーナー確認後、予約確定のご案内があります。`;
-
-      await fetchExistingProfile();
-      goStep(6);
-
-      // 初回アンケート完了後は、そのままマイページへ移動します。
-      // 少しだけ完了表示を見せてから移動することで、送信できたことが分かります。
-      setTimeout(() => {
-        goMemberPage();
-      }, 900);
-
-    } catch (e) {
-      alert('送信に失敗しました: ' + e.message);
-      btn.disabled = false;
-      btn.textContent = '予約を送信する';
-    }
-  }
-
-  function formatDateTime(value) {
-    if (!value) return '';
-
-    const text = String(value).replace('T', ' ');
-    const [date, timeRaw] = text.split(' ');
-
-    if (!date) return text;
-
-    const [y, m, d] = date.split('-').map(Number);
-    if (!y || !m || !d) return text;
-
-    const dt = new Date(y, m - 1, d);
-    const w = ['日', '月', '火', '水', '木', '金', '土'][dt.getDay()];
-    const time = timeRaw ? timeRaw.slice(0, 5) : '';
-
-    return `${m}/${d}(${w}) ${time}`;
-  }
-
-  function getPageBaseUrl() {
-    const origin = window.location.origin;
-    let pathname = window.location.pathname || '/';
-
-    if (pathname.endsWith('/')) {
-      return origin + pathname;
     }
 
-    const lastPart = pathname.split('/').pop() || '';
-
-    if (lastPart.includes('.')) {
-      return origin + pathname.slice(0, pathname.lastIndexOf('/') + 1);
+    async function initLineIdentity() {
+      try {
+        if (typeof liff === 'undefined') return;
+        await liff.init({ liffId: LIFF_ID });
+        if (liff.isLoggedIn()) {
+          const profile = await liff.getProfile();
+          state.lineUserId = profile.userId || state.lineUserId;
+          state.liffAccessToken = liff.getAccessToken() || '';
+          if (!document.getElementById('fullName').value) document.getElementById('fullName').value = profile.displayName || '';
+        }
+      } catch (error) {
+        console.warn('LIFF initialization skipped', error);
+      }
+      if (state.demo && !state.lineUserId) state.lineUserId = 'demo_gym_line_001';
+      updateMemberLinks();
     }
 
-    return origin + pathname + '/';
-  }
-
-  function isLineInApp() {
-    try {
-      return typeof liff !== 'undefined' && liff.isInClient && liff.isInClient();
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function appendMemberParams(url) {
-    const name = getCustomerName();
-
-    url.searchParams.set('from', 'reserve');
-    url.searchParams.set('t', String(Date.now()));
-
-    if (state.savedProfileId || (state.existingData && state.existingData.id)) {
-      url.searchParams.set('profile_id', state.savedProfileId || state.existingData.id);
-    }
-
-    const memberUserId = normalizeLineUserId(state.userId);
-    if (memberUserId) {
-      url.searchParams.set('uid', memberUserId);
-    }
-
-    if (name) {
-      url.searchParams.set('name', name);
+    async function tryLoadMember() {
+      if (!state.memberToken && !state.lineUserId) return;
+      const query = new URLSearchParams({ facility_code: FACILITY });
+      if (state.memberToken) query.set('member_token', state.memberToken);
+      if (state.lineUserId) query.set('line_user_id', state.lineUserId);
+      if (state.demo) query.set('demo', '1');
+      try {
+        const data = await api(`/api/member/home?${query.toString()}`);
+        state.customer = data.customer;
+        document.getElementById('fullName').value = data.customer.full_name || '';
+        document.getElementById('phone').value = data.customer.phone || '';
+        document.getElementById('goal').value = data.customer.goal || '';
+        document.getElementById('concern').value = data.customer.concern || '';
+        const phoneRegistered = isValidPhone(data.customer.phone || '');
+        document.getElementById('firstTimeFields').classList.toggle('hidden', phoneRegistered);
+        document.getElementById('customerLead').textContent = phoneRegistered
+          ? '登録済みの会員情報を取得しました。氏名・電話番号の再入力は不要です。'
+          : '会員情報を取得しました。電話番号だけ初回登録してください。';
+        const box = document.getElementById('profileFound');
+        box.classList.add('show');
+        box.innerHTML = `<strong>会員情報取得済み</strong><br>${escapeHtml(data.customer.full_name)} 様　${escapeHtml(data.customer.customer_no || '')}<br>残り回数：${Number(data.customer.ticket_remaining || 0)}回`;
+        renderServices();
+      } catch (error) {
+        if (!/見つかりません|LINEから開き直してください/.test(error.message)) console.warn(error);
+      }
     }
 
-    return url;
-  }
-
-  function getMemberPageUrl() {
-    // LINEアプリ内では member.html へ直接移動すると
-    // 「外部サイトに移動したため」と表示されることがあります。
-    // そのため、マイページ専用の LIFF URL で開きます。
-    if (isLineInApp()) {
-      return appendMemberParams(new URL(`https://liff.line.me/${MEMBER_LIFF_ID}`)).toString();
-    }
-
-    // PC / iPad / LINE外ブラウザでは、通常のGitHub Pages上の member.html を開きます。
-    return appendMemberParams(new URL('member.html', getPageBaseUrl())).toString();
-  }
-
-  function updateMemberLinks() {
-    const url = getMemberPageUrl();
-    document.querySelectorAll('[data-member-link]').forEach(link => {
-      link.setAttribute('href', url);
-      link.setAttribute('target', '_self');
-      link.setAttribute('rel', 'noopener');
-    });
-  }
-
-  function saveMemberBridge(profile) {
-    try {
-      const payload = {
-        profile_id: profile && profile.id ? profile.id : (state.savedProfileId || ''),
-        line_user_id: profile && profile.line_user_id ? normalizeLineUserId(profile.line_user_id) : normalizeLineUserId(state.userId),
-        display_name: getCustomerName(),
-        saved_at: Date.now()
-      };
-      localStorage.setItem('dpro_gym_last_profile', JSON.stringify(payload));
-    } catch (e) {
-      console.warn('member bridge skipped:', e);
-    }
-  }
-
-  function goMemberPage() {
-    const url = getMemberPageUrl();
-    updateMemberLinks();
-
-    // LINEアプリ内では先にマイページ専用 LIFF URL を開く。
-    // これで「外部サイトに移動したため」を避けます。
-    try {
-      if (isLineInApp() && typeof liff.openWindow === 'function') {
-        liff.openWindow({ url, external: false });
+    function renderServices() {
+      const list = document.getElementById('serviceList');
+      const available = state.customer?.status === 'member'
+        ? state.services
+        : state.services.filter(item => item.service_type === 'trial' || item.service_type === 'counseling');
+      if (!available.length) {
+        list.innerHTML = '<div class="loading">現在予約できるメニューはありません。</div>';
         return;
       }
-    } catch (e) {
-      console.warn('liff.openWindow skipped:', e);
-    }
-
-    try {
-      window.location.assign(url);
-    } catch (error) {
-      window.location.href = url;
-    }
-  }
-
-  function closeLiff() {
-    try {
-      if (typeof liff !== 'undefined' && liff.isInClient()) {
-        liff.closeWindow();
-      } else {
-        goMemberPage();
+      if (!available.some(item => item.service_code === state.serviceCode)) {
+        state.serviceCode = (available.find(item => item.service_type === 'trial') || available[0]).service_code;
       }
-    } catch (e) {
-      goMemberPage();
+      list.innerHTML = available.map(item => `
+        <button class="option-card ${item.service_code === state.serviceCode ? 'selected' : ''}" type="button" onclick="selectService('${escapeAttr(item.service_code)}')">
+          <strong>${escapeHtml(item.service_name)}</strong>
+          <small>${escapeHtml(item.description || '')}</small>
+          <span class="option-meta"><span class="tag">${Number(item.duration_minutes)}分</span>${item.price_label ? `<span class="tag yellow">${escapeHtml(item.price_label)}</span>` : ''}</span>
+        </button>`).join('');
     }
-  }
-</script>
 
+    function renderTrainers() {
+      const list = document.getElementById('trainerList');
+      list.innerHTML = `
+        <button class="trainer-btn ${!state.trainerCode ? 'selected' : ''}" type="button" onclick="selectTrainer('')">おまかせ</button>
+        ${state.trainers.map(item => `<button class="trainer-btn ${item.trainer_code === state.trainerCode ? 'selected' : ''}" type="button" onclick="selectTrainer('${escapeAttr(item.trainer_code)}')">${escapeHtml(item.trainer_name)}<br><small>${escapeHtml((item.specialties || []).join('・'))}</small></button>`).join('')}`;
+    }
+
+    function selectService(code) {
+      state.serviceCode = code;
+      state.slot = null;
+      renderServices();
+      if (state.date) loadSlots();
+    }
+
+    function selectTrainer(code) {
+      state.trainerCode = code;
+      state.slot = null;
+      renderTrainers();
+      if (state.date) loadSlots();
+    }
+
+    function buildDates() {
+      const strip = document.getElementById('dateStrip');
+      const max = Math.min(21, Number(state.settings?.max_booking_days || 60) + 1);
+      const dates = [];
+      for (let i = 0; i < max; i += 1) {
+        const date = addDaysYmd(todayYmd(), i);
+        const day = new Date(`${date}T00:00:00+09:00`).getDay();
+        const closed = (state.settings?.weekly_closed_days || []).map(Number).includes(day) || (state.settings?.special_closed_dates || []).includes(date);
+        dates.push({ date, day, closed });
+      }
+      const firstOpen = dates.find(item => !item.closed);
+      if (!state.date && firstOpen) state.date = firstOpen.date;
+      strip.innerHTML = dates.map(item => {
+        const d = new Date(`${item.date}T00:00:00+09:00`);
+        return `<button class="date-btn ${item.date === state.date ? 'selected' : ''} ${item.closed ? 'closed' : ''}" type="button" ${item.closed ? 'disabled' : ''} onclick="selectDate('${item.date}')"><small>${formatMonthDay(d)}</small>${weekdayJa(item.day)}${item.closed ? '<small>休み</small>' : ''}</button>`;
+      }).join('');
+      if (state.date) loadSlots();
+    }
+
+    function selectDate(date) {
+      state.date = date;
+      state.slot = null;
+      buildDates();
+    }
+
+    async function loadSlots() {
+      if (!state.date || !state.serviceCode) return;
+      const area = document.getElementById('slotArea');
+      area.innerHTML = '<div class="loading">空き時間を確認しています…</div>';
+      const query = new URLSearchParams({ facility_code: FACILITY, date: state.date, service_code: state.serviceCode });
+      if (state.trainerCode) query.set('trainer_code', state.trainerCode);
+      try {
+        const data = await api(`/api/public/availability?${query.toString()}`);
+        if (data.closed) {
+          area.innerHTML = '<div class="notice">この日は予約を受け付けていません。別の日を選択してください。</div>';
+          return;
+        }
+        if (!(data.slots || []).length) {
+          area.innerHTML = '<div class="notice">予約できる時間がありません。別の日を選択してください。</div>';
+          return;
+        }
+        area.innerHTML = `<div class="slot-grid">${data.slots.map(slot => `<button class="slot-btn ${state.slot?.start_at === slot.start_at ? 'selected' : ''}" type="button" ${slot.available ? '' : 'disabled'} onclick='selectSlot(${JSON.stringify(JSON.stringify(slot))})'>${escapeHtml(slot.time)}${slot.available ? '' : '<br><small>満席</small>'}</button>`).join('')}</div>`;
+      } catch (error) {
+        area.innerHTML = `<div class="error show">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    function selectSlot(serialized) {
+      state.slot = JSON.parse(serialized);
+      loadSlots();
+    }
+
+    function bindChoices() {
+      document.querySelectorAll('#purposeChoices .choice-btn').forEach(button => {
+        button.addEventListener('click', () => {
+          state.purpose = button.dataset.value;
+          document.querySelectorAll('#purposeChoices .choice-btn').forEach(item => item.classList.toggle('selected', item === button));
+        });
+      });
+    }
+
+    function nextStep(step) {
+      clearErrors();
+      if (step > state.step && !validateStep(state.step)) return;
+      state.step = step;
+      document.querySelectorAll('.step').forEach(item => item.classList.toggle('active', Number(item.dataset.step) === step));
+      document.querySelectorAll('.progress-item').forEach(item => {
+        const number = Number(item.dataset.progress);
+        item.classList.toggle('active', number === step);
+        item.classList.toggle('done', number < step);
+      });
+      if (step === 4) renderConfirmation();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function validateStep(step) {
+      if (step === 1 && !state.serviceCode) return fail('step1Error', 'メニューを選択してください。');
+      if (step === 2 && !state.slot) return fail('step2Error', '予約時間を選択してください。');
+      if (step === 3) {
+        const name = document.getElementById('fullName').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+        if (!name) return fail('step3Error', 'お名前を入力してください。');
+        if (!isValidPhone(phone)) return fail('step3Error', '電話番号を正しく入力してください。');
+      }
+      return true;
+    }
+
+    function renderConfirmation() {
+      const service = state.services.find(item => item.service_code === state.serviceCode);
+      const trainer = state.trainers.find(item => item.trainer_code === state.trainerCode);
+      const name = state.customer?.full_name || document.getElementById('fullName').value.trim();
+      const phone = state.customer?.phone || document.getElementById('phone').value.trim();
+      document.getElementById('confirmSummary').innerHTML = [
+        ['メニュー', service?.service_name || state.serviceCode],
+        ['日時', formatDateTime(state.slot?.start_at)],
+        ['担当', trainer?.trainer_name || 'おまかせ'],
+        ['お名前', `${name} 様`],
+        ['電話番号', phone],
+        ['目的', state.purpose || '未選択'],
+        ['目標・希望', document.getElementById('goal').value.trim() || '特になし'],
+        ['不安・事前連絡', document.getElementById('concern').value.trim() || '特になし']
+      ].map(([label,value]) => `<div class="summary-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('');
+    }
+
+    async function submitReservation() {
+      const button = document.getElementById('submitButton');
+      button.disabled = true;
+      button.textContent = '送信中…';
+      clearErrors();
+      const fullName = state.customer?.full_name || document.getElementById('fullName').value.trim();
+      const phone = state.customer?.phone || document.getElementById('phone').value.trim();
+      const goal = document.getElementById('goal').value.trim();
+      const concern = document.getElementById('concern').value.trim();
+      try {
+        const data = await api('/api/public/reservations', {
+          method: 'POST',
+          body: {
+            facility_code: FACILITY,
+            line_user_id: state.lineUserId || null,
+            demo: state.demo,
+            full_name: fullName,
+            phone,
+            service_code: state.serviceCode,
+            trainer_code: state.trainerCode || null,
+            start_at: state.slot.start_at,
+            goal,
+            concern,
+            customer_message: [state.purpose ? `目的：${state.purpose}` : '', concern ? `事前連絡：${concern}` : ''].filter(Boolean).join('\n')
+          }
+        });
+        if (data.member_token) {
+          state.memberToken = data.member_token;
+          localStorage.setItem('dpro_gym_member_token', data.member_token);
+        }
+        state.customer = data.customer;
+        updateMemberLinks();
+        document.getElementById('completeSummary').innerHTML = `<div class="summary-row"><span>受付番号</span><strong>${escapeHtml(data.reservation.reservation_no)}</strong></div><div class="summary-row"><span>予約希望日時</span><strong>${escapeHtml(formatDateTime(data.reservation.start_at))}</strong></div>`;
+        nextStep(5);
+      } catch (error) {
+        fail('step4Error', error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = '予約希望を送信';
+      }
+    }
+
+    async function api(path, options = {}) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (state.liffAccessToken) headers['X-LIFF-Access-Token'] = state.liffAccessToken;
+      const response = await fetch(`${API}${path}`, {
+        method: options.method || 'GET',
+        headers,
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        cache: 'no-store'
+      });
+      const text = await response.text();
+      let data;
+      try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { message: text }; }
+      if (!response.ok || data.ok === false) throw new Error(data.message || `HTTP ${response.status}`);
+      return data;
+    }
+
+    function updateMemberLinks() {
+      const query = new URLSearchParams();
+      if (state.demo) query.set('demo','1');
+      if (state.lineUserId) query.set('line_user_id',state.lineUserId);
+      if (state.memberToken) query.set('member_token',state.memberToken);
+      const url = `member.html${query.toString() ? `?${query}` : ''}`;
+      document.getElementById('memberLink').href = url;
+      document.getElementById('completeMemberLink').href = url;
+    }
+
+    function clearErrors() { document.querySelectorAll('.error').forEach(item => { item.textContent = ''; item.classList.remove('show'); }); }
+    function showError(id,message) { const item = document.getElementById(id); item.textContent = message; item.classList.add('show'); }
+    function fail(id,message) { showError(id,message); return false; }
+    function isValidPhone(value) { const digits = String(value || '').normalize('NFKC').replace(/\D/g,'').replace(/^81(?=\d{9,10}$)/,'0'); return /^0\d{9,10}$/.test(digits); }
+    function todayYmd() { return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()); }
+    function addDaysYmd(ymd,days) { const date = new Date(`${ymd}T12:00:00+09:00`); date.setUTCDate(date.getUTCDate()+days); return new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit'}).format(date); }
+    function formatMonthDay(date) { return new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',month:'numeric',day:'numeric'}).format(date); }
+    function weekdayJa(day) { return ['日','月','火','水','木','金','土'][day]; }
+    function formatDateTime(value) { if (!value) return '-'; return new Intl.DateTimeFormat('ja-JP',{timeZone:'Asia/Tokyo',year:'numeric',month:'numeric',day:'numeric',weekday:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(value)); }
+    function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g,char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[char]); }
+    function escapeAttr(value) { return escapeHtml(value); }
+  </script>
 </body>
 </html>
