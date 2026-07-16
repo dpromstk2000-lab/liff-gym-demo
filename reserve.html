@@ -1,82 +1,38 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>予約申し込み</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <style>
-        body { font-family: sans-serif; background: #f8f9fa; padding: 20px; display: flex; justify-content: center; }
-        .card { background: white; width: 100%; max-width: 400px; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        select, input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #2d3436; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="0; url=index.html">
+  <title>DPRO パーソナルジム｜予約画面へ移動</title>
+  <meta name="robots" content="noindex,nofollow">
+  <style>
+    :root { --navy:#13213c; --blue:#2563eb; --text:#182235; --muted:#617086; --line:#d6dfeb; --bg:#eef2f7; }
+    * { box-sizing:border-box; }
+    html { font-size:18px; }
+    body { min-height:100vh; margin:0; display:grid; place-items:center; padding:20px; color:var(--text); background:linear-gradient(135deg,var(--bg),#fff); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.65; }
+    main { width:min(620px,100%); border:1px solid var(--line); border-radius:24px; padding:28px; text-align:center; background:#fff; box-shadow:0 20px 60px rgba(20,38,70,.12); }
+    .brand { margin:0; color:var(--blue); font-size:.72rem; font-weight:950; letter-spacing:.15em; }
+    h1 { margin:7px 0 0; color:var(--navy); font-size:1.55rem; line-height:1.4; }
+    p { margin:9px 0 0; color:var(--muted); }
+    a { display:inline-grid; place-items:center; min-height:56px; margin-top:20px; border-radius:15px; padding:10px 22px; color:#fff; background:var(--blue); text-decoration:none; font-weight:950; }
+  </style>
 </head>
 <body>
-
-<div class="card">
-    <h2 style="margin-top: 0;">新規予約申し込み</h2>
-    <div class="form-group">
-        <label>日付を選択</label>
-        <input type="date" id="dateInput" required>
-    </div>
-    <div class="form-group">
-        <label>時間を選択 (10:00 - 19:00)</label>
-        <select id="timeSelect"></select>
-    </div>
-    <button onclick="submitReservation()">予約を送信する</button>
-</div>
-
-<script>
-    const supabaseUrl = 'https://cbknucemarcpbscirzyv.supabase.co';
-    const supabaseKey = 'sb_publishable_cT4vj0FoU1MtjFayuk7HVw_YcuSMR5J';
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-    // 時間のプルダウンを生成
-    const timeSelect = document.getElementById('timeSelect');
-    for (let h = 10; h < 19; h++) {
-        for (let m of ['00', '30']) {
-            let option = document.createElement('option');
-            option.value = `${h}:${m}`;
-            option.text = `${h}:${m}`;
-            timeSelect.appendChild(option);
-        }
-    }
-
-    // 今日の日付を最小値に設定
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('dateInput').min = today;
-
-    async function init() {
-        await liff.init({ liffId: "2010362463-80AFWCcm" });
-        if (!liff.isLoggedIn()) liff.login();
-    }
-
-    async function submitReservation() {
-        const date = document.getElementById('dateInput').value;
-        const time = document.getElementById('timeSelect').value;
-        if (!date) return alert("日付を選択してください");
-
-        const profile = await liff.getProfile();
-        
-        const { error } = await supabaseClient
-            .from('gym_profiles')
-            .update({ 
-                preferred_datetime: `${date} ${time}`,
-                reservation_status: 'pending' 
-            })
-            .eq('line_user_id', profile.userId);
-
-        if (error) return alert("予約エラー: " + error.message);
-        
-        alert("予約を申し込みました！");
-        window.location.href = 'member.html';
-    }
-
-    init();
-</script>
+  <main>
+    <p class="brand">DPRO PERSONAL GYM LINE</p>
+    <h1>新しい予約画面へ移動します</h1>
+    <p>自動で移動しない場合は、下のボタンを押してください。</p>
+    <a id="bookingLink" href="index.html">予約画面を開く</a>
+  </main>
+  <script>
+    (() => {
+      const target = new URL('index.html', window.location.href);
+      target.search = window.location.search;
+      target.hash = window.location.hash;
+      document.getElementById('bookingLink').href = target.href;
+      window.location.replace(target.href);
+    })();
+  </script>
 </body>
 </html>
