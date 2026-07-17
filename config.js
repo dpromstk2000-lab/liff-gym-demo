@@ -1,44 +1,47 @@
+/* STEP GYM-6-R2 / DPRO パーソナルジム LINE */
 window.DPRO_GYM_CONFIG = Object.freeze({
-  workerBaseUrl: "https://dpro-gym-line-api.dpromstk2000.workers.dev",
-  facilityCode: "dpro_gym_demo",
-  demoAdminCode: "1234",
-  version: "GYM-6-R1-CONFIG-DEMO-HEADER-FIX-20260717"
+  version: 'GYM-6-R2-CONFIG-RESTORE-URL-HEADER-FIX-20260717',
+  facilityCode: 'dpro_gym_demo',
+  workerBaseUrl: 'https://dpro-gym-line-api.dpromstk2000.workers.dev',
+  publicSiteUrl: 'https://dpromstk2000-lab.github.io/liff-gym-demo/',
+  demoAdminCode: '1234',
+  timezone: 'Asia/Tokyo',
+  slotMinutes: 30
 });
 
 /*
- * STEP GYM-6-R1
- * Browser-safe demo prepare transport fix
+ * Browser-safe demo prepare transport fix.
  *
- * The existing pages include a Japanese value in X-Demo-Confirm.
- * Some browsers reject non ISO-8859-1 header values before fetch is sent.
- * The Worker also accepts body.confirm_text, so this shim removes only the
- * invalid custom header and preserves the JSON body confirmation text.
+ * Existing screens may include Japanese text in X-Demo-Confirm.
+ * Browsers reject non-Latin-1 header values before sending the request.
+ * The Worker also reads body.confirm_text, so remove only the invalid
+ * custom header while preserving the JSON confirmation body.
  */
 (() => {
-  "use strict";
+  'use strict';
 
-  if (typeof window === "undefined" || typeof window.fetch !== "function") return;
+  if (typeof window === 'undefined' || typeof window.fetch !== 'function') return;
   if (window.__DPRO_GYM_FETCH_HEADER_FIX__) return;
 
   const nativeFetch = window.fetch.bind(window);
 
-  const containsNonLatin1 = (value) => {
-    for (const character of String(value ?? "")) {
+  const containsNonLatin1 = value => {
+    for (const character of String(value ?? '')) {
       if (character.codePointAt(0) > 255) return true;
     }
     return false;
   };
 
-  const isDemoConfirmHeader = (name) =>
-    String(name ?? "").toLowerCase() === "x-demo-confirm";
+  const isDemoConfirmHeader = name =>
+    String(name ?? '').toLowerCase() === 'x-demo-confirm';
 
-  const sanitizeHeaders = (headers) => {
+  const sanitizeHeaders = headers => {
     if (!headers) return headers;
 
-    if (typeof Headers !== "undefined" && headers instanceof Headers) {
+    if (typeof Headers !== 'undefined' && headers instanceof Headers) {
       const next = new Headers(headers);
-      const value = next.get("X-Demo-Confirm");
-      if (value && containsNonLatin1(value)) next.delete("X-Demo-Confirm");
+      const value = next.get('X-Demo-Confirm');
+      if (value && containsNonLatin1(value)) next.delete('X-Demo-Confirm');
       return next;
     }
 
@@ -48,7 +51,7 @@ window.DPRO_GYM_CONFIG = Object.freeze({
       );
     }
 
-    if (typeof headers === "object") {
+    if (typeof headers === 'object') {
       const next = {};
       Object.entries(headers).forEach(([name, value]) => {
         if (isDemoConfirmHeader(name) && containsNonLatin1(value)) return;
