@@ -1,4 +1,4 @@
-name: STEP GYM-NEXT-1 - Baseline Protection
+name: STEP GYM-NEXT-1-R2 - Baseline Protection
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Record STEP metadata
         shell: bash
@@ -84,17 +84,10 @@ jobs:
           fi
 
           if [[ "${GITHUB_EVENT_NAME}" == "push" ]] && git rev-parse "${GITHUB_SHA}^" >/dev/null 2>&1; then
-            BASELINE_SHA="$(git rev-parse "${GITHUB_SHA}^")"
-          else
-            BASELINE_SHA="$(git rev-parse HEAD)"
-          fi
+            UPLOAD_PARENT="$(git rev-parse "${GITHUB_SHA}^")"
 
-          echo "baseline_sha=${BASELINE_SHA}" >> "$GITHUB_OUTPUT"
-          echo "BASELINE_SHA=${BASELINE_SHA}" >> "$GITHUB_ENV"
-
-          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             UNEXPECTED_CHANGED_FILES="$(
-              git diff --name-only "${BASELINE_SHA}" "${GITHUB_SHA}" \
+              git diff --name-only "${UPLOAD_PARENT}" "${GITHUB_SHA}" \
                 | grep -v -F -x "${WORKFLOW_FILE}" \
                 | sed '/^$/d' || true
             )"
@@ -105,9 +98,48 @@ jobs:
               echo "${UNEXPECTED_CHANGED_FILES}"
               exit 1
             fi
+          else
+            UPLOAD_PARENT="$(git rev-parse HEAD)"
           fi
 
-          echo "Protected commit: ${BASELINE_SHA}"
+          # R2 safety:
+          # Walk back over earlier workflow-only upload/fix commits so that the
+          # backup tag protects the last application commit before NEXT work.
+          BASELINE_SHA="${UPLOAD_PARENT}"
+          while git rev-parse "${BASELINE_SHA}^" >/dev/null 2>&1; do
+            if ! git cat-file -e "${BASELINE_SHA}:${WORKFLOW_FILE}" 2>/dev/null; then
+              break
+            fi
+
+            CANDIDATE_CHANGED_FILES="$(
+              git diff --name-only "${BASELINE_SHA}^" "${BASELINE_SHA}" \
+                | sed '/^$/d' || true
+            )"
+            CANDIDATE_UNEXPECTED_FILES="$(
+              printf '%s\n' "${CANDIDATE_CHANGED_FILES}" \
+                | grep -v -F -x "${WORKFLOW_FILE}" \
+                | sed '/^$/d' || true
+            )"
+
+            if printf '%s\n' "${CANDIDATE_CHANGED_FILES}" | grep -F -x -q "${WORKFLOW_FILE}" \
+              && [[ -z "${CANDIDATE_UNEXPECTED_FILES}" ]]; then
+              BASELINE_SHA="$(git rev-parse "${BASELINE_SHA}^")"
+              continue
+            fi
+
+            break
+          done
+
+          echo "baseline_sha=${BASELINE_SHA}" >> "$GITHUB_OUTPUT"
+          echo "BASELINE_SHA=${BASELINE_SHA}" >> "$GITHUB_ENV"
+          echo "Protected application commit: ${BASELINE_SHA}"
+
+      - name: Configure Git identity for tag and completion commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO NEXT Actions"
+          git config user.email "actions@users.noreply.github.com"
 
       - name: Create or verify backup tag
         shell: bash
@@ -536,7 +568,7 @@ jobs:
           COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
 
           cat > "${LEDGER_DIR}/baseline-report.md" <<EOF
-          # DPRO パーソナルジム LINE｜GYM-NEXT-1 現状基準台帳
+          # DPRO パーソナルジム LINE｜GYM-NEXT-1-R2 現状基準台帳
 
           - STEP: ${STEP_NAME}
           - 結果: OK
@@ -546,6 +578,8 @@ jobs:
           - 施設コード: ${FACILITY_CODE}
           - 完了日時: ${COMPLETED_AT}
           - Actions: ${run_url}
+          - R2修正: バックアップタグ作成前にGit作成者情報を設定
+          - R2安全対策: 過去のYMLのみの修正コミットを除外して正常アプリ版を保護
 
           ## 保護対象
 
@@ -579,6 +613,7 @@ jobs:
           repository: "${GITHUB_REPOSITORY}"
           branch: "main"
           current_step: "GYM-NEXT-1-COMPLETE"
+          workflow_revision: "R2"
           next_step: "${NEXT_STEP}"
           result: "OK"
           baseline_config_version: "${BASELINE_CONFIG_VERSION}"
@@ -640,7 +675,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## GYM-NEXT-1 COMPLETE"
+            echo "## GYM-NEXT-1-R2 COMPLETE"
             echo ""
             echo "- Backup tag: \`${BACKUP_TAG}\`"
             echo "- Protected commit: \`${BASELINE_SHA}\`"
