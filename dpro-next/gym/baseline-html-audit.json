@@ -1,0 +1,80 @@
+{
+  "index.html": {
+    "duplicate_ids": [],
+    "structure_errors": [],
+    "document_checks": {
+      "doctype": true,
+      "html_tag": true,
+      "head_tag": true,
+      "body_tag": true,
+      "viewport": true,
+      "charset": true
+    },
+    "inline_script_count": 1
+  },
+  "member.html": {
+    "duplicate_ids": [],
+    "structure_errors": [],
+    "document_checks": {
+      "doctype": true,
+      "html_tag": true,
+      "head_tag": true,
+      "body_tag": true,
+      "viewport": true,
+      "charset": true
+    },
+    "inline_script_count": 1
+  },
+  "dashboard.html": {
+    "duplicate_ids": [],
+    "structure_errors": [],
+    "document_checks": {
+      "doctype": true,
+      "html_tag": true,
+      "head_tag": true,
+      "body_tag": true,
+      "viewport": true,
+      "charset": true
+    },
+    "inline_script_count": 1
+  },
+  "owner-ipad.html": {
+    "duplicate_ids": [],
+    "structure_errors": [],
+    "document_checks": {
+      "doctype": true,
+      "html_tag": true,
+      "head_tag": true,
+      "body_tag": true,
+      "viewport": true,
+      "charset": true
+    },
+    "inline_script_count": 1
+  },
+  "reserve.html": {
+    "duplicate_ids": [],
+    "structure_errors": [],
+    "document_checks": {
+      "doctype": true,
+      "html_tag": true,
+      "head_tag": true,
+      "body_tag": true,
+      "viewport": true,
+      "charset": true
+    },
+    "inline_script_count": 1
+  },
+  "system-check.html": {
+    "duplicate_ids": [],
+    "structure_errors": [],
+    "document_checks": {
+      "doctype": true,
+      "html_tag": true,
+      "head_tag": true,
+      "body_tag": true,
+      "viewport": true,
+      "charset": true
+    },
+    "inline_script_count": 1
+  }
+}

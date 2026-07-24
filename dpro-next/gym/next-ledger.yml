@@ -1,0 +1,31 @@
+system_name: "DPRO パーソナルジム LINE"
+repository: "dpromstk2000-lab/liff-gym-demo"
+branch: "main"
+current_step: "GYM-NEXT-1-COMPLETE"
+workflow_revision: "R2"
+next_step: "GYM-NEXT-2"
+result: "OK"
+baseline_config_version: "GYM-6-R2-CONFIG-RESTORE-URL-HEADER-FIX-20260717"
+facility_code: "dpro_gym_demo"
+slot_minutes: 30
+baseline_sha: "d6306daed290cb2abac8603d425885cbeeb40a4f"
+backup_tag: "backup-gym-before-next-20260725"
+completed_at: "2026-07-25T08:50:15+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30134810072"
+worker_changed: false
+supabase_changed: false
+api_changed: false
+application_files_changed: false
+checks:
+  public_urls_and_worker: "OK"
+  yaml_syntax: "OK"
+  html_structure: "OK"
+  javascript_syntax: "OK"
+  duplicate_html_ids: "OK"
+  required_files: "OK"
+  existing_features: "OK"
+  personal_gym_logic: "OK"
+  slot_minutes_30: "OK"
+  phone_normalization_check: "OK"
+  duplicate_reservation_check: "OK"
+  admin_code_delete_button: "OK"
