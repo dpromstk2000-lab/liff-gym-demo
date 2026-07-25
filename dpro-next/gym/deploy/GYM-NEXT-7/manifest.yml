@@ -1,0 +1,33 @@
+package_version: "GYM-NEXT-7-PREP-20260725"
+system_name: "DPRO パーソナルジム LINE"
+phase: "PREPARED"
+worker_name: "dpro-gym-line-api"
+worker_expected_version: "GYM-NEXT-7-WORKER-20260725"
+supabase_changed: false
+runtime_changed: false
+member_features:
+  session_history: true
+  repeat_booking_prefill: true
+  member_visible_comment: true
+  next_focus: true
+privacy:
+  trainer_note_exposed: false
+  condition_note_exposed: false
+  member_visible_fields_only: true
+planned_ui:
+  member.html:
+    - "前回と同じ内容で予約"
+    - "セッション振り返り"
+    - "次回の重点"
+    - "会員向けコメント"
+  index.html:
+    - "service_code URL事前選択"
+    - "trainer_code URL事前選択"
+    - "repeat=1案内"
+safety:
+  - "30分予約枠を維持"
+  - "過去日時不可を維持"
+  - "予約重複防止を維持"
+  - "LINE本人確認を維持"
+  - "内部メモを会員へ返さない"
+next_action: "Deploy Worker, then run GYM-NEXT-7-VERIFY"
