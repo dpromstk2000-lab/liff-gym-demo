@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "workflow_revision": "R7",
+  "normalized_file_count": 6,
+  "normalized_files": [
+    "deliverables/gym-next-10/manifest.yml",
+    "deliverables/gym-next-10/operation-sheet-layout.json",
+    "deliverables/gym-next-10/operation-sheet-qr-check.json",
+    "deliverables/gym-next-10/operation-sheet.html",
+    "deliverables/gym-next-10/product-site-content.json",
+    "deliverables/gym-next-10/screens/capture-report.json"
+  ],
+  "trailing_whitespace_count": 0,
+  "extra_blank_eof_count": 0
+}
