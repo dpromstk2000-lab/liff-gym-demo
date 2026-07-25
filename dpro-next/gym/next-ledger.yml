@@ -1,54 +1,50 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-7-COMPLETE"
-workflow_revision: "R2"
-next_step: "GYM-NEXT-8"
-result: "OK"
+current_step: "GYM-NEXT-8-PREPARED"
+workflow_revision: "R1"
+next_step: "GYM-NEXT-8-VERIFY"
+next_action: "DEPLOY_WORKER_THEN_VERIFY"
+result: "PREPARED"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-7-verify-20260725"
-step_backup_sha: "0dc83673c67249273ede92ef716e424071b468d5"
-application_commit_sha: "9dcea17299be65b220b99925c13bf775f42a37d1"
-index_blob: "6ea48136d70e328366a8584ebecaa55562372d20"
-member_blob: "ed7e59d0a1101adfd328e24e1eb09a8f62a41aca"
-config_blob: "68028432d9177a907e1e91e81c316b47b8845147"
-dashboard_blob: "538199c142e44d4ee03953d29359c1b341c4ca28"
-owner_ipad_blob: "3b94e5221ec26ec74d8e1fe4e4e41285ee27c792"
-staff_blob: "59e66cb480aa5795c646ab99a1ff71070013ad26"
-completed_at: "2026-07-25T17:37:00+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30151390932"
+step_backup_tag: "backup-gym-before-next-8-20260725"
+step_backup_sha: "14ae66990140909361ec84943ea097c1efadc78f"
+package_commit_sha: "3399f57f593a7d290b701fb2f92c6bb21853bb7d"
+prepared_at: "2026-07-25T17:53:10+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30151876859"
 worker_name: "dpro-gym-line-api"
-worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
-worker_version: "GYM-NEXT-7-WORKER-20260725"
-worker_deployed: true
+current_worker_version: "GYM-NEXT-7-WORKER-20260725"
+expected_worker_version: "GYM-NEXT-8-WORKER-20260725"
+worker_sha256: "b5be892badfe91ffaa76d2d38b2fd54cf4310af519b4e2484ef8d72d75225995"
 supabase_changed: false
-runtime_files_changed: true
-worker_changed: true
-api_changed: true
-changed_files:
-  - "index.html"
-  - "member.html"
-completed_features:
-  member_session_history: true
-  repeat_booking_prefill: true
-  member_visible_comment: true
-  next_focus: true
-  trainer_note_exposed: false
-  condition_note_exposed: false
+runtime_files_changed: false
+worker_deployed: false
+planned_runtime_files:
+  - "dashboard.html"
+planned_features:
+  follow_up_board: true
+  follow_up_prioritization: true
+  follow_up_action_log: true
+  follow_up_message_copy_only: true
+  automatic_line_broadcast: false
+candidate_rules:
+  - "follow_due"
+  - "low_tickets"
+  - "expiring_soon"
+  - "no_next_booking"
+  - "continuation"
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  worker_health: "OK"
-  member_home_contract: "OK"
-  member_privacy_guard: "OK"
+  current_worker_health: "OK"
   next4_preserved: "OK"
   next5_preserved: "OK"
   staff_role_preserved: "OK"
-  html_structure: "OK"
-  javascript_syntax: "OK"
-  duplicate_html_ids: "OK"
-  booking_30_minute_rule: "OK"
-  existing_api_references: "OK"
-  public_index: "OK"
-  public_member: "OK"
+  member_history_preserved: "OK"
+  source_worker_blob: "OK"
+  worker_diff_patch: "OK"
+  worker_javascript_syntax: "OK"
+  existing_api_contract: "OK"
+  automatic_line_send_absent: "OK"
+  runtime_unchanged: "OK"
