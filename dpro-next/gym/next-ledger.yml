@@ -1,45 +1,60 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-6-PREPARED"
-workflow_revision: "R2"
-next_step: "GYM-NEXT-6-VERIFY"
-next_action: "SET_STAFF_TOKEN_AND_DEPLOY_WORKER"
-result: "PREPARED"
+current_step: "GYM-NEXT-6-COMPLETE"
+workflow_revision: "R1"
+next_step: "GYM-NEXT-7"
+result: "OK"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-6-20260725"
-step_backup_sha: "1e906915ed213be60ceaa236f85e629796a5e0c6"
-package_commit_sha: "991e474ba3d16de5841b1f04839b788173fb1ed6"
-prepared_at: "2026-07-25T14:36:35+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30146054197"
+step_backup_tag: "backup-gym-before-next-6-verify-20260725"
+step_backup_sha: "3eaa28ff2d37b3d1bf64d569c237b85a03ae8988"
+application_commit_sha: "ae550aafd2f8e7f58c5daf228e2bfadb2b4508f7"
+config_blob: "68028432d9177a907e1e91e81c316b47b8845147"
+dashboard_blob: "538199c142e44d4ee03953d29359c1b341c4ca28"
+owner_ipad_blob: "3b94e5221ec26ec74d8e1fe4e4e41285ee27c792"
+staff_blob: "59e66cb480aa5795c646ab99a1ff71070013ad26"
+completed_at: "2026-07-25T15:25:19+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30147439355"
 worker_name: "dpro-gym-line-api"
-current_worker_version: "GYM-NEXT-5-WORKER-20260725"
-expected_worker_version: "GYM-NEXT-6-WORKER-20260725"
-worker_sha256: "9ffc0de79e25bc1da24c04b9ac2719bb44d74639bb5ff70c68a54f4a28dfc208"
-staff_token_required: true
-recommended_demo_staff_code: "5678"
+worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
+worker_version: "GYM-NEXT-6-WORKER-20260725"
+worker_deployed: true
 supabase_changed: false
-runtime_files_changed: false
-worker_deployed: false
-planned_runtime_files:
+runtime_files_changed: true
+worker_changed: true
+api_changed: true
+changed_files:
   - "config.js"
   - "owner-ipad.html"
   - "staff.html"
-planned_roles:
-  owner_pc: "ADMIN_TOKEN / 全体管理"
-  owner_ipad: "STAFF_TOKEN / 受付"
-  staff: "STAFF_TOKEN / セッション"
-  member_line: "LINE / 会員操作"
+roles:
+  owner_pc:
+    authentication: "ADMIN_TOKEN / 1234 demo"
+    purpose: "全体管理・設定・入会・プラン"
+  owner_ipad:
+    authentication: "STAFF_TOKEN / 5678 demo"
+    purpose: "来店受付・予約進行・簡易会員確認"
+  staff:
+    authentication: "STAFF_TOKEN / 5678 demo"
+    purpose: "担当セッション・注意事項・記録・完了"
+  member_line:
+    authentication: "LINE"
+    purpose: "予約・変更依頼・履歴"
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  current_worker_health: "OK"
+  worker_health: "OK"
+  staff_token: "OK"
+  staff_api_authorized: "OK"
+  staff_api_no_key_rejected: "OK"
+  admin_code_as_staff_rejected: "OK"
+  admin_api_preserved: "OK"
   next4_preserved: "OK"
   next5_preserved: "OK"
-  source_worker_blob: "OK"
-  worker_diff_patch: "OK"
-  worker_javascript_syntax: "OK"
-  staff_api_contract: "OK"
-  existing_api_contract: "OK"
-  runtime_unchanged: "OK"
+  html_structure: "OK"
+  javascript_syntax: "OK"
+  duplicate_html_ids: "OK"
+  role_boundary: "OK"
+  public_ipad: "OK"
+  public_staff: "OK"
