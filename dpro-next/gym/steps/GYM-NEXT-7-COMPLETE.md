@@ -1,0 +1,17 @@
+# DPRO パーソナルジム LINE｜GYM-NEXT-7 COMPLETE（R2）
+- 結果: OK
+- Workflow修正版: R2
+- R2修正: 動的な予約依頼APIの検査条件を修正
+- Worker: GYM-NEXT-7-WORKER-20260725
+- Supabase変更: なし
+- 前回と同じ内容で予約: OK
+- メニュー・担当者事前選択: OK
+- 会員向けセッション振り返り: OK
+- 実施内容・次回の重点・会員向けコメント: OK
+- スタッフ内部メモ公開: なし
+- 体調内部記録公開: なし
+- 30分枠・過去日時・重複防止: 維持
+- バックアップタグ: backup-gym-before-next-7-verify-20260725
+- アプリケーションコミット: 9dcea17299be65b220b99925c13bf775f42a37d1
+- 完了日時: 2026-07-25T17:37:00+0900
+- Actions: https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30151390932
