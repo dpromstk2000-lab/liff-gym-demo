@@ -1,0 +1,35 @@
+package_version: "GYM-NEXT-6-PREP-R2-20260725"
+system_name: "DPRO パーソナルジム LINE"
+phase: "PREPARED"
+workflow_revision: "R2"
+worker_name: "dpro-gym-line-api"
+worker_expected_version: "GYM-NEXT-6-WORKER-20260725"
+runtime_changed: false
+supabase_changed: false
+required_secret:
+  name: "STAFF_TOKEN"
+  recommended_demo_value: "5678"
+roles:
+  owner_pc:
+    authentication: "ADMIN_TOKEN"
+    purpose: "全体管理・設定・入会・プラン"
+  owner_ipad:
+    authentication: "STAFF_TOKEN"
+    purpose: "来店受付・予約進行・簡易会員確認"
+  staff:
+    authentication: "STAFF_TOKEN"
+    purpose: "担当セッション・注意事項・記録・完了"
+  member_line:
+    authentication: "LINE"
+    purpose: "予約・変更依頼・会員履歴"
+safety:
+  - "スタッフAPIから設定・入会・プラン変更は不可"
+  - "スタッフAPIからキャンセル確定は不可"
+  - "会員検索は2文字以上"
+  - "電話番号・LINE ID・オーナー内部メモをスタッフ応答から除外"
+  - "NEXT-4とNEXT-5の既存機能を維持"
+r2_fix:
+  - "Worker全文をjob envへ格納しない"
+  - "既存Workerへunified diffを適用"
+  - "checkout時のArgument list too longを防止"
+next_action: "Set STAFF_TOKEN, deploy Worker, then request STEP GYM-NEXT-6-VERIFY"
