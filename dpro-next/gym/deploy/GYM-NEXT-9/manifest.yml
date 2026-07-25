@@ -1,8 +1,8 @@
-package_version: "GYM-NEXT-9-PREP-20260725"
+package_version: "GYM-NEXT-9-PREP-R2-20260725"
 system_name: "DPRO パーソナルジム LINE"
 phase: "PREPARED"
 worker_name: "dpro-gym-line-api"
-worker_expected_version: "GYM-NEXT-9-WORKER-20260725"
+worker_expected_version: "GYM-NEXT-9-WORKER-R2-20260725"
 supabase_changed: false
 runtime_changed: false
 security:
@@ -33,4 +33,9 @@ planned_checks:
   - "公開ページ容量"
   - "API応答時間"
   - "LINE自動送信なし"
-next_action: "Deploy Worker, then run GYM-NEXT-9-VERIFY"
+next_action: "Deploy R2 Worker, then run GYM-NEXT-9-VERIFY-R2"
+
+r2_correction:
+  activity_log_column: "action"
+  optional_probes_isolated: true
+  failed_verify_workflow_removed: true

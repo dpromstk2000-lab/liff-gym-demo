@@ -2,7 +2,7 @@
   STEP GYM-NEXT-9
   DPRO パーソナルジム LINE API
   Worker name: dpro-gym-line-api
-  Worker version: GYM-NEXT-9-WORKER-20260725
+  Worker version: GYM-NEXT-9-WORKER-R2-20260725
 
   Cloudflare Secrets:
     SUPABASE_URL
@@ -17,7 +17,7 @@
     ALLOW_DEMO_ADMIN_FALLBACK   false（通常は設定不要）
 ============================================================ */
 
-const VERSION = 'GYM-NEXT-9-WORKER-20260725';
+const VERSION = 'GYM-NEXT-9-WORKER-R2-20260725';
 const SERVICE = 'DPRO Personal Gym LINE API';
 const DEFAULT_FACILITY_CODE = 'dpro_gym_demo';
 const DEMO_CONFIRM_TEXT = 'DEMOパーソナルジムだけ実行';
@@ -350,7 +350,8 @@ async function handleHealth(env) {
     query_auth_disabled: false,
     request_body_limit: false,
     compact_json: false,
-    integrated_system_check: false
+    integrated_system_check: false,
+    resilient_optional_probes: false
   };
 
   try {
@@ -442,6 +443,7 @@ async function handleHealth(env) {
     request_body_limit: true,
     compact_json: true,
     integrated_system_check: true,
+    resilient_optional_probes: true,
     max_json_body_bytes: MAX_JSON_BODY_BYTES,
     system_check_budget_ms: SYSTEM_CHECK_BUDGET_MS
   };
@@ -504,6 +506,9 @@ async function handleHealth(env) {
       request_body_limit: Boolean(next9?.request_body_limit),
       compact_json_payload: Boolean(next9?.compact_json),
       integrated_system_check: Boolean(next9?.integrated_system_check),
+      resilient_optional_system_probes: Boolean(
+        next9?.resilient_optional_probes
+      ),
       system_check: true,
       demo_prepare: true
     }
@@ -2728,6 +2733,10 @@ async function handleAdminNext9SystemCheck(url, env) {
   let next5 = null;
   let followProbe = [];
   let activityProbe = [];
+  let followProbeOk = false;
+  let activityProbeOk = false;
+  let followProbeError = '';
+  let activityProbeError = '';
 
   try {
     const dbStarted = Date.now();
@@ -2737,9 +2746,7 @@ async function handleAdminNext9SystemCheck(url, env) {
       services,
       trainers,
       next4,
-      next5,
-      followProbe,
-      activityProbe
+      next5
     ] = await Promise.all([
       measure('facility_ms', () => getFacility(env, facilityCode)),
       measure('settings_ms', () => getSettings(env, facilityCode)),
@@ -2754,8 +2761,28 @@ async function handleAdminNext9SystemCheck(url, env) {
         env,
         'gym_next_5_system_check',
         { p_facility_code: facilityCode }
-      )),
-      measure('follow_probe_ms', () => selectRows(
+      ))
+    ]);
+    timings.parallel_database_ms = Date.now() - dbStarted;
+    checks.push(check(
+      'next9_database_parallel',
+      true,
+      `重要6系統を並列確認 / ${timings.parallel_database_ms}ms`
+    ));
+  } catch (error) {
+    checks.push(check(
+      'next9_database_parallel',
+      false,
+      safeErrorMessage(error)
+    ));
+  }
+
+  // STEP GYM-NEXT-9 R2:
+  // 補助ログ検査は個別に実行し、失敗しても重要検査を巻き込まない。
+  try {
+    followProbe = await measure(
+      'follow_probe_ms',
+      () => selectRows(
         env,
         TABLES.interactionLogs,
         {
@@ -2765,30 +2792,30 @@ async function handleAdminNext9SystemCheck(url, env) {
           order: 'created_at.desc',
           limit: '5'
         }
-      )),
-      measure('activity_probe_ms', () => selectRows(
+      )
+    );
+    followProbeOk = true;
+  } catch (error) {
+    followProbeError = safeErrorMessage(error);
+  }
+
+  try {
+    activityProbe = await measure(
+      'activity_probe_ms',
+      () => selectRows(
         env,
         TABLES.activityLogs,
         {
-          select: 'id,action_type,created_at',
+          select: 'id,action,created_at',
           facility_code: `eq.${facilityCode}`,
           order: 'created_at.desc',
           limit: '5'
         }
-      ))
-    ]);
-    timings.parallel_database_ms = Date.now() - dbStarted;
-    checks.push(check(
-      'next9_database_parallel',
-      true,
-      `8系統を並列確認 / ${timings.parallel_database_ms}ms`
-    ));
+      )
+    );
+    activityProbeOk = true;
   } catch (error) {
-    checks.push(check(
-      'next9_database_parallel',
-      false,
-      safeErrorMessage(error)
-    ));
+    activityProbeError = safeErrorMessage(error);
   }
 
   checks.push(check(
@@ -2866,13 +2893,17 @@ async function handleAdminNext9SystemCheck(url, env) {
   ));
   checks.push(check(
     'next9_follow_log',
-    Array.isArray(followProbe),
-    `直近確認 ${followProbe.length}件`
+    followProbeOk,
+    followProbeOk
+      ? `直近確認 ${followProbe.length}件`
+      : followProbeError || '継続フォロー履歴を確認できません。'
   ));
   checks.push(check(
     'next9_activity_log',
-    Array.isArray(activityProbe),
-    `直近確認 ${activityProbe.length}件`
+    activityProbeOk,
+    activityProbeOk
+      ? `直近確認 ${activityProbe.length}件`
+      : activityProbeError || '操作履歴を確認できません。'
   ));
   checks.push(check(
     'next9_automatic_line_disabled',
