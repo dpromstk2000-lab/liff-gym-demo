@@ -3,201 +3,386 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>DPRO パーソナルジム LINE｜system-check</title>
+  <title>DPRO パーソナルジム LINE｜営業前system-check</title>
   <meta name="robots" content="noindex,nofollow">
   <style>
     :root {
-      --navy: #13213c;
-      --navy-2: #1e3155;
-      --blue: #2563eb;
-      --blue-soft: #eaf2ff;
-      --green: #087a55;
-      --green-soft: #e9f8f1;
-      --red: #c52f3e;
-      --red-soft: #fff0f1;
-      --amber: #a05a00;
-      --amber-soft: #fff5dd;
-      --line: #d6deea;
-      --text: #172033;
-      --muted: #5f6d82;
-      --bg: #f3f6fa;
-      --card: #ffffff;
+      --navy:#13213c;
+      --navy-2:#1e3155;
+      --blue:#2563eb;
+      --blue-soft:#eaf2ff;
+      --green:#087a55;
+      --green-soft:#e9f8f1;
+      --red:#c52f3e;
+      --red-soft:#fff0f1;
+      --amber:#a05a00;
+      --amber-soft:#fff5dd;
+      --purple:#6842a8;
+      --purple-soft:#f1ebff;
+      --line:#d6deea;
+      --text:#172033;
+      --muted:#5f6d82;
+      --bg:#f3f6fa;
+      --card:#ffffff;
     }
-
-    * { box-sizing: border-box; }
-    html { font-size: 18px; }
+    * { box-sizing:border-box; }
+    html { font-size:18px; }
     body {
-      margin: 0;
-      color: var(--text);
-      background: var(--bg);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      line-height: 1.65;
+      margin:0;
+      color:var(--text);
+      background:var(--bg);
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      line-height:1.65;
     }
-    button, input { font: inherit; }
-    button { cursor: pointer; }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
     .header {
-      color: white;
-      background: linear-gradient(135deg, var(--navy), var(--navy-2));
-      padding: 24px 20px;
-      box-shadow: 0 8px 30px rgba(19, 33, 60, .18);
+      color:#fff;
+      background:linear-gradient(135deg,var(--navy),var(--navy-2));
+      padding:26px 20px;
+      box-shadow:0 8px 30px rgba(19,33,60,.18);
     }
-    .header-inner, .container { max-width: 1120px; margin: 0 auto; }
-    .eyebrow { margin: 0; font-size: .78rem; font-weight: 900; letter-spacing: .16em; color: #bcd4ff; }
-    h1 { margin: 4px 0 0; font-size: clamp(1.45rem, 4vw, 2rem); line-height: 1.3; }
-    .header p:last-child { margin: 10px 0 0; color: #dce8ff; }
-    .container { padding: 22px 16px 50px; }
+    .header-inner,.container { max-width:1180px; margin:0 auto; }
+    .eyebrow {
+      margin:0;
+      color:#bcd4ff;
+      font-size:.76rem;
+      font-weight:950;
+      letter-spacing:.16em;
+    }
+    h1 { margin:4px 0 0; font-size:clamp(1.5rem,4vw,2.15rem); line-height:1.3; }
+    h2,h3 { color:var(--navy); }
+    .header p:last-child { margin:10px 0 0; color:#dce8ff; }
+    .container { padding:22px 16px 52px; }
     .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 8px 24px rgba(30, 49, 85, .06);
-      margin-bottom: 18px;
+      margin-bottom:18px;
+      border:1px solid var(--line);
+      border-radius:20px;
+      padding:20px;
+      background:var(--card);
+      box-shadow:0 8px 24px rgba(30,49,85,.06);
     }
-    .card h2 { margin: 0; font-size: 1.25rem; line-height: 1.35; }
-    .sub { color: var(--muted); margin: 6px 0 0; font-size: .92rem; }
-    .auth-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; margin-top: 16px; }
+    .card h2 { margin:0; font-size:1.28rem; line-height:1.35; }
+    .card h3 { margin:0; font-size:1rem; }
+    .sub { margin:6px 0 0; color:var(--muted); font-size:.9rem; }
+    .auth-grid {
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;
+      gap:10px;
+      margin-top:16px;
+    }
+    .auth-field label {
+      display:block;
+      margin-bottom:5px;
+      color:var(--muted);
+      font-size:.76rem;
+      font-weight:900;
+    }
     input {
-      min-width: 0;
-      width: 100%;
-      min-height: 52px;
-      border: 2px solid var(--line);
-      border-radius: 14px;
-      padding: 10px 14px;
-      color: var(--text);
-      background: white;
+      width:100%;
+      min-width:0;
+      min-height:52px;
+      border:2px solid var(--line);
+      border-radius:14px;
+      padding:10px 14px;
+      color:var(--text);
+      background:#fff;
     }
-    input:focus { outline: 3px solid rgba(37, 99, 235, .16); border-color: var(--blue); }
+    input:focus {
+      outline:3px solid rgba(37,99,235,.16);
+      border-color:var(--blue);
+    }
     .btn {
-      border: 0;
-      min-height: 52px;
-      padding: 10px 18px;
-      border-radius: 14px;
-      font-weight: 900;
-      transition: transform .15s ease, opacity .15s ease;
+      min-height:52px;
+      border:0;
+      border-radius:14px;
+      padding:10px 18px;
+      font-weight:950;
+      transition:transform .15s ease,opacity .15s ease;
     }
-    .btn:active { transform: translateY(1px); }
-    .btn:disabled { cursor: wait; opacity: .62; }
-    .btn-primary { color: white; background: var(--blue); }
-    .btn-dark { color: white; background: var(--navy); }
-    .btn-soft { color: var(--navy); background: #e8edf5; }
-    .btn-danger { color: white; background: var(--red); }
-    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
-    .summary-box { background: #f7f9fc; border: 1px solid var(--line); border-radius: 16px; padding: 15px; }
-    .summary-label { color: var(--muted); font-size: .78rem; font-weight: 800; }
-    .summary-value { font-size: 1.55rem; line-height: 1.25; font-weight: 950; margin-top: 4px; }
-    .result-list { display: grid; gap: 10px; margin-top: 16px; }
+    .btn:active { transform:translateY(1px); }
+    .btn:disabled { cursor:wait; opacity:.62; }
+    .btn-primary { color:#fff; background:var(--blue); }
+    .btn-dark { color:#fff; background:var(--navy); }
+    .btn-soft { color:var(--navy); background:#e8edf5; }
+    .btn-green { color:#fff; background:var(--green); }
+    .action-grid {
+      display:grid;
+      grid-template-columns:1.25fr 1fr 1fr;
+      gap:12px;
+      margin-top:14px;
+    }
+    .notice {
+      margin-top:14px;
+      border-radius:14px;
+      padding:12px 14px;
+      color:#18447d;
+      background:var(--blue-soft);
+    }
+    .summary-grid {
+      display:grid;
+      grid-template-columns:repeat(6,minmax(0,1fr));
+      gap:11px;
+      margin-top:16px;
+    }
+    .summary-box {
+      min-width:0;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px;
+      background:#f7f9fc;
+    }
+    .summary-label { color:var(--muted); font-size:.72rem; font-weight:850; }
+    .summary-value {
+      margin-top:4px;
+      overflow-wrap:anywhere;
+      color:var(--navy);
+      font-size:1.42rem;
+      line-height:1.25;
+      font-weight:950;
+    }
+    .result-list { display:grid; gap:10px; margin-top:16px; }
     .result {
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 14px 15px;
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 12px;
-      align-items: start;
-      background: #fafbfd;
+      display:grid;
+      grid-template-columns:auto minmax(0,1fr);
+      gap:12px;
+      align-items:start;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:14px 15px;
+      background:#fafbfd;
     }
-    .result.ok { background: var(--green-soft); border-color: #a9dfc9; }
-    .result.ng { background: var(--red-soft); border-color: #f2b7bd; }
-    .result.wait { background: var(--amber-soft); border-color: #eed39b; }
-    .icon { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 950; background: #e3e9f2; }
-    .ok .icon { color: white; background: var(--green); }
-    .ng .icon { color: white; background: var(--red); }
-    .wait .icon { color: white; background: var(--amber); }
-    .result-title { font-weight: 900; }
-    .result-detail { color: var(--muted); font-size: .86rem; overflow-wrap: anywhere; margin-top: 2px; }
-    .manual-list { display: grid; gap: 10px; margin-top: 16px; }
+    .result.ok { border-color:#a9dfc9; background:var(--green-soft); }
+    .result.ng { border-color:#f2b7bd; background:var(--red-soft); }
+    .result.wait { border-color:#eed39b; background:var(--amber-soft); }
+    .icon {
+      display:grid;
+      place-items:center;
+      width:34px;
+      height:34px;
+      border-radius:50%;
+      font-weight:950;
+      background:#e3e9f2;
+    }
+    .ok .icon { color:#fff; background:var(--green); }
+    .ng .icon { color:#fff; background:var(--red); }
+    .wait .icon { color:#fff; background:var(--amber); }
+    .result-title { font-weight:950; }
+    .result-detail {
+      margin-top:2px;
+      overflow-wrap:anywhere;
+      color:var(--muted);
+      font-size:.84rem;
+    }
+    .detail-grid {
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-top:16px;
+    }
+    .detail-panel {
+      border:1px solid var(--line);
+      border-radius:17px;
+      padding:16px;
+      background:#fafbfd;
+    }
+    .detail-list { display:grid; gap:8px; margin-top:12px; }
+    .detail-row {
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      border-radius:12px;
+      padding:9px 11px;
+      background:#eef2f7;
+    }
+    .detail-row span { color:var(--muted); font-size:.78rem; }
+    .detail-row strong {
+      max-width:58%;
+      overflow-wrap:anywhere;
+      text-align:right;
+      color:var(--navy);
+      font-size:.8rem;
+    }
+    .safe-note {
+      margin-top:12px;
+      border-radius:13px;
+      padding:10px 12px;
+      color:#075f43;
+      background:var(--green-soft);
+      font-size:.8rem;
+      font-weight:850;
+    }
+    .manual-list { display:grid; gap:10px; margin-top:16px; }
     .manual-item {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr);
-      gap: 12px;
-      padding: 13px 14px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      background: #fafbfd;
+      display:grid;
+      grid-template-columns:auto minmax(0,1fr);
+      gap:12px;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:13px 14px;
+      background:#fafbfd;
     }
-    .manual-item input { width: 24px; height: 24px; min-height: 0; margin-top: 2px; accent-color: var(--green); }
-    .manual-item strong { display: block; }
-    .manual-item span { display: block; color: var(--muted); font-size: .84rem; }
-    .url-list { display: grid; gap: 10px; margin-top: 16px; }
-    .url-box { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; background: #f8fafc; }
-    .url-box strong { display: block; font-size: .82rem; }
-    .url-box a { color: var(--blue); overflow-wrap: anywhere; font-size: .86rem; }
-    .notice { margin-top: 14px; border-radius: 14px; padding: 12px 14px; background: var(--blue-soft); color: #18447d; }
-    .footer { text-align: center; color: var(--muted); font-size: .78rem; padding-top: 10px; }
-    .hidden { display: none !important; }
-    @media (max-width: 760px) {
-      html { font-size: 17px; }
-      .auth-row { grid-template-columns: 1fr auto; }
-      .auth-row .btn-primary { grid-column: 1 / -1; }
-      .action-grid, .summary-grid { grid-template-columns: 1fr 1fr; }
+    .manual-item input {
+      width:24px;
+      height:24px;
+      min-height:0;
+      margin-top:2px;
+      accent-color:var(--green);
     }
-    @media (max-width: 480px) {
-      .action-grid, .summary-grid { grid-template-columns: 1fr; }
-      .card { padding: 17px; border-radius: 17px; }
+    .manual-item strong { display:block; }
+    .manual-item span span {
+      display:block;
+      color:var(--muted);
+      font-size:.82rem;
+    }
+    .url-list { display:grid; gap:10px; margin-top:16px; }
+    .url-box {
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px 14px;
+      background:#f8fafc;
+    }
+    .url-box strong { display:block; font-size:.8rem; }
+    .url-box a {
+      color:var(--blue);
+      overflow-wrap:anywhere;
+      font-size:.84rem;
+    }
+    .footer {
+      padding-top:10px;
+      text-align:center;
+      color:var(--muted);
+      font-size:.76rem;
+    }
+    @media (max-width:1050px) {
+      .summary-grid { grid-template-columns:repeat(3,1fr); }
+      .auth-grid { grid-template-columns:minmax(0,1fr) auto; }
+      .action-grid { grid-template-columns:1fr 1fr; }
+      .action-grid .btn-primary { grid-column:1/-1; }
+    }
+    @media (max-width:760px) {
+      html { font-size:17px; }
+      .detail-grid { grid-template-columns:1fr; }
+      .summary-grid { grid-template-columns:1fr 1fr; }
+    }
+    @media (max-width:480px) {
+      .summary-grid,.action-grid { grid-template-columns:1fr; }
+      .action-grid .btn-primary { grid-column:auto; }
+      .card { padding:17px; border-radius:17px; }
     }
   </style>
 </head>
-<body>
+<body data-dpro-next-step="GYM-NEXT-9">
   <header class="header">
     <div class="header-inner">
-      <p class="eyebrow">DPRO PERSONAL GYM LINE</p>
+      <p class="eyebrow">DPRO PERSONAL GYM LINE / NEXT-9 R2</p>
       <h1>営業前 system-check</h1>
-      <p>API・DB・30分枠・電話番号正規化・デモデータをまとめて確認します。</p>
+      <p>R2 Workerの修正を含め、業務機能・認証・セキュリティ・性能を一括で確認します。</p>
     </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2>管理コード</h2>
-      <p class="sub">デモ環境の管理コードを入力してください。入力欄には削除ボタンを常設しています。</p>
-      <div class="auth-row">
-        <input id="adminCode" type="password" inputmode="numeric" autocomplete="current-password" placeholder="管理コード">
-        <button class="btn btn-soft" type="button" id="clearCode">削除</button>
-        <button class="btn btn-primary" type="button" id="runAll">一括チェック</button>
+      <h2>確認コード</h2>
+      <p class="sub">管理とスタッフの権限を分けて確認します。各入力欄には削除ボタンを常設しています。</p>
+
+      <div class="auth-grid">
+        <div class="auth-field">
+          <label for="adminCode">管理コード</label>
+          <input id="adminCode" type="password" inputmode="numeric" autocomplete="current-password" placeholder="管理コード">
+        </div>
+        <button class="btn btn-soft" type="button" id="clearAdminCode">削除</button>
+
+        <div class="auth-field">
+          <label for="staffCode">スタッフコード</label>
+          <input id="staffCode" type="password" inputmode="numeric" autocomplete="current-password" placeholder="スタッフコード">
+        </div>
+        <button class="btn btn-soft" type="button" id="clearStaffCode">削除</button>
       </div>
+
       <div class="action-grid">
+        <button class="btn btn-primary" type="button" id="runAll">一括チェック</button>
         <button class="btn btn-dark" type="button" id="prepareDemo">営業前DEMO準備</button>
         <button class="btn btn-soft" type="button" id="openOwner">PC管理画面を開く</button>
       </div>
+
       <p class="notice" id="mainMessage">まだチェックしていません。</p>
     </section>
 
     <section class="card">
       <h2>自動チェック結果</h2>
-      <p class="sub">こちらで確認できるAPI・DB・設定を自動で検査します。</p>
+      <p class="sub">NEXT-4・5・8・9、操作履歴列action、補助検査分離、役割分離、データ保護、容量と応答時間を確認します。</p>
+
       <div class="summary-grid">
         <div class="summary-box"><div class="summary-label">成功</div><div class="summary-value" id="okCount">0</div></div>
         <div class="summary-box"><div class="summary-label">要確認</div><div class="summary-value" id="ngCount">0</div></div>
         <div class="summary-box"><div class="summary-label">顧客</div><div class="summary-value" id="customerCount">-</div></div>
         <div class="summary-box"><div class="summary-label">予約</div><div class="summary-value" id="reservationCount">-</div></div>
+        <div class="summary-box"><div class="summary-label">統合検査</div><div class="summary-value" id="responseTime">-</div></div>
+        <div class="summary-box"><div class="summary-label">公開データ</div><div class="summary-value" id="payloadSize">-</div></div>
       </div>
+
       <div class="result-list" id="resultList">
-        <div class="result wait"><div class="icon">…</div><div><div class="result-title">待機中</div><div class="result-detail">「一括チェック」を押してください。</div></div></div>
+        <div class="result wait">
+          <div class="icon">…</div>
+          <div>
+            <div class="result-title">待機中</div>
+            <div class="result-detail">「一括チェック」を押してください。</div>
+          </div>
+        </div>
       </div>
     </section>
 
     <section class="card">
-      <h2>画面の手動確認</h2>
-      <p class="sub">GitHubとWorker反映後、実画面で確認できた項目だけチェックしてください。</p>
+      <h2>セキュリティ・性能</h2>
+      <p class="sub">Workerが返した統合検査の詳細です。</p>
+
+      <div class="detail-grid">
+        <div class="detail-panel">
+          <h3>セキュリティ</h3>
+          <div class="detail-list" id="securityDetails">
+            <div class="detail-row"><span>状態</span><strong>未確認</strong></div>
+          </div>
+        </div>
+
+        <div class="detail-panel">
+          <h3>性能</h3>
+          <div class="detail-list" id="performanceDetails">
+            <div class="detail-row"><span>状態</span><strong>未確認</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="safe-note">
+        SupabaseのService Role Keyは画面へ返しません。LINEは文面コピー方式のみで、自動・一斉送信は行いません。
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>実画面の手動確認</h2>
+      <p class="sub">自動検査後、実際に操作できた項目だけチェックしてください。</p>
+
       <div class="manual-list" id="manualList">
-        <label class="manual-item"><input type="checkbox"><span><strong>無料体験予約</strong><span>過去日不可・30分単位・満席時間を選べない</span></span></label>
-        <label class="manual-item"><input type="checkbox"><span><strong>初回登録</strong><span>氏名・電話番号を初回だけ入力し、2回目以降は会員情報を取得</span></span></label>
-        <label class="manual-item"><input type="checkbox"><span><strong>会員マイページ</strong><span>次回予約・残り回数・変更/キャンセル希望・相談を確認</span></span></label>
-        <label class="manual-item"><input type="checkbox"><span><strong>PC管理画面</strong><span>管理コード・削除ボタン・電話番号/氏名/会員番号検索</span></span></label>
-        <label class="manual-item"><input type="checkbox"><span><strong>iPad画面</strong><span>来店→トレーニング中→完了、完了時だけ回数券を1回減算</span></span></label>
-        <label class="manual-item"><input type="checkbox"><span><strong>文字サイズ</strong><span>葬儀システム程度の大きさで、スマホ・PC・iPadとも読みやすい</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>無料体験・通常予約</strong><span>過去日不可、30分単位、満席・重複予約を防止できる</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>会員マイページ</strong><span>予約履歴、セッション振り返り、前回と同じ内容で予約できる</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>PC管理画面</strong><span>今日優先、体験・入会、継続フォロー、LINE文面コピーを確認できる</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>iPad受付画面</strong><span>来店、トレーニング中、完了を操作し、完了時だけ回数を減算する</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>スタッフ画面</strong><span>スタッフ権限だけで当日の受付とセッション記録を操作できる</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>役割分離</strong><span>管理コードではPC管理、スタッフコードではスタッフAPIへ接続する</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>継続フォロー</strong><span>3日後・7日後・対応済みが正しく候補から外れる</span></span></label>
+        <label class="manual-item"><input type="checkbox"><span><strong>文字とレスポンシブ</strong><span>葬儀システム程度の文字サイズで、スマホ・PC・iPadとも読みやすい</span></span></label>
       </div>
     </section>
 
     <section class="card">
       <h2>確認URL</h2>
-      <p class="sub">実際のフルURLです。Worker名やGitHub Pages名を変えた場合はconfig.jsだけ変更します。</p>
+      <p class="sub">正式なWorker名はdpro-gym-line-apiです。管理コードやスタッフコードをURLへ含めません。</p>
       <div class="url-list" id="urlList"></div>
     </section>
 
-    <div class="footer">STEP GYM-1 / system-check / <span id="versionText">-</span></div>
+    <div class="footer">
+      GYM-NEXT-9 / system-check / <span id="versionText">-</span>
+    </div>
   </main>
 
   <script src="config.js"></script>
@@ -209,25 +394,40 @@
 
     const el = id => document.getElementById(id);
     const adminCode = () => el('adminCode').value.trim();
+    const staffCode = () => el('staffCode').value.trim();
 
     document.addEventListener('DOMContentLoaded', () => {
       el('versionText').textContent = CONFIG.version;
+
       if (new URLSearchParams(location.search).get('demo') === '1') {
         el('adminCode').value = CONFIG.demoAdminCode || '';
+        el('staffCode').value = CONFIG.demoStaffCode || '';
       }
+
       renderUrls();
       restoreManualChecks();
+
       el('runAll').addEventListener('click', runAllChecks);
       el('prepareDemo').addEventListener('click', prepareDemo);
-      el('clearCode').addEventListener('click', () => {
+
+      el('clearAdminCode').addEventListener('click', () => {
         el('adminCode').value = '';
         el('adminCode').focus();
       });
+
+      el('clearStaffCode').addEventListener('click', () => {
+        el('staffCode').value = '';
+        el('staffCode').focus();
+      });
+
       el('openOwner').addEventListener('click', () => {
         location.href = 'dashboard.html?demo=1';
       });
+
       document.querySelectorAll('#manualList input').forEach((box, index) => {
-        box.addEventListener('change', () => saveManualCheck(index, box.checked));
+        box.addEventListener('change', () => {
+          saveManualCheck(index, box.checked);
+        });
       });
     });
 
@@ -235,35 +435,228 @@
       const button = el('runAll');
       button.disabled = true;
       button.textContent = '確認中…';
+
       results.length = 0;
       renderResults();
-      setMessage('APIとDBを確認しています。', 'wait');
+      resetMetrics();
+      setMessage('Worker、DB、認証、性能を確認しています。', 'wait');
 
       try {
-        const health = await request('/api/health');
-        addResult('Worker API', health.ok, `${health.service} / ${health.version}`);
-        addResult('Database', Boolean(health.database?.ok), health.database?.facility_name || health.database?.error || 'DB確認');
-        addResult('30分枠', Number(health.database?.default_slot_minutes) === 30, `${health.database?.default_slot_minutes ?? '-'}分枠`);
+        const [healthResult, facilityResult] = await Promise.all([
+          requestDetailed('/api/health'),
+          requestDetailed(
+            `/api/public/facility?facility_code=${encodeURIComponent(FACILITY)}`
+          )
+        ]);
 
-        const facility = await request(`/api/public/facility?facility_code=${encodeURIComponent(FACILITY)}`);
-        addResult('施設公開情報', facility.ok, `${facility.facility?.facility_name || '-'} / メニュー${facility.services?.length || 0}件 / トレーナー${facility.trainers?.length || 0}名`);
+        const health = healthResult.data;
+        const facility = facilityResult.data;
+
+        addResult(
+          'Worker API',
+          health.ok &&
+            health.version === 'GYM-NEXT-9-WORKER-R2-20260725',
+          `${health.service} / ${health.version} / ${Math.round(healthResult.elapsedMs)}ms`
+        );
+        addResult(
+          'Database',
+          Boolean(health.database?.ok),
+          health.database?.facility_name ||
+            health.database?.error ||
+            'DB確認'
+        );
+        addResult(
+          '予約枠30分',
+          Number(health.database?.default_slot_minutes) === 30,
+          `${health.database?.default_slot_minutes ?? '-'}分`
+        );
+        addResult(
+          '施設公開情報',
+          facility.ok,
+          `${facility.facility?.facility_name || '-'} / メニュー${facility.services?.length || 0}件 / トレーナー${facility.trainers?.length || 0}名 / ${formatBytes(facilityResult.bytes)}`
+        );
+
+        addResult(
+          'NEXT-4 セッション記録',
+          Boolean(
+            health.next4?.ok &&
+            health.next4?.session_records &&
+            health.next4?.completion_guard &&
+            health.next4?.ticket_completion_unique_guard
+          ),
+          `記録${health.next4?.session_record_count ?? 0}件 / 重複完了${health.next4?.duplicate_completion_count ?? 0}件`
+        );
+        addResult(
+          'NEXT-5 体験・入会',
+          Boolean(
+            health.next5?.ok &&
+            health.next5?.plan_master &&
+            health.next5?.trial_pipeline &&
+            health.next5?.atomic_admission
+          ),
+          `有効プラン${health.next5?.active_plan_count ?? 0}件`
+        );
+        addResult(
+          'NEXT-8 継続フォロー',
+          Boolean(
+            health.next8?.ok &&
+            health.next8?.snooze_guard &&
+            health.next8?.recent_done_guard
+          ),
+          '延期・対応済み後の再表示防止'
+        );
+        addResult(
+          'NEXT-9 セキュリティ',
+          Boolean(
+            health.next9?.ok &&
+            health.next9?.security_headers &&
+            health.next9?.query_auth_disabled &&
+            health.next9?.request_body_limit &&
+            health.next9?.compact_json
+          ),
+          `最大${health.next9?.max_json_body_bytes ?? '-'}bytes / 目標${health.next9?.system_check_budget_ms ?? '-'}ms`
+        );
 
         if (!adminCode()) {
-          addResult('管理コード', false, '管理コードを入力すると管理APIも確認できます。');
+          addResult(
+            '管理コード',
+            false,
+            '管理コードを入力すると統合検査を実行できます。'
+          );
         } else {
-          const [system, phone] = await Promise.all([
-            request(`/api/admin/system-check?facility_code=${encodeURIComponent(FACILITY)}`, { admin: true }),
-            request('/api/admin/phone-normalize-check', { admin: true })
+          const [
+            integratedResult,
+            legacyResult,
+            phoneResult,
+            adminQueryStatus,
+            staffQueryStatus,
+            plainTextStatus,
+            oversizedStatus
+          ] = await Promise.all([
+            requestDetailed(
+              `/api/admin/next-9-system-check?facility_code=${encodeURIComponent(FACILITY)}`,
+              { admin:true }
+            ),
+            requestDetailed(
+              `/api/admin/system-check?facility_code=${encodeURIComponent(FACILITY)}`,
+              { admin:true }
+            ),
+            requestDetailed(
+              '/api/admin/phone-normalize-check',
+              { admin:true }
+            ),
+            rawStatus(
+              `/api/admin/next-9-system-check?facility_code=${encodeURIComponent(FACILITY)}&admin_key=${encodeURIComponent(adminCode())}`
+            ),
+            rawStatus(
+              `/api/staff/health?staff_key=${encodeURIComponent(staffCode() || CONFIG.demoStaffCode || '')}`
+            ),
+            rawStatus(
+              '/api/admin/follow-ups/action',
+              {
+                method:'POST',
+                headers:{
+                  'X-Admin-Key':adminCode(),
+                  'Content-Type':'text/plain'
+                },
+                body:'{}'
+              }
+            ),
+            rawStatus(
+              '/api/admin/follow-ups/action',
+              {
+                method:'POST',
+                headers:{
+                  'X-Admin-Key':adminCode(),
+                  'Content-Type':'application/json'
+                },
+                body:JSON.stringify({ padding:'x'.repeat(70 * 1024) })
+              }
+            )
           ]);
-          addResult('管理API認証', true, '管理コードで接続できました。');
-          (system.checks || []).forEach(item => addResult(labelForCheck(item.id), item.ok, item.detail));
-          addResult('電話番号正規化 5形式', phone.ok, phone.ok ? `${phone.expected} に一致` : '正規化結果が一致しません。');
-          el('customerCount').textContent = system.counts?.customers ?? '-';
-          el('reservationCount').textContent = system.counts?.reservations ?? '-';
+
+          const integrated = integratedResult.data;
+          const legacy = legacyResult.data;
+          const phone = phoneResult.data;
+
+          addResult(
+            '管理APIヘッダー認証',
+            integrated.ok,
+            'X-Admin-Keyで接続'
+          );
+          addResult(
+            'URL管理認証の拒否',
+            adminQueryStatus === 401,
+            `HTTP ${adminQueryStatus} / 期待値401`
+          );
+          addResult(
+            'URLスタッフ認証の拒否',
+            staffQueryStatus === 401,
+            `HTTP ${staffQueryStatus} / 期待値401`
+          );
+          addResult(
+            'JSON形式以外の拒否',
+            plainTextStatus === 415,
+            `HTTP ${plainTextStatus} / 期待値415`
+          );
+          addResult(
+            '64KB超過の拒否',
+            oversizedStatus === 413,
+            `HTTP ${oversizedStatus} / 期待値413`
+          );
+          addResult(
+            '電話番号正規化 5形式',
+            phone.ok,
+            phone.ok
+              ? `${phone.expected} に一致`
+              : '正規化結果が一致しません。'
+          );
+
+          (integrated.checks || []).forEach(item => {
+            addResult(labelForCheck(item.id), item.ok, item.detail);
+          });
+
+          if (!staffCode()) {
+            addResult(
+              'スタッフコード',
+              false,
+              'スタッフコードを入力するとスタッフAPIを確認できます。'
+            );
+          } else {
+            const staffHealth = await requestDetailed(
+              '/api/staff/health',
+              { staff:true }
+            );
+            addResult(
+              'スタッフAPIヘッダー認証',
+              staffHealth.data?.ok &&
+                staffHealth.data?.role === 'staff',
+              `${staffHealth.data?.service || 'staff'} / ${Math.round(staffHealth.elapsedMs)}ms`
+            );
+          }
+
+          el('customerCount').textContent =
+            legacy.counts?.customers ?? '-';
+          el('reservationCount').textContent =
+            legacy.counts?.reservations ?? '-';
+          el('responseTime').textContent =
+            `${integrated.elapsed_ms ?? '-'}ms`;
+          el('payloadSize').textContent =
+            formatBytes(
+              integrated.performance?.public_payload_bytes
+            );
+
+          renderSecurityDetails(integrated.security || {});
+          renderPerformanceDetails(integrated.performance || {});
         }
 
         const failed = results.filter(item => !item.ok).length;
-        setMessage(failed ? `自動チェックに${failed}件の要確認があります。` : '自動チェックはすべてOKです。', failed ? 'ng' : 'ok');
+        setMessage(
+          failed
+            ? `自動チェックに${failed}件の要確認があります。`
+            : '自動チェックはすべてOKです。',
+          failed ? 'ng' : 'ok'
+        );
       } catch (error) {
         addResult('一括チェック', false, error.message);
         setMessage(error.message, 'ng');
@@ -280,128 +673,323 @@
         el('adminCode').focus();
         return;
       }
-      const confirmed = confirm('DPRO パーソナルジムのデモデータだけを今日基準で作り直します。実行しますか？');
+
+      const confirmed = confirm(
+        'DPRO パーソナルジムのデモデータだけを今日基準で作り直します。実行しますか？'
+      );
       if (!confirmed) return;
 
       const button = el('prepareDemo');
       button.disabled = true;
       button.textContent = '準備中…';
       setMessage('営業前デモデータを準備しています。', 'wait');
+
       try {
-        const data = await request('/api/admin/demo-prepare', {
-          method: 'POST',
-          admin: true,
-          headers: { 'X-Demo-Confirm': 'DEMOパーソナルジムだけ実行' },
-          body: {
-            facility_code: FACILITY,
-            confirm_text: 'DEMOパーソナルジムだけ実行'
+        const data = await requestDetailed(
+          '/api/admin/demo-prepare',
+          {
+            method:'POST',
+            admin:true,
+            headers:{
+              'X-Demo-Confirm':'DEMOパーソナルジムだけ実行'
+            },
+            body:{
+              facility_code:FACILITY,
+              confirm_text:'DEMOパーソナルジムだけ実行'
+            }
           }
-        });
-        setMessage(`DEMO準備完了：顧客${data.demo_data?.customers ?? '-'}件・予約${data.demo_data?.reservations ?? '-'}件・相談${data.demo_data?.inquiries ?? '-'}件`, 'ok');
+        );
+
+        setMessage(
+          `DEMO準備完了：顧客${data.data.demo_data?.customers ?? '-'}件・予約${data.data.demo_data?.reservations ?? '-'}件・相談${data.data.demo_data?.inquiries ?? '-'}件`,
+          'ok'
+        );
         await runAllChecks();
       } catch (error) {
-        setMessage(`DEMO準備に失敗しました：${error.message}`, 'ng');
+        setMessage(
+          `DEMO準備に失敗しました：${error.message}`,
+          'ng'
+        );
       } finally {
         button.disabled = false;
         button.textContent = '営業前DEMO準備';
       }
     }
 
-    async function request(path, options = {}) {
-      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+    async function requestDetailed(path, options = {}) {
+      const headers = { ...(options.headers || {}) };
       if (options.admin) headers['X-Admin-Key'] = adminCode();
-      const response = await fetch(`${API}${path}`, {
-        method: options.method || 'GET',
-        headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
-        cache: 'no-store'
-      });
-      const text = await response.text();
-      let data;
-      try { data = text ? JSON.parse(text) : {}; } catch (_) { data = { message: text }; }
-      if (!response.ok || data.ok === false) {
-        throw new Error(data.message || `HTTP ${response.status}`);
+      if (options.staff) headers['X-Staff-Key'] = staffCode();
+
+      let body;
+      if (options.body !== undefined) {
+        if (!headers['Content-Type']) {
+          headers['Content-Type'] = 'application/json';
+        }
+        body = typeof options.body === 'string'
+          ? options.body
+          : JSON.stringify(options.body);
       }
-      return data;
+
+      const startedAt = performance.now();
+      const response = await fetch(`${API}${path}`, {
+        method:options.method || 'GET',
+        headers,
+        body,
+        cache:'no-store'
+      });
+      const elapsedMs = performance.now() - startedAt;
+      const text = await response.text();
+      const bytes = new TextEncoder().encode(text).byteLength;
+
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch (_) {
+        data = { message:text };
+      }
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(
+          data.message ||
+          data.error?.message ||
+          `HTTP ${response.status}`
+        );
+      }
+
+      return { data, response, elapsedMs, bytes };
+    }
+
+    async function rawStatus(path, options = {}) {
+      try {
+        const response = await fetch(`${API}${path}`, {
+          method:options.method || 'GET',
+          headers:options.headers || {},
+          body:options.body,
+          cache:'no-store'
+        });
+        return response.status;
+      } catch (_) {
+        return 0;
+      }
     }
 
     function addResult(title, ok, detail) {
-      results.push({ title, ok: Boolean(ok), detail: String(detail || '') });
+      results.push({
+        title,
+        ok:Boolean(ok),
+        detail:String(detail || '')
+      });
       renderResults();
     }
 
     function renderResults() {
       const list = el('resultList');
+
       if (!results.length) {
-        list.innerHTML = '<div class="result wait"><div class="icon">…</div><div><div class="result-title">確認中</div><div class="result-detail">結果を取得しています。</div></div></div>';
+        list.innerHTML = `
+          <div class="result wait">
+            <div class="icon">…</div>
+            <div>
+              <div class="result-title">確認中</div>
+              <div class="result-detail">結果を取得しています。</div>
+            </div>
+          </div>
+        `;
       } else {
         list.innerHTML = results.map(item => `
           <div class="result ${item.ok ? 'ok' : 'ng'}">
             <div class="icon">${item.ok ? '✓' : '!'}</div>
-            <div><div class="result-title">${escapeHtml(item.title)}</div><div class="result-detail">${escapeHtml(item.detail)}</div></div>
+            <div>
+              <div class="result-title">${escapeHtml(item.title)}</div>
+              <div class="result-detail">${escapeHtml(item.detail)}</div>
+            </div>
           </div>
         `).join('');
       }
-      el('okCount').textContent = results.filter(item => item.ok).length;
-      el('ngCount').textContent = results.filter(item => !item.ok).length;
+
+      el('okCount').textContent =
+        results.filter(item => item.ok).length;
+      el('ngCount').textContent =
+        results.filter(item => !item.ok).length;
+    }
+
+    function renderSecurityDetails(security) {
+      const rows = [
+        ['管理認証', security.admin_header_only ? 'HTTPヘッダー限定' : '要確認'],
+        ['スタッフ認証', security.staff_header_only ? 'HTTPヘッダー限定' : '要確認'],
+        ['URL認証', security.query_string_auth_disabled ? '無効' : '要確認'],
+        ['最大JSON', `${security.max_json_body_bytes ?? '-'}bytes`],
+        ['キャッシュ', security.cache_control || '-'],
+        ['MIME保護', security.x_content_type_options || '-'],
+        ['フレーム', security.x_frame_options || '-'],
+        ['参照元', security.referrer_policy || '-'],
+        ['HSTS', security.strict_transport_security ? '有効' : '要確認'],
+        ['Service Role公開', security.service_role_exposed ? '要確認' : 'なし'],
+        ['LINE一斉送信', security.automatic_line_broadcast ? '要確認' : 'なし']
+      ];
+      renderDetailRows('securityDetails', rows);
+    }
+
+    function renderPerformanceDetails(performanceData) {
+      const timings = performanceData.timings || {};
+      const rows = [
+        ['JSON', performanceData.compact_json ? 'compact' : '要確認'],
+        ['重要DB検査', performanceData.critical_queries_parallel ? '並列' : '要確認'],
+        ['統合検査上限', `${performanceData.system_check_budget_ms ?? '-'}ms`],
+        ['公開データ', formatBytes(performanceData.public_payload_bytes)],
+        ['公開データ上限', formatBytes(performanceData.public_payload_budget_bytes)],
+        ['DB並列時間', `${timings.parallel_database_ms ?? '-'}ms`],
+        ['施設', `${timings.facility_ms ?? '-'}ms`],
+        ['設定', `${timings.settings_ms ?? '-'}ms`],
+        ['メニュー', `${timings.services_ms ?? '-'}ms`],
+        ['トレーナー', `${timings.trainers_ms ?? '-'}ms`],
+        ['NEXT-4', `${timings.next4_ms ?? '-'}ms`],
+        ['NEXT-5', `${timings.next5_ms ?? '-'}ms`]
+      ];
+      renderDetailRows('performanceDetails', rows);
+    }
+
+    function renderDetailRows(id, rows) {
+      el(id).innerHTML = rows.map(([label, value]) => `
+        <div class="detail-row">
+          <span>${escapeHtml(label)}</span>
+          <strong>${escapeHtml(value)}</strong>
+        </div>
+      `).join('');
+    }
+
+    function resetMetrics() {
+      el('customerCount').textContent = '-';
+      el('reservationCount').textContent = '-';
+      el('responseTime').textContent = '-';
+      el('payloadSize').textContent = '-';
+      renderDetailRows('securityDetails', [['状態','確認中']]);
+      renderDetailRows('performanceDetails', [['状態','確認中']]);
     }
 
     function setMessage(text, type) {
       const box = el('mainMessage');
       box.textContent = text;
-      box.style.background = type === 'ok' ? 'var(--green-soft)' : type === 'ng' ? 'var(--red-soft)' : 'var(--amber-soft)';
-      box.style.color = type === 'ok' ? 'var(--green)' : type === 'ng' ? 'var(--red)' : 'var(--amber)';
+      box.style.background =
+        type === 'ok'
+          ? 'var(--green-soft)'
+          : type === 'ng'
+            ? 'var(--red-soft)'
+            : 'var(--amber-soft)';
+      box.style.color =
+        type === 'ok'
+          ? 'var(--green)'
+          : type === 'ng'
+            ? 'var(--red)'
+            : 'var(--amber)';
     }
 
     function labelForCheck(id) {
       return ({
-        database_connection: '新DB接続',
-        facility: '施設設定',
-        production_guard: '本番誤操作ガード',
-        slot_minutes_30: '予約枠30分',
-        services: '予約メニュー',
-        trainers: 'トレーナー',
-        phone_normalization: '電話番号正規化',
-        atomic_reservation_guard: '重複予約防止',
-        admin_token: '管理コード設定'
+        database_connection:'新DB接続',
+        facility:'施設設定',
+        production_guard:'本番誤操作ガード',
+        slot_minutes_30:'予約枠30分',
+        services:'予約メニュー',
+        trainers:'トレーナー',
+        phone_normalization:'電話番号正規化',
+        atomic_reservation_guard:'重複予約防止',
+        admin_token:'管理コード設定',
+        next9_database_parallel:'重要DB検査の並列実行',
+        next9_production_guard:'本番誤操作ガード',
+        next9_slot_minutes_30:'予約枠30分',
+        next9_services:'予約メニュー',
+        next9_trainers:'トレーナー',
+        next9_admin_token:'管理コードSecret',
+        next9_staff_token:'スタッフコードSecret',
+        next9_query_auth_disabled:'URL認証無効化',
+        next9_request_body_limit:'JSON容量制限',
+        next9_security_headers:'セキュリティヘッダー',
+        next9_compact_json:'compact JSON',
+        next9_next4_preserved:'NEXT-4維持',
+        next9_next5_preserved:'NEXT-5維持',
+        next9_follow_log:'継続フォロー履歴',
+        next9_activity_log:'操作履歴',
+        next9_automatic_line_disabled:'LINE自動送信なし',
+        next9_public_payload_budget:'公開データ容量',
+        next9_system_check_budget:'統合検査応答時間'
       })[id] || id;
     }
 
     function renderUrls() {
       const urls = [
         ['Worker health', `${API}/api/health`],
-        ['無料体験予約', `${CONFIG.publicSiteUrl}`],
+        ['無料体験・予約', `${CONFIG.publicSiteUrl}`],
         ['会員マイページ', `${CONFIG.publicSiteUrl}member.html?demo=1&line_user_id=demo_gym_line_002`],
         ['PC管理画面', `${CONFIG.publicSiteUrl}dashboard.html?demo=1`],
-        ['iPad画面', `${CONFIG.publicSiteUrl}owner-ipad.html?demo=1`],
+        ['iPad受付画面', `${CONFIG.publicSiteUrl}${CONFIG.ownerIpadPageUrl || 'owner-ipad.html'}?demo=1`],
+        ['スタッフ画面', `${CONFIG.publicSiteUrl}${CONFIG.staffPageUrl || 'staff.html'}?demo=1`],
         ['system-check', `${CONFIG.publicSiteUrl}system-check.html?demo=1`]
       ];
+
       el('urlList').innerHTML = urls.map(([label, url]) => `
-        <div class="url-box"><strong>${escapeHtml(label)}</strong><a href="${escapeAttr(url)}" target="_blank" rel="noopener">${escapeHtml(url)}</a></div>
+        <div class="url-box">
+          <strong>${escapeHtml(label)}</strong>
+          <a href="${escapeAttr(url)}" target="_blank" rel="noopener">
+            ${escapeHtml(url)}
+          </a>
+        </div>
       `).join('');
     }
 
     function saveManualCheck(index, checked) {
       const saved = getManualChecks();
       saved[index] = checked;
-      localStorage.setItem('dpro_gym_system_check_manual', JSON.stringify(saved));
+      localStorage.setItem(
+        'dpro_gym_system_check_manual_next9',
+        JSON.stringify(saved)
+      );
     }
 
     function restoreManualChecks() {
       const saved = getManualChecks();
-      document.querySelectorAll('#manualList input').forEach((box, index) => { box.checked = Boolean(saved[index]); });
+      document.querySelectorAll('#manualList input')
+        .forEach((box, index) => {
+          box.checked = Boolean(saved[index]);
+        });
     }
 
     function getManualChecks() {
-      try { return JSON.parse(localStorage.getItem('dpro_gym_system_check_manual') || '[]'); }
-      catch (_) { return []; }
+      try {
+        return JSON.parse(
+          localStorage.getItem(
+            'dpro_gym_system_check_manual_next9'
+          ) || '[]'
+        );
+      } catch (_) {
+        return [];
+      }
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value);
+      if (!Number.isFinite(bytes)) return '-';
+      if (bytes < 1024) return `${bytes}B`;
+      return `${(bytes / 1024).toFixed(1)}KB`;
     }
 
     function escapeHtml(value) {
-      return String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
+      return String(value ?? '').replace(
+        /[&<>"']/g,
+        character => ({
+          '&':'&amp;',
+          '<':'&lt;',
+          '>':'&gt;',
+          '"':'&quot;',
+          "'":'&#39;'
+        })[character]
+      );
     }
 
-    function escapeAttr(value) { return escapeHtml(value); }
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
   </script>
 </body>
 </html>
