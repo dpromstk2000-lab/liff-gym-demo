@@ -2,21 +2,21 @@ system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
 current_step: "GYM-NEXT-9-PREPARED"
-workflow_revision: "R1"
-next_step: "GYM-NEXT-9-VERIFY"
-next_action: "DEPLOY_WORKER_THEN_VERIFY"
+workflow_revision: "R2"
+next_step: "GYM-NEXT-9-VERIFY-R2"
+next_action: "DEPLOY_WORKER_R2_THEN_VERIFY"
 result: "PREPARED"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
 step_backup_tag: "backup-gym-before-next-9-20260725"
 step_backup_sha: "5c300b51a5c122229f5c28b249e5204cfcf33f0f"
-package_commit_sha: "6fe2c201f07536e255a7f90caa0442dbef61f3de"
+package_commit_sha: "e556ee307caa47ac15b1dfbb2c932fb20c35d0ff"
 prepared_at: "2026-07-25T22:07:20+0900"
 workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30159133559"
 worker_name: "dpro-gym-line-api"
 current_worker_version: "GYM-NEXT-8-WORKER-R2-20260725"
-expected_worker_version: "GYM-NEXT-9-WORKER-20260725"
-worker_sha256: "d1f62c3d88b67df0488848ad8d29ba5cc3a0493669993cc386e7ad5d49832dbb"
+expected_worker_version: "GYM-NEXT-9-WORKER-R2-20260725"
+worker_sha256: "9405f4c300f2d73cdf77606dcb33dfa8b5c9afb7e5ca247a445e0b25d4d2439f"
 supabase_changed: false
 runtime_files_changed: false
 worker_deployed: false
@@ -45,3 +45,11 @@ checks:
   worker_javascript_syntax: "OK"
   existing_api_contract: "OK"
   runtime_unchanged: "OK"
+
+worker_r2_correction:
+  invalid_column_removed: "action_type"
+  valid_column_used: "action"
+  optional_probes_isolated: true
+  failed_verify_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30159660911"
+  corrected_at: "2026-07-25T23:26:33+0900"
+  workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30161633400"
