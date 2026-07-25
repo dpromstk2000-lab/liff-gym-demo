@@ -1,49 +1,45 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-5-COMPLETE"
-workflow_revision: "R1"
-next_step: "GYM-NEXT-6"
-result: "OK"
+current_step: "GYM-NEXT-6-PREPARED"
+workflow_revision: "R2"
+next_step: "GYM-NEXT-6-VERIFY"
+next_action: "SET_STAFF_TOKEN_AND_DEPLOY_WORKER"
+result: "PREPARED"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-5-verify-20260725"
-step_backup_sha: "8a7a52445bd46bea70e5cfaaf531e7c6e22ffe40"
-application_commit_sha: "97880494c4c51821a5e5429874f401502c340b32"
-dashboard_blob: "538199c142e44d4ee03953d29359c1b341c4ca28"
-owner_ipad_blob: "04b119e1f32a5156f94a64079c6d751253d7dfff"
-completed_at: "2026-07-25T14:11:22+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30145290377"
+step_backup_tag: "backup-gym-before-next-6-20260725"
+step_backup_sha: "1e906915ed213be60ceaa236f85e629796a5e0c6"
+package_commit_sha: "991e474ba3d16de5841b1f04839b788173fb1ed6"
+prepared_at: "2026-07-25T14:36:35+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30146054197"
 worker_name: "dpro-gym-line-api"
-worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
-worker_version: "GYM-NEXT-5-WORKER-20260725"
-worker_deployed: true
-supabase_executed: true
-runtime_files_changed: true
-worker_changed: true
-supabase_changed: true
-api_changed: true
-changed_files:
-  - "dashboard.html"
-completed_features:
-  plan_master: true
-  trial_pipeline: true
-  trial_decisions: true
-  atomic_admission: true
-  membership_grant_guard: true
-  membership_history: true
-  automatic_line_send: false
+current_worker_version: "GYM-NEXT-5-WORKER-20260725"
+expected_worker_version: "GYM-NEXT-6-WORKER-20260725"
+worker_sha256: "9ffc0de79e25bc1da24c04b9ac2719bb44d74639bb5ff70c68a54f4a28dfc208"
+staff_token_required: true
+recommended_demo_staff_code: "5678"
+supabase_changed: false
+runtime_files_changed: false
+worker_deployed: false
+planned_runtime_files:
+  - "config.js"
+  - "owner-ipad.html"
+  - "staff.html"
+planned_roles:
+  owner_pc: "ADMIN_TOKEN / 全体管理"
+  owner_ipad: "STAFF_TOKEN / 受付"
+  staff: "STAFF_TOKEN / セッション"
+  member_line: "LINE / 会員操作"
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  worker_health: "OK"
-  supabase_next5: "OK"
-  duplicate_membership_grants: 0
-  duplicate_active_memberships: 0
-  config_worker_url: "OK"
-  html_structure: "OK"
-  javascript_syntax: "OK"
-  duplicate_html_ids: "OK"
-  existing_api_references: "OK"
-  trial_admission_ui: "OK"
-  public_dashboard: "OK"
+  current_worker_health: "OK"
+  next4_preserved: "OK"
+  next5_preserved: "OK"
+  source_worker_blob: "OK"
+  worker_diff_patch: "OK"
+  worker_javascript_syntax: "OK"
+  staff_api_contract: "OK"
+  existing_api_contract: "OK"
+  runtime_unchanged: "OK"
