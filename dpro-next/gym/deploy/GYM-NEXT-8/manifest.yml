@@ -1,8 +1,8 @@
-package_version: "GYM-NEXT-8-PREP-20260725"
+package_version: "GYM-NEXT-8-PREP-R2-20260725"
 system_name: "DPRO パーソナルジム LINE"
 phase: "PREPARED"
 worker_name: "dpro-gym-line-api"
-worker_expected_version: "GYM-NEXT-8-WORKER-20260725"
+worker_expected_version: "GYM-NEXT-8-WORKER-R2-20260725"
 supabase_changed: false
 runtime_changed: false
 follow_up_sources:
@@ -30,3 +30,7 @@ planned_ui:
     - "案内文コピー"
     - "対応済み・再連絡記録"
 next_action: "Deploy Worker, then run GYM-NEXT-8-VERIFY"
+
+r2_guards:
+  follow_up_snooze_guard: true
+  follow_up_recent_done_guard: true

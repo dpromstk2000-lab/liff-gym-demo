@@ -2,7 +2,7 @@
   STEP GYM-NEXT-8
   DPRO パーソナルジム LINE API
   Worker name: dpro-gym-line-api
-  Worker version: GYM-NEXT-8-WORKER-20260725
+  Worker version: GYM-NEXT-8-WORKER-R2-20260725
 
   Cloudflare Secrets:
     SUPABASE_URL
@@ -17,7 +17,7 @@
     ALLOW_DEMO_ADMIN_FALLBACK   false（通常は設定不要）
 ============================================================ */
 
-const VERSION = 'GYM-NEXT-8-WORKER-20260725';
+const VERSION = 'GYM-NEXT-8-WORKER-R2-20260725';
 const SERVICE = 'DPRO Personal Gym LINE API';
 const DEFAULT_FACILITY_CODE = 'dpro_gym_demo';
 const DEMO_CONFIRM_TEXT = 'DEMOパーソナルジムだけ実行';
@@ -333,7 +333,9 @@ async function handleHealth(env) {
     follow_up_board: false,
     interaction_log: false,
     derived_without_schema_change: false,
-    manual_line_copy_only: true
+    manual_line_copy_only: true,
+    snooze_guard: false,
+    recent_done_guard: false
   };
 
   try {
@@ -401,7 +403,9 @@ async function handleHealth(env) {
       follow_up_board: true,
       interaction_log: true,
       derived_without_schema_change: true,
-      manual_line_copy_only: true
+      manual_line_copy_only: true,
+      snooze_guard: true,
+      recent_done_guard: true
     };
   } catch (error) {
     next8 = {
@@ -410,7 +414,9 @@ async function handleHealth(env) {
       follow_up_board: false,
       interaction_log: false,
       derived_without_schema_change: false,
-      manual_line_copy_only: true
+      manual_line_copy_only: true,
+      snooze_guard: false,
+      recent_done_guard: false
     };
   }
 
@@ -457,6 +463,8 @@ async function handleHealth(env) {
       follow_up_prioritization: true,
       follow_up_action_log: Boolean(next8?.interaction_log),
       follow_up_message_copy_only: true,
+      follow_up_snooze_guard: Boolean(next8?.snooze_guard),
+      follow_up_recent_done_guard: Boolean(next8?.recent_done_guard),
       automatic_line_broadcast: false,
       system_check: true,
       demo_prepare: true
@@ -1108,6 +1116,33 @@ async function handleAdminFollowUps(url, env) {
         : 'follow';
 
     const latest = latestInteraction.get(customer.id) || null;
+
+    // STEP GYM-NEXT-8 R2:
+    // 延期中の会員は指定日まで候補へ戻さない。
+    const scheduledForFuture =
+      customer.follow_status === 'scheduled' &&
+      nextFollow &&
+      nextFollow > today;
+    if (scheduledForFuture) return;
+
+    // 対応済みの直後に、残り回数など同じ条件だけで
+    // 即時再表示されることを防ぐ。明示的な期限到来は優先する。
+    const latestCompletedOn =
+      latest?.status === 'completed' && latest.created_at
+        ? formatJstDate(new Date(latest.created_at))
+        : null;
+    const daysSinceLatestCompleted = isYmd(latestCompletedOn)
+      ? followUpDayDiff(latestCompletedOn, today)
+      : null;
+    if (
+      !explicitDue &&
+      daysSinceLatestCompleted !== null &&
+      daysSinceLatestCompleted >= 0 &&
+      daysSinceLatestCompleted < 7
+    ) {
+      return;
+    }
+
     const candidate = {
       customer: adminCustomer(customer),
       reasons: uniqueReasons,
