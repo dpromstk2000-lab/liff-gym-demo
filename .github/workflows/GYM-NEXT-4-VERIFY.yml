@@ -1,0 +1,511 @@
+name: STEP GYM-NEXT-4-VERIFY - Session Records UI Completion
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/GYM-NEXT-4-VERIFY.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gym-next-4-verify-main
+  cancel-in-progress: false
+
+env:
+  STEP_NAME: GYM-NEXT-4-VERIFY
+  CURRENT_STEP_REQUIRED: GYM-NEXT-4-PREPARED
+  NEXT_STEP: GYM-NEXT-5
+  WORKFLOW_FILE: .github/workflows/GYM-NEXT-4-VERIFY.yml
+  LEDGER_FILE: dpro-next/gym/next-ledger.yml
+  STEP_DIR: dpro-next/gym/steps
+  BACKUP_TAG: backup-gym-before-next-4-verify-20260725
+  PUBLIC_BASE: https://dpromstk2000-lab.github.io/liff-gym-demo
+  WORKER_BASE: https://dpro-gym-line-api.dpromstk2000.workers.dev
+  EXPECTED_WORKER_VERSION: GYM-NEXT-4-WORKER-20260725
+  PATCH_SCRIPT_B64: "CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKZGVmIHJlcGxhY2Vfb25jZSh0ZXh0LCBvbGQsIG5ldywgbGFiZWwpOgogICAgY291bnQgPSB0ZXh0LmNvdW50KG9sZCkKICAgIGlmIGNvdW50ICE9IDE6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdCgKICAgICAgICAgICAgZiJ7bGFiZWx9OiBleHBlY3RlZCBleGFjdGx5IG9uZSBtYXRjaCwgZm91bmQge2NvdW50fSIKICAgICAgICApCiAgICByZXR1cm4gdGV4dC5yZXBsYWNlKG9sZCwgbmV3LCAxKQoKZGVmIGluc2VydF9iZWZvcmVfb25jZSh0ZXh0LCBtYXJrZXIsIGFkZGl0aW9uLCBsYWJlbCk6CiAgICByZXR1cm4gcmVwbGFjZV9vbmNlKHRleHQsIG1hcmtlciwgYWRkaXRpb24gKyBtYXJrZXIsIGxhYmVsKQoKIyA9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0KIyBkYXNoYm9hcmQuaHRtbAojID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQpkYXNoYm9hcmRfcGF0aCA9IFBhdGgoImRhc2hib2FyZC5odG1sIikKZGFzaGJvYXJkID0gZGFzaGJvYXJkX3BhdGgucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOCIpCgpkYXNoYm9hcmQgPSByZXBsYWNlX29uY2UoCiAgICBkYXNoYm9hcmQsCiAgICAnPGJvZHkgZGF0YS1kcHJvLW5leHQtc3RlcD0iR1lNLU5FWFQtMiI+JywKICAgICc8Ym9keSBkYXRhLWRwcm8tbmV4dC1zdGVwPSJHWU0tTkVYVC00Ij4nLAogICAgImRhc2hib2FyZCBORVhUIG1hcmtlciIsCikKCmRhc2hib2FyZF9jc3MgPSByJycnCiAgICAuaGlzdG9yeS1jb2x1bW5zIHsgZGlzcGxheTpncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6MWZyIDFmcjsgZ2FwOjEycHg7IG1hcmdpbi10b3A6MTRweDsgfQogICAgLmhpc3RvcnktcGFuZWwgeyBtaW4td2lkdGg6MDsgYm9yZGVyOjFweCBzb2xpZCB2YXIoLS1saW5lKTsgYm9yZGVyLXJhZGl1czoxNXB4OyBwYWRkaW5nOjEzcHg7IGJhY2tncm91bmQ6I2ZhZmJmZDsgfQogICAgLmhpc3RvcnktcGFuZWwgaDMgeyBtYXJnaW46MDsgfQogICAgLmhpc3RvcnktbGlzdCB7IGRpc3BsYXk6Z3JpZDsgZ2FwOjhweDsgbWFyZ2luLXRvcDoxMHB4OyBtYXgtaGVpZ2h0OjI5MHB4OyBvdmVyZmxvdzphdXRvOyB9CiAgICAuaGlzdG9yeS1lbnRyeSB7IGJvcmRlcjoxcHggc29saWQgdmFyKC0tbGluZSk7IGJvcmRlci1yYWRpdXM6MTJweDsgcGFkZGluZzoxMHB4OyBiYWNrZ3JvdW5kOiNmZmY7IH0KICAgIC5oaXN0b3J5LWVudHJ5IHN0cm9uZyB7IGRpc3BsYXk6YmxvY2s7IH0KICAgIC5oaXN0b3J5LWVudHJ5IHNtYWxsIHsgZGlzcGxheTpibG9jazsgbWFyZ2luLXRvcDozcHg7IGNvbG9yOnZhcigtLW11dGVkKTsgfQogICAgLnNlc3Npb24tc3VtbWFyeSB7IGJvcmRlci1yYWRpdXM6MTNweDsgcGFkZGluZzoxMHB4IDEycHg7IG1hcmdpbi1ib3R0b206MTJweDsgY29sb3I6IzE3NGRhYzsgYmFja2dyb3VuZDojZWFmMmZmOyBmb250LXNpemU6LjgycmVtOyBmb250LXdlaWdodDo4NTA7IH0KICAgIC5yZXF1aXJlZC1sYWJlbDo6YWZ0ZXIgeyBjb250ZW50OiIg5b+F6aCIIjsgY29sb3I6dmFyKC0tcmVkKTsgZm9udC1zaXplOi42OHJlbTsgfQonJycKZGFzaGJvYXJkID0gaW5zZXJ0X2JlZm9yZV9vbmNlKAogICAgZGFzaGJvYXJkLAogICAgJyAgICAudG9hc3QgeyBwb3NpdGlvbjpmaXhlZDsnLAogICAgZGFzaGJvYXJkX2NzcywKICAgICJkYXNoYm9hcmQgQ1NTIiwKKQoKY3VzdG9tZXJfaGlzdG9yeV9odG1sID0gcicnJwo8ZGl2IGNsYXNzPSJoaXN0b3J5LWNvbHVtbnMiIGlkPSJjdXN0b21lckhpc3RvcnlQYW5lbHMiPgogIDxzZWN0aW9uIGNsYXNzPSJoaXN0b3J5LXBhbmVsIj4KICAgIDxoMz7jgrvjg4Pjgrfjg6fjg7PlsaXmrbQ8L2gzPgogICAgPHAgY2xhc3M9InN1YiI+5a6f5pa95YaF5a6544Go5qyh5Zue44Gu6YeN54K544KS5paw44GX44GE6aCG44Gr6KGo56S644GX44G+44GZ44CCPC9wPgogICAgPGRpdiBjbGFzcz0iaGlzdG9yeS1saXN0IiBpZD0iY3VzdG9tZXJTZXNzaW9uSGlzdG9yeSI+PC9kaXY+CiAgPC9zZWN0aW9uPgogIDxzZWN0aW9uIGNsYXNzPSJoaXN0b3J5LXBhbmVsIj4KICAgIDxoMz7lm57mlbDliLjlsaXmrbQ8L2gzPgogICAgPHAgY2xhc3M9InN1YiI+5aKX5rib55CG55Sx44Go5q6L5pWw44KS56K66KqN44Gn44GN44G+44GZ44CCPC9wPgogICAgPGRpdiBjbGFzcz0iaGlzdG9yeS1saXN0IiBpZD0iY3VzdG9tZXJUaWNrZXRMZWRnZXIiPjwvZGl2PgogIDwvc2VjdGlvbj4KPC9kaXY+JycnCmRhc2hib2FyZCA9IHJlcGxhY2Vfb25jZSgKICAgIGRhc2hib2FyZCwKICAgICcnJzwvZGl2PjxkaXYgY2xhc3M9Im1vZGFsLWFjdGlvbnMiPjxidXR0b24gY2xhc3M9ImJ0biBidG4tc29mdCIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJjbG9zZU1vZGFsKCdjdXN0b21lck1vZGFsJykiPicnJywKICAgIGYnJyc8L2Rpdj57Y3VzdG9tZXJfaGlzdG9yeV9odG1sfTxkaXYgY2xhc3M9Im1vZGFsLWFjdGlvbnMiPjxidXR0b24gY2xhc3M9ImJ0biBidG4tc29mdCIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJjbG9zZU1vZGFsKCdjdXN0b21lck1vZGFsJykiPicnJywKICAgICJkYXNoYm9hcmQgY3VzdG9tZXIgaGlzdG9yeSIsCikKCmRhc2hib2FyZF9zZXNzaW9uX21vZGFsID0gcicnJwogIDxkaXYgY2xhc3M9Im1vZGFsIGhpZGRlbiIgaWQ9InNlc3Npb25Nb2RhbCI+CiAgICA8ZGl2IGNsYXNzPSJtb2RhbC1jYXJkIHdpZGUiPgogICAgICA8ZGl2IGNsYXNzPSJtb2RhbC1oZWFkIj4KICAgICAgICA8ZGl2PgogICAgICAgICAgPHAgY2xhc3M9ImJyYW5kIj5TRVNTSU9OIFJFQ09SRDwvcD4KICAgICAgICAgIDxoMiBpZD0ic2Vzc2lvbk1vZGFsVGl0bGUiPuOCu+ODg+OCt+ODp+ODs+iomOmMsjwvaDI+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGJ1dHRvbiBjbGFzcz0iY2xvc2UiIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0iY2xvc2VNb2RhbCgnc2Vzc2lvbk1vZGFsJykiPsOXPC9idXR0b24+CiAgICAgIDwvZGl2PgogICAgICA8aW5wdXQgaWQ9InNlc3Npb25SZXNlcnZhdGlvbklkIiB0eXBlPSJoaWRkZW4iPgogICAgICA8ZGl2IGNsYXNzPSJzZXNzaW9uLXN1bW1hcnkiIGlkPSJzZXNzaW9uUmVzZXJ2YXRpb25NZXRhIj7kuojntITjgpLpgbjmip7jgZfjgabjgY/jgaDjgZXjgYTjgII8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iZm9ybS1ncmlkIj4KICAgICAgICA8ZGl2IGNsYXNzPSJzcGFuLTIiPgogICAgICAgICAgPGxhYmVsIGZvcj0ic2Vzc2lvbkNvbmRpdGlvbiI+5b2T5pel44Gu5L2T6Kq/44O756K66KqN5LqL6aCFPC9sYWJlbD4KICAgICAgICAgIDx0ZXh0YXJlYSBpZD0ic2Vzc2lvbkNvbmRpdGlvbiIgcGxhY2Vob2xkZXI9IueXm+OBv+OAgeeWsuWKtOOAgeedoeecoOOAgeS9k+iqv+OBquOBqSI+PC90ZXh0YXJlYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2IGNsYXNzPSJzcGFuLTIiPgogICAgICAgICAgPGxhYmVsIGNsYXNzPSJyZXF1aXJlZC1sYWJlbCIgZm9yPSJzZXNzaW9uVHJhaW5pbmdTdW1tYXJ5Ij7lrp/mlr3jgZfjgZ/jg4jjg6zjg7zjg4vjg7PjgrDlhoXlrrk8L2xhYmVsPgogICAgICAgICAgPHRleHRhcmVhIGlkPSJzZXNzaW9uVHJhaW5pbmdTdW1tYXJ5IiBwbGFjZWhvbGRlcj0i56iu55uu44CB5Zue5pWw44CB6YeN6YeP44CB44OV44Kp44O844Og56K66KqN44Gq44GpIj48L3RleHRhcmVhPgogICAgICAgIDwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9InNwYW4tMiI+CiAgICAgICAgICA8bGFiZWwgZm9yPSJzZXNzaW9uVHJhaW5lck5vdGUiPuODiOODrOODvOODiuODvOWGhemDqOODoeODojwvbGFiZWw+CiAgICAgICAgICA8dGV4dGFyZWEgaWQ9InNlc3Npb25UcmFpbmVyTm90ZSIgcGxhY2Vob2xkZXI9IuS8muWToeOBq+OBr+ihqOekuuOBl+OBquOBhOWGhemDqOiomOmMsiI+PC90ZXh0YXJlYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2PgogICAgICAgICAgPGxhYmVsIGZvcj0ic2Vzc2lvbk5leHRGb2N1cyI+5qyh5Zue44Gu6YeN54K5PC9sYWJlbD4KICAgICAgICAgIDx0ZXh0YXJlYSBpZD0ic2Vzc2lvbk5leHRGb2N1cyIgcGxhY2Vob2xkZXI9IuasoeWbnueiuuiqjeOBmeOCi+WGheWuuSI+PC90ZXh0YXJlYT4KICAgICAgICA8L2Rpdj4KICAgICAgICA8ZGl2PgogICAgICAgICAgPGxhYmVsIGZvcj0ic2Vzc2lvbk1lbWJlckNvbW1lbnQiPuS8muWToeOBuOWFseacieOBp+OBjeOCi+OCs+ODoeODs+ODiDwvbGFiZWw+CiAgICAgICAgICA8dGV4dGFyZWEgaWQ9InNlc3Npb25NZW1iZXJDb21tZW50IiBwbGFjZWhvbGRlcj0i5Lya5ZOh5ZCR44GR44Gu55+t44GE5oyv44KK6L+U44KKIj48L3RleHRhcmVhPgogICAgICAgIDwvZGl2PgogICAgICA8L2Rpdj4KICAgICAgPHAgY2xhc3M9Im5vdGljZSIgaWQ9InNlc3Npb25SZWNvcmROb3RpY2UiPuODiOODrOODvOODi+ODs+OCsOS4reOBr+S4i+abuOOBjeS/neWtmOOBp+OBjeOBvuOBmeOAguWujOS6huaZguOBr+Wun+aWveWGheWuueOBjOW/hemgiOOBp+OBmeOAgjwvcD4KICAgICAgPGRpdiBjbGFzcz0ibW9kYWwtYWN0aW9ucyI+CiAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zb2Z0IiB0eXBlPSJidXR0b24iIG9uY2xpY2s9ImNsb3NlTW9kYWwoJ3Nlc3Npb25Nb2RhbCcpIj7plonjgZjjgos8L2J1dHRvbj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLWJsdWUiIGlkPSJzZXNzaW9uU2F2ZUJ1dHRvbiIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJzYXZlU2Vzc2lvblJlY29yZCgpIj7oqJjpjLLjgpLkv53lrZg8L2J1dHRvbj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLWdyZWVuIiBpZD0ic2Vzc2lvbkNvbXBsZXRlQnV0dG9uIiB0eXBlPSJidXR0b24iIG9uY2xpY2s9ImNvbXBsZXRlU2Vzc2lvbigpIj7oqJjpjLLjgZfjgablrozkuobjg7vlm57mlbDmuJvnrpc8L2J1dHRvbj4KICAgICAgPC9kaXY+CiAgICA8L2Rpdj4KICA8L2Rpdj4KJycnCmRhc2hib2FyZCA9IGluc2VydF9iZWZvcmVfb25jZSgKICAgIGRhc2hib2FyZCwKICAgICcgIDxkaXYgY2xhc3M9Im1vZGFsIGhpZGRlbiIgaWQ9Im1lc3NhZ2VNb2RhbCI+JywKICAgIGRhc2hib2FyZF9zZXNzaW9uX21vZGFsLAogICAgImRhc2hib2FyZCBzZXNzaW9uIG1vZGFsIiwKKQoKZGFzaGJvYXJkID0gcmVwbGFjZV9vbmNlKAogICAgZGFzaGJvYXJkLAogICAgJycnY29uc3QgcGFyYW1zPW5ldyBVUkxTZWFyY2hQYXJhbXMobG9jYXRpb24uc2VhcmNoKTsgY29uc3Qgc3RhdGU9e2FkbWluS2V5OicnLHZpZXc6J3RvZGF5JyxkYXNoYm9hcmQ6bnVsbCxyZXNlcnZhdGlvbnM6W10sY3VzdG9tZXJzOltdLGlucXVpcmllczpbXSxmYWNpbGl0eURhdGE6bnVsbCxzZXR0aW5nc0RhdGE6bnVsbCxzZWxlY3RlZEN1c3RvbWVyOm51bGwsYm9va2luZ0N1c3RvbWVyOm51bGx9OycnJywKICAgICcnJ2NvbnN0IHBhcmFtcz1uZXcgVVJMU2VhcmNoUGFyYW1zKGxvY2F0aW9uLnNlYXJjaCk7IGNvbnN0IHN0YXRlPXthZG1pbktleTonJyx2aWV3Oid0b2RheScsZGFzaGJvYXJkOm51bGwscmVzZXJ2YXRpb25zOltdLGN1c3RvbWVyczpbXSxpbnF1aXJpZXM6W10sZmFjaWxpdHlEYXRhOm51bGwsc2V0dGluZ3NEYXRhOm51bGwsc2VsZWN0ZWRDdXN0b21lcjpudWxsLHNlbGVjdGVkUmVzZXJ2YXRpb246bnVsbCxib29raW5nQ3VzdG9tZXI6bnVsbH07JycnLAogICAgImRhc2hib2FyZCBzdGF0ZSIsCikKCmRhc2hib2FyZCA9IHJlcGxhY2Vfb25jZSgKICAgIGRhc2hib2FyZCwKICAgICcnJ2lmKHIuc3RhdHVzPT09J2luX3Nlc3Npb24nKXJldHVybiBgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1ncmVlbiIgb25jbGljaz0iY2hhbmdlUmVzZXJ2YXRpb25TdGF0dXMoJyR7YXR0cihyLmlkKX0nLCdjb21wbGV0ZWQnKSI+5a6M5LqG44O75Zue5pWw5rib566XPC9idXR0b24+YDtpZihbJ2NhbmNlbF9yZXF1ZXN0ZWQnLCdjaGFuZ2VfcmVxdWVzdGVkJ10uaW5jbHVkZXMoci5zdGF0dXMpKScnJywKICAgICcnJ2lmKHIuc3RhdHVzPT09J2luX3Nlc3Npb24nKXJldHVybiBgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1ncmVlbiIgb25jbGljaz0ib3BlblNlc3Npb25SZWNvcmQoJyR7YXR0cihyLmlkKX0nKSI+6KiY6Yyy44GX44Gm5a6M5LqGPC9idXR0b24+YDtpZihyLnN0YXR1cz09PSdjb21wbGV0ZWQnKXJldHVybiBgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zb2Z0IiBvbmNsaWNrPSJvcGVuU2Vzc2lvblJlY29yZCgnJHthdHRyKHIuaWQpfScpIj7jgrvjg4Pjgrfjg6fjg7PoqJjpjLI8L2J1dHRvbj5gO2lmKFsnY2FuY2VsX3JlcXVlc3RlZCcsJ2NoYW5nZV9yZXF1ZXN0ZWQnXS5pbmNsdWRlcyhyLnN0YXR1cykpJycnLAogICAgImRhc2hib2FyZCBzdGF0dXMgYnV0dG9uIiwKKQoKZGFzaGJvYXJkID0gcmVwbGFjZV9vbmNlKAogICAgZGFzaGJvYXJkLAogICAgJycnYXN5bmMgZnVuY3Rpb24gY2hhbmdlUmVzZXJ2YXRpb25TdGF0dXMoaWQsc3RhdHVzKXtpZihzdGF0dXM9PT0nY29tcGxldGVkJyYmIWNvbmZpcm0oJ+OCu+ODg+OCt+ODp+ODs+OCkuWujOS6huOBl+OAgeWbnuaVsOWIuOWvvuixoeODoeODi+ODpeODvOOBrzHlm57muJvnrpfjgZfjgb7jgZnjgILjgojjgo3jgZfjgYTjgafjgZnjgYvvvJ8nKSlyZXR1cm47dHJ5eycnJywKICAgICcnJ2FzeW5jIGZ1bmN0aW9uIGNoYW5nZVJlc2VydmF0aW9uU3RhdHVzKGlkLHN0YXR1cyl7aWYoc3RhdHVzPT09J2NvbXBsZXRlZCcpcmV0dXJuIG9wZW5TZXNzaW9uUmVjb3JkKGlkKTt0cnl7JycnLAogICAgImRhc2hib2FyZCBjb21wbGV0ZWQgZ3VhcmQiLAopCgpkYXNoYm9hcmQgPSByZXBsYWNlX29uY2UoCiAgICBkYXNoYm9hcmQsCiAgICAnJydkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY3VzdG9tZXJNb2RhbCcpLmNsYXNzTGlzdC5yZW1vdmUoJ2hpZGRlbicpO30nJycsCiAgICAnJydkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY3VzdG9tZXJNb2RhbCcpLmNsYXNzTGlzdC5yZW1vdmUoJ2hpZGRlbicpO2lmKGM/LmlkKWxvYWRDdXN0b21lckhpc3RvcnkoYy5pZCk7ZWxzZXtkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY3VzdG9tZXJTZXNzaW9uSGlzdG9yeScpLmlubmVySFRNTD1lbXB0eSgn5Lya5ZOh5L+d5a2Y5b6M44Gr5bGl5q2044KS6KGo56S644GX44G+44GZ44CCJyk7ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2N1c3RvbWVyVGlja2V0TGVkZ2VyJykuaW5uZXJIVE1MPWVtcHR5KCfkvJrlk6Hkv53lrZjlvozjgavlsaXmrbTjgpLooajnpLrjgZfjgb7jgZnjgIInKTt9fScnJywKICAgICJkYXNoYm9hcmQgY3VzdG9tZXIgaGlzdG9yeSBsb2FkIiwKKQoKZGFzaGJvYXJkX2Z1bmN0aW9ucyA9IHInJycKICAgIGZ1bmN0aW9uIGZpbmRSZXNlcnZhdGlvbihpZCl7cmV0dXJuIHN0YXRlLmRhc2hib2FyZD8ucmVzZXJ2YXRpb25zPy5maW5kKHg9PnguaWQ9PT1pZCl8fHN0YXRlLnJlc2VydmF0aW9ucy5maW5kKHg9PnguaWQ9PT1pZCl8fG51bGw7fQogICAgYXN5bmMgZnVuY3Rpb24gb3BlblNlc3Npb25SZWNvcmQoaWQpe2xldCByZXNlcnZhdGlvbj1maW5kUmVzZXJ2YXRpb24oaWQpO2lmKCFyZXNlcnZhdGlvbil7dHJ5e2NvbnN0IGZyb209dmFsKCdyZXNlcnZhdGlvbkZyb20nKXx8dG9kYXlZbWQoKSx0bz12YWwoJ3Jlc2VydmF0aW9uVG8nKXx8YWRkRGF5c1ltZChmcm9tLDMwKSxkYXRhPWF3YWl0IGFwaShgL2FwaS9hZG1pbi9yZXNlcnZhdGlvbnM/ZmFjaWxpdHlfY29kZT0ke0ZBQ0lMSVRZfSZkYXRlX2Zyb209JHtmcm9tfSZkYXRlX3RvPSR7dG99YCk7c3RhdGUucmVzZXJ2YXRpb25zPWRhdGEucmVzZXJ2YXRpb25zfHxbXTtyZXNlcnZhdGlvbj1maW5kUmVzZXJ2YXRpb24oaWQpO31jYXRjaChlKXtyZXR1cm4gdG9hc3QoZS5tZXNzYWdlLHRydWUpO319aWYoIXJlc2VydmF0aW9uKXJldHVybiB0b2FzdCgn5LqI57SE5oOF5aCx44GM6KaL44Gk44GL44KK44G+44Gb44KT44CCJyx0cnVlKTtzdGF0ZS5zZWxlY3RlZFJlc2VydmF0aW9uPXJlc2VydmF0aW9uO3ZhbFNldCgnc2Vzc2lvblJlc2VydmF0aW9uSWQnLHJlc2VydmF0aW9uLmlkKTtbJ3Nlc3Npb25Db25kaXRpb24nLCdzZXNzaW9uVHJhaW5pbmdTdW1tYXJ5Jywnc2Vzc2lvblRyYWluZXJOb3RlJywnc2Vzc2lvbk5leHRGb2N1cycsJ3Nlc3Npb25NZW1iZXJDb21tZW50J10uZm9yRWFjaChmaWVsZD0+dmFsU2V0KGZpZWxkLCcnKSk7Y29uc3QgY3VzdG9tZXI9cmVzZXJ2YXRpb24uY3VzdG9tZXJ8fHt9O3NldFRleHQoJ3Nlc3Npb25Nb2RhbFRpdGxlJyxgJHtjdXN0b21lci5mdWxsX25hbWV8fCfkvJrlk6EnfSDmp5jvvZzjgrvjg4Pjgrfjg6fjg7PoqJjpjLJgKTtzZXRUZXh0KCdzZXNzaW9uUmVzZXJ2YXRpb25NZXRhJyxgJHtmb3JtYXREYXRlVGltZShyZXNlcnZhdGlvbi5zdGFydF9hdCl9IC8gJHtzZXJ2aWNlTmFtZShyZXNlcnZhdGlvbi5zZXJ2aWNlX2NvZGUpfSAvICR7dHJhaW5lck5hbWUocmVzZXJ2YXRpb24udHJhaW5lcl9jb2RlKX1gKTtkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc2Vzc2lvbkNvbXBsZXRlQnV0dG9uJykuY2xhc3NMaXN0LnRvZ2dsZSgnaGlkZGVuJyxyZXNlcnZhdGlvbi5zdGF0dXMhPT0naW5fc2Vzc2lvbicpO3NldFRleHQoJ3Nlc3Npb25TYXZlQnV0dG9uJyxyZXNlcnZhdGlvbi5zdGF0dXM9PT0nY29tcGxldGVkJz8n6KiY6Yyy44KS5pu05pawJzon5LiL5pu444GN5L+d5a2YJyk7c2V0VGV4dCgnc2Vzc2lvblJlY29yZE5vdGljZScscmVzZXJ2YXRpb24uc3RhdHVzPT09J2NvbXBsZXRlZCc/J+WujOS6hua4iOOBv+OCu+ODg+OCt+ODp+ODs+OBruiomOmMsuOCkueiuuiqjeODu+abtOaWsOOBp+OBjeOBvuOBmeOAgic6J+ODiOODrOODvOODi+ODs+OCsOS4reOBr+S4i+abuOOBjeS/neWtmOOBp+OBjeOBvuOBmeOAguWujOS6huaZguOBr+Wun+aWveWGheWuueOBjOW/hemgiOOBp+OBmeOAgicpO2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzZXNzaW9uTW9kYWwnKS5jbGFzc0xpc3QucmVtb3ZlKCdoaWRkZW4nKTt0cnl7Y29uc3QgZGF0YT1hd2FpdCBhcGkoYC9hcGkvYWRtaW4vc2Vzc2lvbi1yZWNvcmRzP2ZhY2lsaXR5X2NvZGU9JHtGQUNJTElUWX0mcmVzZXJ2YXRpb25faWQ9JHtlbmNvZGVVUklDb21wb25lbnQocmVzZXJ2YXRpb24uaWQpfSZsaW1pdD0xYCkscmVjb3JkPWRhdGEuc2Vzc2lvbl9yZWNvcmRzPy5bMF07aWYocmVjb3JkKXt2YWxTZXQoJ3Nlc3Npb25Db25kaXRpb24nLHJlY29yZC5jb25kaXRpb25fbm90ZXx8JycpO3ZhbFNldCgnc2Vzc2lvblRyYWluaW5nU3VtbWFyeScscmVjb3JkLnRyYWluaW5nX3N1bW1hcnl8fCcnKTt2YWxTZXQoJ3Nlc3Npb25UcmFpbmVyTm90ZScscmVjb3JkLnRyYWluZXJfbm90ZXx8JycpO3ZhbFNldCgnc2Vzc2lvbk5leHRGb2N1cycscmVjb3JkLm5leHRfZm9jdXN8fCcnKTt2YWxTZXQoJ3Nlc3Npb25NZW1iZXJDb21tZW50JyxyZWNvcmQubWVtYmVyX3Zpc2libGVfY29tbWVudHx8JycpO319Y2F0Y2goZSl7dG9hc3QoZS5tZXNzYWdlLHRydWUpO319CiAgICBmdW5jdGlvbiBzZXNzaW9uUmVjb3JkQm9keSgpe2NvbnN0IHJlc2VydmF0aW9uPXN0YXRlLnNlbGVjdGVkUmVzZXJ2YXRpb247cmV0dXJue2ZhY2lsaXR5X2NvZGU6RkFDSUxJVFkscmVzZXJ2YXRpb25faWQ6cmVzZXJ2YXRpb24/LmlkLHJlY29yZF9zdGF0dXM6cmVzZXJ2YXRpb24/LnN0YXR1cz09PSdjb21wbGV0ZWQnPydjb21wbGV0ZWQnOidkcmFmdCcsY29uZGl0aW9uX25vdGU6dmFsKCdzZXNzaW9uQ29uZGl0aW9uJyksdHJhaW5pbmdfc3VtbWFyeTp2YWwoJ3Nlc3Npb25UcmFpbmluZ1N1bW1hcnknKSx0cmFpbmVyX25vdGU6dmFsKCdzZXNzaW9uVHJhaW5lck5vdGUnKSxuZXh0X2ZvY3VzOnZhbCgnc2Vzc2lvbk5leHRGb2N1cycpLG1lbWJlcl92aXNpYmxlX2NvbW1lbnQ6dmFsKCdzZXNzaW9uTWVtYmVyQ29tbWVudCcpLGNyZWF0ZWRfYnk6J293bmVyX3BjJ307fQogICAgYXN5bmMgZnVuY3Rpb24gc2F2ZVNlc3Npb25SZWNvcmQoKXtpZighc3RhdGUuc2VsZWN0ZWRSZXNlcnZhdGlvbilyZXR1cm4gdG9hc3QoJ+S6iOe0hOOCkumBuOaKnuOBl+OBpuOBj+OBoOOBleOBhOOAgicsdHJ1ZSk7dHJ5e2F3YWl0IGFwaSgnL2FwaS9hZG1pbi9zZXNzaW9uLXJlY29yZHMvdXBzZXJ0Jyx7bWV0aG9kOidQT1NUJyxib2R5OnNlc3Npb25SZWNvcmRCb2R5KCl9KTt0b2FzdChzdGF0ZS5zZWxlY3RlZFJlc2VydmF0aW9uLnN0YXR1cz09PSdjb21wbGV0ZWQnPyfjgrvjg4Pjgrfjg6fjg7PoqJjpjLLjgpLmm7TmlrDjgZfjgb7jgZfjgZ/jgIInOifkuIvmm7jjgY3jgpLkv53lrZjjgZfjgb7jgZfjgZ/jgIInKTtpZihzdGF0ZS5zZWxlY3RlZFJlc2VydmF0aW9uLmN1c3RvbWVyX2lkKWxvYWRDdXN0b21lckhpc3Rvcnkoc3RhdGUuc2VsZWN0ZWRSZXNlcnZhdGlvbi5jdXN0b21lcl9pZCk7fWNhdGNoKGUpe3RvYXN0KGUubWVzc2FnZSx0cnVlKTt9fQogICAgYXN5bmMgZnVuY3Rpb24gY29tcGxldGVTZXNzaW9uKCl7Y29uc3QgcmVzZXJ2YXRpb249c3RhdGUuc2VsZWN0ZWRSZXNlcnZhdGlvbjtpZighcmVzZXJ2YXRpb24pcmV0dXJuIHRvYXN0KCfkuojntITjgpLpgbjmip7jgZfjgabjgY/jgaDjgZXjgYTjgIInLHRydWUpO2lmKCF2YWwoJ3Nlc3Npb25UcmFpbmluZ1N1bW1hcnknKSlyZXR1cm4gdG9hc3QoJ+Wun+aWveOBl+OBn+ODiOODrOODvOODi+ODs+OCsOWGheWuueOCkuWFpeWKm+OBl+OBpuOBj+OBoOOBleOBhOOAgicsdHJ1ZSk7aWYoIWNvbmZpcm0oJ+iomOmMsuOCkuS/neWtmOOBl+OBpuOCu+ODg+OCt+ODp+ODs+OCkuWujOS6huOBl+OAgeWbnuaVsOWIuOWvvuixoeODoeODi+ODpeODvOOBrzHlm57muJvnrpfjgZfjgb7jgZnjgILjgojjgo3jgZfjgYTjgafjgZnjgYvvvJ8nKSlyZXR1cm47Y29uc3QgYm9keT1zZXNzaW9uUmVjb3JkQm9keSgpO2RlbGV0ZSBib2R5LnJlY29yZF9zdGF0dXM7dHJ5e2NvbnN0IGRhdGE9YXdhaXQgYXBpKCcvYXBpL2FkbWluL3Nlc3Npb25zL2NvbXBsZXRlJyx7bWV0aG9kOidQT1NUJyxib2R5fSk7dG9hc3QoZGF0YS5pZGVtcG90ZW50PyflrozkuobmuIjjgb/kuojntITjga7oqJjpjLLjgpLmm7TmlrDjgZfjgb7jgZfjgZ/jgIInOifjgrvjg4Pjgrfjg6fjg7PjgpLlrozkuobjgZfjgb7jgZfjgZ/jgIInKTtjbG9zZU1vZGFsKCdzZXNzaW9uTW9kYWwnKTthd2FpdCBsb2FkRGFzaGJvYXJkKCk7aWYoc3RhdGUudmlldz09PSdyZXNlcnZhdGlvbnMnKWF3YWl0IGxvYWRSZXNlcnZhdGlvbnMoKTtpZihyZXNlcnZhdGlvbi5jdXN0b21lcl9pZClsb2FkQ3VzdG9tZXJIaXN0b3J5KHJlc2VydmF0aW9uLmN1c3RvbWVyX2lkKTt9Y2F0Y2goZSl7dG9hc3QoZS5tZXNzYWdlLHRydWUpO319CiAgICBhc3luYyBmdW5jdGlvbiBsb2FkQ3VzdG9tZXJIaXN0b3J5KGN1c3RvbWVySWQpe2NvbnN0IHNlc3Npb25zPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjdXN0b21lclNlc3Npb25IaXN0b3J5JyksbGVkZ2VyPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjdXN0b21lclRpY2tldExlZGdlcicpO3Nlc3Npb25zLmlubmVySFRNTD1sb2FkaW5nKCk7bGVkZ2VyLmlubmVySFRNTD1sb2FkaW5nKCk7dHJ5e2NvbnN0IFtzZXNzaW9uRGF0YSx0aWNrZXREYXRhXT1hd2FpdCBQcm9taXNlLmFsbChbYXBpKGAvYXBpL2FkbWluL2N1c3RvbWVycy8ke2VuY29kZVVSSUNvbXBvbmVudChjdXN0b21lcklkKX0vc2Vzc2lvbi1yZWNvcmRzP2ZhY2lsaXR5X2NvZGU9JHtGQUNJTElUWX0mbGltaXQ9MjBgKSxhcGkoYC9hcGkvYWRtaW4vY3VzdG9tZXJzLyR7ZW5jb2RlVVJJQ29tcG9uZW50KGN1c3RvbWVySWQpfS90aWNrZXQtbGVkZ2VyP2ZhY2lsaXR5X2NvZGU9JHtGQUNJTElUWX0mbGltaXQ9MzBgKV0pO3Nlc3Npb25zLmlubmVySFRNTD1zZXNzaW9uRGF0YS5zZXNzaW9uX3JlY29yZHM/Lmxlbmd0aD9zZXNzaW9uRGF0YS5zZXNzaW9uX3JlY29yZHMubWFwKHNlc3Npb25IaXN0b3J5RW50cnkpLmpvaW4oJycpOmVtcHR5KCfjgrvjg4Pjgrfjg6fjg7PoqJjpjLLjga/jgb7jgaDjgYLjgorjgb7jgZvjgpPjgIInKTtsZWRnZXIuaW5uZXJIVE1MPXRpY2tldERhdGEudGlja2V0X2xlZGdlcj8ubGVuZ3RoP3RpY2tldERhdGEudGlja2V0X2xlZGdlci5tYXAodGlja2V0TGVkZ2VyRW50cnkpLmpvaW4oJycpOmVtcHR5KCflm57mlbDliLjlsaXmrbTjga/jgb7jgaDjgYLjgorjgb7jgZvjgpPjgIInKTt9Y2F0Y2goZSl7c2Vzc2lvbnMuaW5uZXJIVE1MPWVtcHR5KGUubWVzc2FnZSk7bGVkZ2VyLmlubmVySFRNTD1lbXB0eShlLm1lc3NhZ2UpO319CiAgICBmdW5jdGlvbiBzZXNzaW9uSGlzdG9yeUVudHJ5KHJlY29yZCl7cmV0dXJuIGA8ZGl2IGNsYXNzPSJoaXN0b3J5LWVudHJ5Ij48c3Ryb25nPiR7ZXNjKGZvcm1hdERhdGVUaW1lKHJlY29yZC5wZXJmb3JtZWRfYXQpKX3jgIAke2VzYyhyZWNvcmQucmVjb3JkX3N0YXR1cz09PSdjb21wbGV0ZWQnPyflrozkuoboqJjpjLInOifkuIvmm7jjgY0nKX08L3N0cm9uZz48c21hbGw+JHtlc2MocmVjb3JkLnRyYWluaW5nX3N1bW1hcnl8fCflrp/mlr3lhoXlrrnmnKrlhaXlipsnKX08L3NtYWxsPiR7cmVjb3JkLm5leHRfZm9jdXM/YDxzbWFsbD7mrKHlm57vvJoke2VzYyhyZWNvcmQubmV4dF9mb2N1cyl9PC9zbWFsbD5gOicnfTxkaXYgY2xhc3M9Iml0ZW0tYWN0aW9ucyI+PGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zb2Z0IiB0eXBlPSJidXR0b24iIG9uY2xpY2s9Im9wZW5TZXNzaW9uUmVjb3JkKCcke2F0dHIocmVjb3JkLnJlc2VydmF0aW9uX2lkKX0nKSI+6ZaL44GPPC9idXR0b24+PC9kaXY+PC9kaXY+YDt9CiAgICBmdW5jdGlvbiB0aWNrZXRMZWRnZXJFbnRyeShyb3cpe2NvbnN0IGFtb3VudD1OdW1iZXIocm93LmNoYW5nZV9hbW91bnR8fDApO3JldHVybiBgPGRpdiBjbGFzcz0iaGlzdG9yeS1lbnRyeSI+PHN0cm9uZz4ke2Ftb3VudD4wPycrJzonJ30ke2Ftb3VudH3lm57jgIDmrovjgooke051bWJlcihyb3cuYmFsYW5jZV9hZnRlcnx8MCl95ZuePC9zdHJvbmc+PHNtYWxsPiR7ZXNjKGZvcm1hdERhdGVUaW1lKHJvdy5jcmVhdGVkX2F0KSl9IC8gJHtlc2Mocm93LnJlYXNvbnx8J+WbnuaVsOiqv+aVtCcpfSAvICR7ZXNjKHJvdy5jcmVhdGVkX2J5fHwnc3lzdGVtJyl9PC9zbWFsbD48L2Rpdj5gO30KJycnCmRhc2hib2FyZCA9IGluc2VydF9iZWZvcmVfb25jZSgKICAgIGRhc2hib2FyZCwKICAgICcgICAgYXN5bmMgZnVuY3Rpb24gbG9hZElucXVpcmllcygpeycsCiAgICBkYXNoYm9hcmRfZnVuY3Rpb25zLAogICAgImRhc2hib2FyZCBzZXNzaW9uIGZ1bmN0aW9ucyIsCikKCmRhc2hib2FyZF9wYXRoLndyaXRlX3RleHQoZGFzaGJvYXJkLCBlbmNvZGluZz0idXRmLTgiLCBuZXdsaW5lPSJcbiIpCgojID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQojIG93bmVyLWlwYWQuaHRtbAojID09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQppcGFkX3BhdGggPSBQYXRoKCJvd25lci1pcGFkLmh0bWwiKQppcGFkID0gaXBhZF9wYXRoLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQoKaXBhZCA9IHJlcGxhY2Vfb25jZSgKICAgIGlwYWQsCiAgICAnPGJvZHk+JywKICAgICc8Ym9keSBkYXRhLWRwcm8tbmV4dC1zdGVwPSJHWU0tTkVYVC00Ij4nLAogICAgImlwYWQgTkVYVCBtYXJrZXIiLAopCgppcGFkID0gcmVwbGFjZV9vbmNlKAogICAgaXBhZCwKICAgICcgICAgYnV0dG9uLGlucHV0LHNlbGVjdCB7IGZvbnQ6aW5oZXJpdDsgfScsCiAgICAnICAgIGJ1dHRvbixpbnB1dCx0ZXh0YXJlYSxzZWxlY3QgeyBmb250OmluaGVyaXQ7IH0nLAogICAgImlwYWQgdGV4dGFyZWEgZm9udCIsCikKaXBhZCA9IHJlcGxhY2Vfb25jZSgKICAgIGlwYWQsCiAgICAnICAgIGlucHV0LHNlbGVjdCB7IHdpZHRoOjEwMCU7IG1pbi1oZWlnaHQ6NThweDsnLAogICAgJyAgICBpbnB1dCx0ZXh0YXJlYSxzZWxlY3QgeyB3aWR0aDoxMDAlOyBtaW4taGVpZ2h0OjU4cHg7JywKICAgICJpcGFkIHRleHRhcmVhIGJhc2UiLAopCmlwYWQgPSByZXBsYWNlX29uY2UoCiAgICBpcGFkLAogICAgJyAgICBpbnB1dDpmb2N1cyxzZWxlY3Q6Zm9jdXMgeyBvdXRsaW5lOjRweCBzb2xpZCByZ2JhKDM3LDk5LDIzNSwuMTMpOyBib3JkZXItY29sb3I6dmFyKC0tYmx1ZSk7IH0nLAogICAgJyAgICBpbnB1dDpmb2N1cyx0ZXh0YXJlYTpmb2N1cyxzZWxlY3Q6Zm9jdXMgeyBvdXRsaW5lOjRweCBzb2xpZCByZ2JhKDM3LDk5LDIzNSwuMTMpOyBib3JkZXItY29sb3I6dmFyKC0tYmx1ZSk7IH1cbiAgICB0ZXh0YXJlYSB7IG1pbi1oZWlnaHQ6MTE2cHg7IHJlc2l6ZTp2ZXJ0aWNhbDsgfScsCiAgICAiaXBhZCB0ZXh0YXJlYSBmb2N1cyIsCikKCmlwYWRfY3NzID0gcicnJwogICAgLm1vZGFsIHsgcG9zaXRpb246Zml4ZWQ7IGluc2V0OjA7IHotaW5kZXg6ODA7IGRpc3BsYXk6Z3JpZDsgcGxhY2UtaXRlbXM6Y2VudGVyOyBwYWRkaW5nOjE4cHg7IGJhY2tncm91bmQ6cmdiYSg2LDE2LDM0LC42Mik7IH0KICAgIC5tb2RhbC1jYXJkIHsgd2lkdGg6bWluKDkwMHB4LDEwMCUpOyBtYXgtaGVpZ2h0Ojk0dmg7IG92ZXJmbG93OmF1dG87IGJvcmRlci1yYWRpdXM6MjRweDsgcGFkZGluZzoyMHB4OyBiYWNrZ3JvdW5kOiNmZmY7IGJveC1zaGFkb3c6MCAzMHB4IDkwcHggcmdiYSgwLDAsMCwuMyk7IH0KICAgIC5tb2RhbC1oZWFkIHsgZGlzcGxheTpmbGV4OyBhbGlnbi1pdGVtczpmbGV4LXN0YXJ0OyBqdXN0aWZ5LWNvbnRlbnQ6c3BhY2UtYmV0d2VlbjsgZ2FwOjE0cHg7IG1hcmdpbi1ib3R0b206MTRweDsgfQogICAgLm1vZGFsLWhlYWQgaDIgeyBtYXJnaW46MnB4IDAgMDsgfQogICAgLmNsb3NlIHsgd2lkdGg6NTJweDsgaGVpZ2h0OjUycHg7IGJvcmRlcjowOyBib3JkZXItcmFkaXVzOjE1cHg7IGNvbG9yOnZhcigtLW5hdnkpOyBiYWNrZ3JvdW5kOiNlNWViZjQ7IGZvbnQtd2VpZ2h0Ojk1MDsgfQogICAgLmZvcm0tZ3JpZCB7IGRpc3BsYXk6Z3JpZDsgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOjFmciAxZnI7IGdhcDoxMnB4OyB9CiAgICAuc3Bhbi0yIHsgZ3JpZC1jb2x1bW46MS8tMTsgfQogICAgLm1vZGFsLWFjdGlvbnMgeyBkaXNwbGF5OmdyaWQ7IGdyaWQtdGVtcGxhdGUtY29sdW1uczoxZnIgMWZyIDEuNGZyOyBnYXA6MTBweDsgbWFyZ2luLXRvcDoxNnB4OyB9CiAgICAuc2Vzc2lvbi1zdW1tYXJ5IHsgYm9yZGVyLXJhZGl1czoxNHB4OyBwYWRkaW5nOjEycHggMTRweDsgbWFyZ2luLWJvdHRvbToxM3B4OyBjb2xvcjojMTc0ZGFjOyBiYWNrZ3JvdW5kOiNlYWYyZmY7IGZvbnQtd2VpZ2h0OjkwMDsgfQogICAgLm5vdGljZSB7IGJvcmRlci1yYWRpdXM6MTRweDsgcGFkZGluZzoxMXB4IDEzcHg7IG1hcmdpbi10b3A6MTJweDsgY29sb3I6Izc3NTIwMDsgYmFja2dyb3VuZDojZmZmNGQ1OyBmb250LXNpemU6Ljg0cmVtOyB9CiAgICAucmVxdWlyZWQtbGFiZWw6OmFmdGVyIHsgY29udGVudDoiIOW/hemgiCI7IGNvbG9yOnZhcigtLXJlZCk7IGZvbnQtc2l6ZTouN3JlbTsgfQonJycKaXBhZCA9IGluc2VydF9iZWZvcmVfb25jZSgKICAgIGlwYWQsCiAgICAnICAgIC50b2FzdCB7IHBvc2l0aW9uOmZpeGVkOycsCiAgICBpcGFkX2NzcywKICAgICJpcGFkIG1vZGFsIENTUyIsCikKCmlwYWRfbW9kYWwgPSByJycnCiAgPGRpdiBjbGFzcz0ibW9kYWwgaGlkZGVuIiBpZD0ic2Vzc2lvbk1vZGFsIj4KICAgIDxkaXYgY2xhc3M9Im1vZGFsLWNhcmQiPgogICAgICA8ZGl2IGNsYXNzPSJtb2RhbC1oZWFkIj4KICAgICAgICA8ZGl2PgogICAgICAgICAgPHAgY2xhc3M9ImJyYW5kIj5TRVNTSU9OIFJFQ09SRDwvcD4KICAgICAgICAgIDxoMiBpZD0ic2Vzc2lvbk1vZGFsVGl0bGUiPuOCu+ODg+OCt+ODp+ODs+iomOmMsjwvaDI+CiAgICAgICAgPC9kaXY+CiAgICAgICAgPGJ1dHRvbiBjbGFzcz0iY2xvc2UiIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0iY2xvc2VTZXNzaW9uTW9kYWwoKSI+w5c8L2J1dHRvbj4KICAgICAgPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9InNlc3Npb24tc3VtbWFyeSIgaWQ9InNlc3Npb25SZXNlcnZhdGlvbk1ldGEiPuS6iOe0hOOCkumBuOaKnuOBl+OBpuOBj+OBoOOBleOBhOOAgjwvZGl2PgogICAgICA8ZGl2IGNsYXNzPSJmb3JtLWdyaWQiPgogICAgICAgIDxkaXYgY2xhc3M9InNwYW4tMiI+PGxhYmVsIGZvcj0ic2Vzc2lvbkNvbmRpdGlvbiI+5b2T5pel44Gu5L2T6Kq/44O756K66KqN5LqL6aCFPC9sYWJlbD48dGV4dGFyZWEgaWQ9InNlc3Npb25Db25kaXRpb24iPjwvdGV4dGFyZWE+PC9kaXY+CiAgICAgICAgPGRpdiBjbGFzcz0ic3Bhbi0yIj48bGFiZWwgY2xhc3M9InJlcXVpcmVkLWxhYmVsIiBmb3I9InNlc3Npb25UcmFpbmluZ1N1bW1hcnkiPuWun+aWveOBl+OBn+ODiOODrOODvOODi+ODs+OCsOWGheWuuTwvbGFiZWw+PHRleHRhcmVhIGlkPSJzZXNzaW9uVHJhaW5pbmdTdW1tYXJ5Ij48L3RleHRhcmVhPjwvZGl2PgogICAgICAgIDxkaXYgY2xhc3M9InNwYW4tMiI+PGxhYmVsIGZvcj0ic2Vzc2lvblRyYWluZXJOb3RlIj7jg4jjg6zjg7zjg4rjg7zlhoXpg6jjg6Hjg6I8L2xhYmVsPjx0ZXh0YXJlYSBpZD0ic2Vzc2lvblRyYWluZXJOb3RlIj48L3RleHRhcmVhPjwvZGl2PgogICAgICAgIDxkaXY+PGxhYmVsIGZvcj0ic2Vzc2lvbk5leHRGb2N1cyI+5qyh5Zue44Gu6YeN54K5PC9sYWJlbD48dGV4dGFyZWEgaWQ9InNlc3Npb25OZXh0Rm9jdXMiPjwvdGV4dGFyZWE+PC9kaXY+CiAgICAgICAgPGRpdj48bGFiZWwgZm9yPSJzZXNzaW9uTWVtYmVyQ29tbWVudCI+5Lya5ZOh44G45YWx5pyJ44Gn44GN44KL44Kz44Oh44Oz44OIPC9sYWJlbD48dGV4dGFyZWEgaWQ9InNlc3Npb25NZW1iZXJDb21tZW50Ij48L3RleHRhcmVhPjwvZGl2PgogICAgICA8L2Rpdj4KICAgICAgPHAgY2xhc3M9Im5vdGljZSIgaWQ9InNlc3Npb25SZWNvcmROb3RpY2UiPuS4i+abuOOBjeS/neWtmOW+jOOAgeWun+aWveWGheWuueOCkueiuuiqjeOBl+OBpuWujOS6huOBl+OBpuOBj+OBoOOBleOBhOOAgjwvcD4KICAgICAgPGRpdiBjbGFzcz0ibW9kYWwtYWN0aW9ucyI+CiAgICAgICAgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zb2Z0IiB0eXBlPSJidXR0b24iIG9uY2xpY2s9ImNsb3NlU2Vzc2lvbk1vZGFsKCkiPumWieOBmOOCizwvYnV0dG9uPgogICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tYmx1ZSIgaWQ9InNlc3Npb25TYXZlQnV0dG9uIiB0eXBlPSJidXR0b24iIG9uY2xpY2s9InNhdmVTZXNzaW9uUmVjb3JkKCkiPuS4i+abuOOBjeS/neWtmDwvYnV0dG9uPgogICAgICAgIDxidXR0b24gY2xhc3M9ImJ0biBidG4tZ3JlZW4iIGlkPSJzZXNzaW9uQ29tcGxldGVCdXR0b24iIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0iY29tcGxldGVTZXNzaW9uKCkiPuiomOmMsuOBl+OBpuWujOS6hjwvYnV0dG9uPgogICAgICA8L2Rpdj4KICAgIDwvZGl2PgogIDwvZGl2PgonJycKaXBhZCA9IGluc2VydF9iZWZvcmVfb25jZSgKICAgIGlwYWQsCiAgICAnICA8ZGl2IGNsYXNzPSJ0b2FzdCBoaWRkZW4iIGlkPSJ0b2FzdCI+PC9kaXY+JywKICAgIGlwYWRfbW9kYWwsCiAgICAiaXBhZCBzZXNzaW9uIG1vZGFsIiwKKQoKaXBhZCA9IHJlcGxhY2Vfb25jZSgKICAgIGlwYWQsCiAgICAnJydjb25zdCBwYXJhbXM9bmV3IFVSTFNlYXJjaFBhcmFtcyhsb2NhdGlvbi5zZWFyY2gpO2NvbnN0IHN0YXRlPXthZG1pbktleTonJyx2aWV3Oid0b2RheScsZGFzaGJvYXJkOm51bGwsc2NoZWR1bGU6W10sY3VzdG9tZXJzOltdLGlucXVpcmllczpbXSxmYWNpbGl0eURhdGE6bnVsbH07JycnLAogICAgJycnY29uc3QgcGFyYW1zPW5ldyBVUkxTZWFyY2hQYXJhbXMobG9jYXRpb24uc2VhcmNoKTtjb25zdCBzdGF0ZT17YWRtaW5LZXk6JycsdmlldzondG9kYXknLGRhc2hib2FyZDpudWxsLHNjaGVkdWxlOltdLGN1c3RvbWVyczpbXSxpbnF1aXJpZXM6W10sZmFjaWxpdHlEYXRhOm51bGwsc2VsZWN0ZWRSZXNlcnZhdGlvbjpudWxsfTsnJycsCiAgICAiaXBhZCBzdGF0ZSIsCikKCmlwYWQgPSByZXBsYWNlX29uY2UoCiAgICBpcGFkLAogICAgJycnaWYocmVzZXJ2YXRpb24uc3RhdHVzPT09J2luX3Nlc3Npb24nKXJldHVybiBgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1ncmVlbiIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJjaGFuZ2VSZXNlcnZhdGlvblN0YXR1cygnJHtpZH0nLCdjb21wbGV0ZWQnKSI+5a6M5LqG44O75Zue5pWw5rib566XPC9idXR0b24+YDtpZihbJ2NhbmNlbF9yZXF1ZXN0ZWQnLCdjaGFuZ2VfcmVxdWVzdGVkJ10uaW5jbHVkZXMocmVzZXJ2YXRpb24uc3RhdHVzKSknJycsCiAgICAnJydpZihyZXNlcnZhdGlvbi5zdGF0dXM9PT0naW5fc2Vzc2lvbicpcmV0dXJuIGA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLWdyZWVuIiB0eXBlPSJidXR0b24iIG9uY2xpY2s9Im9wZW5TZXNzaW9uUmVjb3JkKCcke2lkfScpIj7oqJjpjLLjgZfjgablrozkuoY8L2J1dHRvbj5gO2lmKHJlc2VydmF0aW9uLnN0YXR1cz09PSdjb21wbGV0ZWQnKXJldHVybiBgPGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1zb2Z0IiB0eXBlPSJidXR0b24iIG9uY2xpY2s9Im9wZW5TZXNzaW9uUmVjb3JkKCcke2lkfScpIj7jgrvjg4Pjgrfjg6fjg7PoqJjpjLI8L2J1dHRvbj5gO2lmKFsnY2FuY2VsX3JlcXVlc3RlZCcsJ2NoYW5nZV9yZXF1ZXN0ZWQnXS5pbmNsdWRlcyhyZXNlcnZhdGlvbi5zdGF0dXMpKScnJywKICAgICJpcGFkIHN0YXR1cyBidXR0b24iLAopCgppcGFkID0gcmVwbGFjZV9vbmNlKAogICAgaXBhZCwKICAgICcnJ2FzeW5jIGZ1bmN0aW9uIGNoYW5nZVJlc2VydmF0aW9uU3RhdHVzKGlkLHN0YXR1cyl7aWYoc3RhdHVzPT09J2NvbXBsZXRlZCcmJiFjb25maXJtKCfjgrvjg4Pjgrfjg6fjg7PjgpLlrozkuobjgZfjgIHlm57mlbDliLjlr77osaHjg6Hjg4vjg6Xjg7zjga8x5Zue5rib566X44GX44G+44GZ44CC44KI44KN44GX44GE44Gn44GZ44GL77yfJykpcmV0dXJuO3RyeXsnJycsCiAgICAnJydhc3luYyBmdW5jdGlvbiBjaGFuZ2VSZXNlcnZhdGlvblN0YXR1cyhpZCxzdGF0dXMpe2lmKHN0YXR1cz09PSdjb21wbGV0ZWQnKXJldHVybiBvcGVuU2Vzc2lvblJlY29yZChpZCk7dHJ5eycnJywKICAgICJpcGFkIGNvbXBsZXRlZCBndWFyZCIsCikKCmlwYWRfZnVuY3Rpb25zID0gcicnJwogICAgZnVuY3Rpb24gZmluZFJlc2VydmF0aW9uKGlkKXtyZXR1cm4gc3RhdGUuZGFzaGJvYXJkPy5yZXNlcnZhdGlvbnM/LmZpbmQoaXRlbT0+aXRlbS5pZD09PWlkKXx8c3RhdGUuc2NoZWR1bGUuZmluZChpdGVtPT5pdGVtLmlkPT09aWQpfHxudWxsO30KICAgIGZ1bmN0aW9uIGNsb3NlU2Vzc2lvbk1vZGFsKCl7ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3Nlc3Npb25Nb2RhbCcpLmNsYXNzTGlzdC5hZGQoJ2hpZGRlbicpO3N0YXRlLnNlbGVjdGVkUmVzZXJ2YXRpb249bnVsbDt9CiAgICBhc3luYyBmdW5jdGlvbiBvcGVuU2Vzc2lvblJlY29yZChpZCl7bGV0IHJlc2VydmF0aW9uPWZpbmRSZXNlcnZhdGlvbihpZCk7aWYoIXJlc2VydmF0aW9uKXt0cnl7Y29uc3QgZnJvbT12YWwoJ3NjaGVkdWxlRnJvbScpfHx0b2RheVltZCgpLGRhdGE9YXdhaXQgYXBpKGAvYXBpL2FkbWluL3Jlc2VydmF0aW9ucz9mYWNpbGl0eV9jb2RlPSR7RkFDSUxJVFl9JmRhdGVfZnJvbT0ke2Zyb219JmRhdGVfdG89JHthZGREYXlzWW1kKGZyb20sNil9YCk7c3RhdGUuc2NoZWR1bGU9ZGF0YS5yZXNlcnZhdGlvbnN8fFtdO3Jlc2VydmF0aW9uPWZpbmRSZXNlcnZhdGlvbihpZCk7fWNhdGNoKGVycm9yKXtyZXR1cm4gdG9hc3QoZXJyb3IubWVzc2FnZSx0cnVlKTt9fWlmKCFyZXNlcnZhdGlvbilyZXR1cm4gdG9hc3QoJ+S6iOe0hOaDheWgseOBjOimi+OBpOOBi+OCiuOBvuOBm+OCk+OAgicsdHJ1ZSk7c3RhdGUuc2VsZWN0ZWRSZXNlcnZhdGlvbj1yZXNlcnZhdGlvbjtbJ3Nlc3Npb25Db25kaXRpb24nLCdzZXNzaW9uVHJhaW5pbmdTdW1tYXJ5Jywnc2Vzc2lvblRyYWluZXJOb3RlJywnc2Vzc2lvbk5leHRGb2N1cycsJ3Nlc3Npb25NZW1iZXJDb21tZW50J10uZm9yRWFjaChmaWVsZD0+dmFsU2V0KGZpZWxkLCcnKSk7Y29uc3QgY3VzdG9tZXI9cmVzZXJ2YXRpb24uY3VzdG9tZXJ8fHt9O3NldFRleHQoJ3Nlc3Npb25Nb2RhbFRpdGxlJyxgJHtjdXN0b21lci5mdWxsX25hbWV8fCfkvJrlk6EnfSDmp5jvvZzjgrvjg4Pjgrfjg6fjg7PoqJjpjLJgKTtzZXRUZXh0KCdzZXNzaW9uUmVzZXJ2YXRpb25NZXRhJyxgJHtmb3JtYXREYXRlVGltZShyZXNlcnZhdGlvbi5zdGFydF9hdCl9IC8gJHtzZXJ2aWNlTmFtZShyZXNlcnZhdGlvbi5zZXJ2aWNlX2NvZGUpfSAvICR7dHJhaW5lck5hbWUocmVzZXJ2YXRpb24udHJhaW5lcl9jb2RlKX1gKTtkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnc2Vzc2lvbkNvbXBsZXRlQnV0dG9uJykuY2xhc3NMaXN0LnRvZ2dsZSgnaGlkZGVuJyxyZXNlcnZhdGlvbi5zdGF0dXMhPT0naW5fc2Vzc2lvbicpO3NldFRleHQoJ3Nlc3Npb25TYXZlQnV0dG9uJyxyZXNlcnZhdGlvbi5zdGF0dXM9PT0nY29tcGxldGVkJz8n6KiY6Yyy44KS5pu05pawJzon5LiL5pu444GN5L+d5a2YJyk7c2V0VGV4dCgnc2Vzc2lvblJlY29yZE5vdGljZScscmVzZXJ2YXRpb24uc3RhdHVzPT09J2NvbXBsZXRlZCc/J+WujOS6hua4iOOBv+OCu+ODg+OCt+ODp+ODs+OBruiomOmMsuOCkueiuuiqjeODu+abtOaWsOOBp+OBjeOBvuOBmeOAgic6J+S4i+abuOOBjeS/neWtmOW+jOOAgeWun+aWveWGheWuueOCkueiuuiqjeOBl+OBpuWujOS6huOBl+OBpuOBj+OBoOOBleOBhOOAgicpO2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdzZXNzaW9uTW9kYWwnKS5jbGFzc0xpc3QucmVtb3ZlKCdoaWRkZW4nKTt0cnl7Y29uc3QgZGF0YT1hd2FpdCBhcGkoYC9hcGkvYWRtaW4vc2Vzc2lvbi1yZWNvcmRzP2ZhY2lsaXR5X2NvZGU9JHtGQUNJTElUWX0mcmVzZXJ2YXRpb25faWQ9JHtlbmNvZGVVUklDb21wb25lbnQocmVzZXJ2YXRpb24uaWQpfSZsaW1pdD0xYCkscmVjb3JkPWRhdGEuc2Vzc2lvbl9yZWNvcmRzPy5bMF07aWYocmVjb3JkKXt2YWxTZXQoJ3Nlc3Npb25Db25kaXRpb24nLHJlY29yZC5jb25kaXRpb25fbm90ZXx8JycpO3ZhbFNldCgnc2Vzc2lvblRyYWluaW5nU3VtbWFyeScscmVjb3JkLnRyYWluaW5nX3N1bW1hcnl8fCcnKTt2YWxTZXQoJ3Nlc3Npb25UcmFpbmVyTm90ZScscmVjb3JkLnRyYWluZXJfbm90ZXx8JycpO3ZhbFNldCgnc2Vzc2lvbk5leHRGb2N1cycscmVjb3JkLm5leHRfZm9jdXN8fCcnKTt2YWxTZXQoJ3Nlc3Npb25NZW1iZXJDb21tZW50JyxyZWNvcmQubWVtYmVyX3Zpc2libGVfY29tbWVudHx8JycpO319Y2F0Y2goZXJyb3Ipe3RvYXN0KGVycm9yLm1lc3NhZ2UsdHJ1ZSk7fX0KICAgIGZ1bmN0aW9uIHNlc3Npb25SZWNvcmRCb2R5KCl7Y29uc3QgcmVzZXJ2YXRpb249c3RhdGUuc2VsZWN0ZWRSZXNlcnZhdGlvbjtyZXR1cm57ZmFjaWxpdHlfY29kZTpGQUNJTElUWSxyZXNlcnZhdGlvbl9pZDpyZXNlcnZhdGlvbj8uaWQscmVjb3JkX3N0YXR1czpyZXNlcnZhdGlvbj8uc3RhdHVzPT09J2NvbXBsZXRlZCc/J2NvbXBsZXRlZCc6J2RyYWZ0Jyxjb25kaXRpb25fbm90ZTp2YWwoJ3Nlc3Npb25Db25kaXRpb24nKSx0cmFpbmluZ19zdW1tYXJ5OnZhbCgnc2Vzc2lvblRyYWluaW5nU3VtbWFyeScpLHRyYWluZXJfbm90ZTp2YWwoJ3Nlc3Npb25UcmFpbmVyTm90ZScpLG5leHRfZm9jdXM6dmFsKCdzZXNzaW9uTmV4dEZvY3VzJyksbWVtYmVyX3Zpc2libGVfY29tbWVudDp2YWwoJ3Nlc3Npb25NZW1iZXJDb21tZW50JyksY3JlYXRlZF9ieTonaXBhZCd9O30KICAgIGFzeW5jIGZ1bmN0aW9uIHNhdmVTZXNzaW9uUmVjb3JkKCl7aWYoIXN0YXRlLnNlbGVjdGVkUmVzZXJ2YXRpb24pcmV0dXJuIHRvYXN0KCfkuojntITjgpLpgbjmip7jgZfjgabjgY/jgaDjgZXjgYTjgIInLHRydWUpO3RyeXthd2FpdCBhcGkoJy9hcGkvYWRtaW4vc2Vzc2lvbi1yZWNvcmRzL3Vwc2VydCcse21ldGhvZDonUE9TVCcsYm9keTpzZXNzaW9uUmVjb3JkQm9keSgpfSk7dG9hc3Qoc3RhdGUuc2VsZWN0ZWRSZXNlcnZhdGlvbi5zdGF0dXM9PT0nY29tcGxldGVkJz8n44K744OD44K344On44Oz6KiY6Yyy44KS5pu05paw44GX44G+44GX44Gf44CCJzon5LiL5pu444GN44KS5L+d5a2Y44GX44G+44GX44Gf44CCJyk7fWNhdGNoKGVycm9yKXt0b2FzdChlcnJvci5tZXNzYWdlLHRydWUpO319CiAgICBhc3luYyBmdW5jdGlvbiBjb21wbGV0ZVNlc3Npb24oKXtjb25zdCByZXNlcnZhdGlvbj1zdGF0ZS5zZWxlY3RlZFJlc2VydmF0aW9uO2lmKCFyZXNlcnZhdGlvbilyZXR1cm4gdG9hc3QoJ+S6iOe0hOOCkumBuOaKnuOBl+OBpuOBj+OBoOOBleOBhOOAgicsdHJ1ZSk7aWYoIXZhbCgnc2Vzc2lvblRyYWluaW5nU3VtbWFyeScpKXJldHVybiB0b2FzdCgn5a6f5pa944GX44Gf44OI44Os44O844OL44Oz44Kw5YaF5a6544KS5YWl5Yqb44GX44Gm44GP44Gg44GV44GE44CCJyx0cnVlKTtpZighY29uZmlybSgn6KiY6Yyy44KS5L+d5a2Y44GX44Gm44K744OD44K344On44Oz44KS5a6M5LqG44GX44CB5Zue5pWw5Yi45a++6LGh44Oh44OL44Ol44O844GvMeWbnua4m+eul+OBl+OBvuOBmeOAguOCiOOCjeOBl+OBhOOBp+OBmeOBi++8nycpKXJldHVybjtjb25zdCBib2R5PXNlc3Npb25SZWNvcmRCb2R5KCk7ZGVsZXRlIGJvZHkucmVjb3JkX3N0YXR1czt0cnl7Y29uc3QgZGF0YT1hd2FpdCBhcGkoJy9hcGkvYWRtaW4vc2Vzc2lvbnMvY29tcGxldGUnLHttZXRob2Q6J1BPU1QnLGJvZHl9KTt0b2FzdChkYXRhLmlkZW1wb3RlbnQ/J+WujOS6hua4iOOBv+S6iOe0hOOBruiomOmMsuOCkuabtOaWsOOBl+OBvuOBl+OBn+OAgic6J+OCu+ODg+OCt+ODp+ODs+OCkuWujOS6huOBl+OBvuOBl+OBn+OAgicpO2Nsb3NlU2Vzc2lvbk1vZGFsKCk7aWYoc3RhdGUudmlldz09PSd0b2RheScpYXdhaXQgbG9hZERhc2hib2FyZCgpO2Vsc2UgYXdhaXQgbG9hZFNjaGVkdWxlKCk7fWNhdGNoKGVycm9yKXt0b2FzdChlcnJvci5tZXNzYWdlLHRydWUpO319CicnJwppcGFkID0gaW5zZXJ0X2JlZm9yZV9vbmNlKAogICAgaXBhZCwKICAgICcgICAgYXN5bmMgZnVuY3Rpb24gbG9hZEN1c3RvbWVycygpeycsCiAgICBpcGFkX2Z1bmN0aW9ucywKICAgICJpcGFkIHNlc3Npb24gZnVuY3Rpb25zIiwKKQoKaXBhZF9wYXRoLndyaXRlX3RleHQoaXBhZCwgZW5jb2Rpbmc9InV0Zi04IiwgbmV3bGluZT0iXG4iKQoKcHJpbnQoIkdZTS1ORVhULTQgVUkgcGF0Y2ggYXBwbGllZCIpCg=="
+
+jobs:
+  verify-and-complete:
+    name: Verify SQL and Worker then add session record UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout main with complete history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Configure Git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO NEXT Actions"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Confirm prepared state and safe upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "${LEDGER_FILE}"
+          test -f "${WORKFLOW_FILE}"
+
+          CURRENT_STEP="$(
+            sed -n 's/^current_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          NEXT_STEP_IN_LEDGER="$(
+            sed -n 's/^next_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          RESULT="$(
+            sed -n 's/^result:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+
+          [[ "${CURRENT_STEP}" == "${CURRENT_STEP_REQUIRED}" ]] || {
+            echo "::error::Expected ${CURRENT_STEP_REQUIRED}, got ${CURRENT_STEP}"
+            exit 1
+          }
+          [[ "${NEXT_STEP_IN_LEDGER}" == "${STEP_NAME}" ]] || {
+            echo "::error::Expected next_step ${STEP_NAME}, got ${NEXT_STEP_IN_LEDGER}"
+            exit 1
+          }
+          [[ "${RESULT}" == "PREPARED" ]] || {
+            echo "::error::Prepared result is not PREPARED."
+            exit 1
+          }
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            UPLOAD_PARENT="$(git rev-parse "${GITHUB_SHA}^")"
+            UNEXPECTED="$(
+              git diff --name-only "${UPLOAD_PARENT}" "${GITHUB_SHA}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            if [[ -n "${UNEXPECTED}" ]]; then
+              echo "::error::Upload commit must contain only ${WORKFLOW_FILE}"
+              echo "${UNEXPECTED}"
+              exit 1
+            fi
+          else
+            UPLOAD_PARENT="$(git rev-parse HEAD)"
+          fi
+
+          STEP_BASE_SHA="${UPLOAD_PARENT}"
+          while git rev-parse "${STEP_BASE_SHA}^" >/dev/null 2>&1; do
+            if ! git cat-file -e "${STEP_BASE_SHA}:${WORKFLOW_FILE}" 2>/dev/null; then
+              break
+            fi
+            CHANGED="$(
+              git diff --name-only "${STEP_BASE_SHA}^" "${STEP_BASE_SHA}" |
+                sed '/^$/d' || true
+            )"
+            OTHER="$(
+              printf '%s\n' "${CHANGED}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            if printf '%s\n' "${CHANGED}" |
+                 grep -F -x -q "${WORKFLOW_FILE}" &&
+               [[ -z "${OTHER}" ]]; then
+              STEP_BASE_SHA="$(git rev-parse "${STEP_BASE_SHA}^")"
+              continue
+            fi
+            break
+          done
+
+          echo "STEP_BASE_SHA=${STEP_BASE_SHA}" >> "$GITHUB_ENV"
+          echo "RUN_URL=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Protect pre-VERIFY version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
+            EXISTING="$(git rev-list -n 1 "${BACKUP_TAG}")"
+            [[ "${EXISTING}" == "${STEP_BASE_SHA}" ]] || {
+              echo "::error::Backup tag points to another commit."
+              exit 1
+            }
+          else
+            git tag -a "${BACKUP_TAG}" "${STEP_BASE_SHA}"               -m "DPRO パーソナルジム LINE before GYM-NEXT-4-VERIFY"
+            git push origin "refs/tags/${BACKUP_TAG}"
+          fi
+
+      - name: Verify inspected UI baselines and config
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_blob() {
+            local file="$1"
+            local expected="$2"
+            local actual
+            test -f "${file}"
+            actual="$(git hash-object "${file}")"
+            if [[ "${actual}" != "${expected}" ]]; then
+              echo "::error::${file} differs from inspected baseline."
+              echo "Expected: ${expected}"
+              echo "Actual:   ${actual}"
+              exit 1
+            fi
+          }
+
+          check_blob config.js 94619ddc2fd2dd43b6d3cb99ba2349eef9d1f705
+          check_blob dashboard.html 83485110de3f2964897f2d6f6804abb53853bb21
+          check_blob owner-ipad.html 2e61368938b6f3f55dd84c9012ea2bc8c94401e9
+
+          grep -Fq             "workerBaseUrl: 'https://dpro-gym-line-api.dpromstk2000.workers.dev'"             config.js
+
+      - name: Verify deployed Worker and Supabase NEXT-4
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-4-verify
+
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             --output /tmp/gym-next-4-verify/health.json             "${WORKER_BASE}/api/health?verify=${GITHUB_RUN_ID}"
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path("/tmp/gym-next-4-verify/health.json")
+              .read_text(encoding="utf-8")
+          )
+          assert data.get("ok") is True, data
+          assert data.get("version") == "GYM-NEXT-4-WORKER-20260725", data
+          assert data.get("database", {}).get("ok") is True, data
+
+          next4 = data.get("next4", {})
+          assert next4.get("ok") is True, data
+          assert next4.get("session_records") is True, data
+          assert next4.get("completion_guard") is True, data
+          assert next4.get("ticket_completion_unique_guard") is True, data
+          assert next4.get("duplicate_completion_count") == 0, data
+
+          features = data.get("features", {})
+          assert features.get("session_records") is True, data
+          assert features.get("atomic_session_completion") is True, data
+          assert features.get("ticket_completion_unique_guard") is True, data
+          PY
+
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             -H "X-Admin-Key: 1234"             --output /tmp/gym-next-4-verify/system-check.json             "${WORKER_BASE}/api/admin/next-4-system-check?facility_code=dpro_gym_demo&verify=${GITHUB_RUN_ID}"
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path("/tmp/gym-next-4-verify/system-check.json")
+              .read_text(encoding="utf-8")
+          )
+          assert data.get("ok") is True, data
+          result = data.get("result", {})
+          assert result.get("duplicate_completion_count") == 0, data
+          PY
+
+      - name: Apply NEXT-4 PC and iPad session UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          printf '%s' "${PATCH_SCRIPT_B64}" |
+            base64 --decode > /tmp/gym-next-4-verify/apply_patch.py
+          python3 -m py_compile /tmp/gym-next-4-verify/apply_patch.py
+          python3 /tmp/gym-next-4-verify/apply_patch.py
+
+      - name: Validate HTML JavaScript IDs and feature contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-4-verify/scripts
+
+          python3 <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import json
+          import re
+
+          class IdParser(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.ids = []
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key == "id" and value:
+                          self.ids.append(value)
+              def handle_startendtag(self, tag, attrs):
+                  self.handle_starttag(tag, attrs)
+
+          report = {}
+          for filename in ("dashboard.html", "owner-ipad.html"):
+              text = Path(filename).read_text(encoding="utf-8")
+              parser = IdParser()
+              parser.feed(text)
+              duplicates = sorted({
+                  item for item in parser.ids
+                  if parser.ids.count(item) > 1
+              })
+              if duplicates:
+                  raise SystemExit(
+                      f"Duplicate IDs in {filename}: {duplicates}"
+                  )
+
+              scripts = re.findall(
+                  r"<script(?:\s[^>]*)?>(.*?)</script>",
+                  text,
+                  flags=re.I | re.S,
+              )
+              inline_scripts = [
+                  script for script in scripts
+                  if script.strip()
+              ]
+              for index, script in enumerate(inline_scripts, 1):
+                  output = Path(
+                      f"/tmp/gym-next-4-verify/scripts/"
+                      f"{Path(filename).stem}-{index}.js"
+                  )
+                  output.write_text(script, encoding="utf-8")
+
+              report[filename] = {
+                  "id_count": len(parser.ids),
+                  "duplicate_ids": duplicates,
+                  "inline_script_count": len(inline_scripts),
+              }
+
+          Path("/tmp/gym-next-4-verify/html-report.json").write_text(
+              json.dumps(report, ensure_ascii=False, indent=2),
+              encoding="utf-8",
+          )
+          PY
+
+          find /tmp/gym-next-4-verify/scripts -type f -name '*.js' -print0 |
+            while IFS= read -r -d '' script; do
+              node --check "${script}"
+            done
+
+          grep -Fq 'data-dpro-next-step="GYM-NEXT-4"' dashboard.html
+          grep -Fq 'data-dpro-next-step="GYM-NEXT-4"' owner-ipad.html
+          grep -Fq 'id="sessionModal"' dashboard.html
+          grep -Fq 'id="sessionModal"' owner-ipad.html
+          grep -Fq '/api/admin/sessions/complete' dashboard.html
+          grep -Fq '/api/admin/sessions/complete' owner-ipad.html
+          grep -Fq '/api/admin/session-records/upsert' dashboard.html
+          grep -Fq '/api/admin/session-records/upsert' owner-ipad.html
+          grep -Fq 'customerSessionHistory' dashboard.html
+          grep -Fq 'customerTicketLedger' dashboard.html
+
+          for marker in             '/api/admin/dashboard'             '/api/admin/customers'             '/api/admin/customers/tickets'             '/api/admin/reservations/status'             '/api/admin/inquiries'             '/api/admin/settings'             '/api/admin/demo-prepare'
+          do
+            grep -Fq "${marker}" dashboard.html
+          done
+
+          for marker in             '/api/admin/dashboard'             '/api/admin/customers'             '/api/admin/customers/tickets'             '/api/admin/reservations/status'             '/api/admin/inquiries'             '/api/admin/demo-prepare'
+          do
+            grep -Fq "${marker}" owner-ipad.html
+          done
+
+      - name: Confirm only intended application files changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t CHANGED < <(
+            git diff --name-only |
+              sed '/^$/d' |
+              sort
+          )
+          EXPECTED=(
+            "dashboard.html"
+            "owner-ipad.html"
+          )
+          mapfile -t EXPECTED_SORTED < <(
+            printf '%s\n' "${EXPECTED[@]}" | sort
+          )
+
+          if [[ "$(printf '%s\n' "${CHANGED[@]}")" != "$(printf '%s\n' "${EXPECTED_SORTED[@]}")" ]]; then
+            echo "::error::Unexpected application files changed."
+            printf 'Changed:\n%s\n' "${CHANGED[*]}"
+            exit 1
+          fi
+
+          git diff --quiet -- config.js || {
+            echo "::error::config.js must remain unchanged."
+            exit 1
+          }
+          git diff --check
+
+      - name: Commit NEXT-4 UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add dashboard.html owner-ipad.html
+          git commit -m "Complete GYM-NEXT-4 session record UI"
+          APPLICATION_COMMIT_SHA="$(git rev-parse HEAD)"
+          DASHBOARD_BLOB="$(git hash-object dashboard.html)"
+          IPAD_BLOB="$(git hash-object owner-ipad.html)"
+
+          echo "APPLICATION_COMMIT_SHA=${APPLICATION_COMMIT_SHA}" >> "$GITHUB_ENV"
+          echo "DASHBOARD_BLOB=${DASHBOARD_BLOB}" >> "$GITHUB_ENV"
+          echo "IPAD_BLOB=${IPAD_BLOB}" >> "$GITHUB_ENV"
+          git push origin HEAD:main
+
+      - name: Wait for GitHub Pages and verify published UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-4-verify/public
+
+          verify_page() {
+            local page="$1"
+            local marker1="$2"
+            local marker2="$3"
+            local file="/tmp/gym-next-4-verify/public/${page}"
+
+            for attempt in $(seq 1 24); do
+              curl --fail --location --silent --show-error                 --max-time 30                 --output "${file}"                 "${PUBLIC_BASE}/${page}?verify=${GITHUB_RUN_ID}-${attempt}" || true
+
+              if [[ -s "${file}" ]] &&
+                 grep -Fq "${marker1}" "${file}" &&
+                 grep -Fq "${marker2}" "${file}"; then
+                return 0
+              fi
+
+              sleep 10
+            done
+
+            echo "::error::Published page did not reach NEXT-4: ${page}"
+            exit 1
+          }
+
+          verify_page             dashboard.html             'data-dpro-next-step="GYM-NEXT-4"'             '/api/admin/sessions/complete'
+
+          verify_page             owner-ipad.html             'data-dpro-next-step="GYM-NEXT-4"'             '/api/admin/sessions/complete'
+
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             --output /tmp/gym-next-4-verify/public/health.json             "${WORKER_BASE}/api/health?public_verify=${GITHUB_RUN_ID}"
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path("/tmp/gym-next-4-verify/public/health.json")
+              .read_text(encoding="utf-8")
+          )
+          assert data.get("ok") is True
+          assert data.get("version") == "GYM-NEXT-4-WORKER-20260725"
+          assert data.get("next4", {}).get("ok") is True
+          PY
+
+      - name: Record GYM-NEXT-4 completion
+        shell: bash
+        run: |
+          set -euo pipefail
+          COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
+
+          cat > "${STEP_DIR}/GYM-NEXT-4-COMPLETE.md" <<EOF
+          # DPRO パーソナルジム LINE｜GYM-NEXT-4 COMPLETE
+
+          - 結果: OK
+          - Worker: ${EXPECTED_WORKER_VERSION}
+          - Supabase NEXT-4: OK
+          - PCセッション記録UI: OK
+          - iPadセッション記録UI: OK
+          - 回数券完了減算一意ガード: OK
+          - 重複完了: 0件
+          - バックアップタグ: ${BACKUP_TAG}
+          - アプリケーションコミット: ${APPLICATION_COMMIT_SHA}
+          - 完了日時: ${COMPLETED_AT}
+          - Actions: ${RUN_URL}
+          EOF
+
+          cat > "${LEDGER_FILE}" <<EOF
+          system_name: "DPRO パーソナルジム LINE"
+          repository: "${GITHUB_REPOSITORY}"
+          branch: "main"
+          current_step: "GYM-NEXT-4-COMPLETE"
+          workflow_revision: "R1"
+          next_step: "${NEXT_STEP}"
+          result: "OK"
+          facility_code: "dpro_gym_demo"
+          slot_minutes: 30
+          step_backup_tag: "${BACKUP_TAG}"
+          step_backup_sha: "${STEP_BASE_SHA}"
+          application_commit_sha: "${APPLICATION_COMMIT_SHA}"
+          dashboard_blob: "${DASHBOARD_BLOB}"
+          owner_ipad_blob: "${IPAD_BLOB}"
+          completed_at: "${COMPLETED_AT}"
+          workflow_run_url: "${RUN_URL}"
+          worker_name: "dpro-gym-line-api"
+          worker_url: "${WORKER_BASE}"
+          worker_version: "${EXPECTED_WORKER_VERSION}"
+          worker_deployed: true
+          supabase_executed: true
+          runtime_files_changed: true
+          worker_changed: true
+          supabase_changed: true
+          api_changed: true
+          changed_files:
+            - "dashboard.html"
+            - "owner-ipad.html"
+          checks:
+            previous_step: "OK"
+            backup_tag: "OK"
+            worker_health: "OK"
+            supabase_next4: "OK"
+            duplicate_completion_count: 0
+            config_worker_url: "OK"
+            html_structure: "OK"
+            javascript_syntax: "OK"
+            duplicate_html_ids: "OK"
+            existing_api_references: "OK"
+            pc_session_ui: "OK"
+            ipad_session_ui: "OK"
+            public_pages: "OK"
+          EOF
+
+          ruby -e "require 'yaml'; YAML.load_file('${LEDGER_FILE}', aliases: true)"
+          git add "${LEDGER_FILE}" "${STEP_DIR}"
+          git rm "${WORKFLOW_FILE}"
+          git commit -m "Record GYM-NEXT-4 completion"
+          git push origin HEAD:main
+
+      - name: Upload NEXT-4 verification artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GYM-NEXT-4-completion
+          path: |
+            dpro-next/gym/next-ledger.yml
+            dpro-next/gym/steps/GYM-NEXT-4-COMPLETE.md
+            /tmp/gym-next-4-verify/health.json
+            /tmp/gym-next-4-verify/system-check.json
+            /tmp/gym-next-4-verify/html-report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: STEP completion summary
+        shell: bash
+        run: |
+          {
+            echo "## GYM-NEXT-4 COMPLETE"
+            echo ""
+            echo "- Worker: \`${EXPECTED_WORKER_VERSION}\`"
+            echo "- Supabase NEXT-4: \`OK\`"
+            echo "- PC session UI: \`OK\`"
+            echo "- iPad session UI: \`OK\`"
+            echo "- Duplicate completion count: \`0\`"
+            echo "- Next STEP: \`${NEXT_STEP}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
