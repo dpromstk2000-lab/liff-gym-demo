@@ -1,76 +1,120 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-9-COMPLETE"
-workflow_revision: "R3"
+current_step: "GYM-NEXT-10A-COMPLETE"
+logical_step: "GYM-NEXT-10"
+workflow_revision: "R7"
 worker_revision: "R2"
-next_step: "GYM-NEXT-10"
+next_step: "GYM-NEXT-10B-PRODUCT-SITE"
+next_repository: "dpromstk2000-lab/dpro-line-systems-site"
 result: "OK"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-9-verify-r3-20260725"
-step_backup_sha: "b67ef7743d843b50d14c67a9c3e031746564099e"
-application_commit_sha: "b67ef7743d843b50d14c67a9c3e031746564099e"
-system_check_blob: "8d37b43caec090e42593d8ebc088bd9aff06131a"
-config_blob: "68028432d9177a907e1e91e81c316b47b8845147"
-index_blob: "6ea48136d70e328366a8584ebecaa55562372d20"
-member_blob: "ed7e59d0a1101adfd328e24e1eb09a8f62a41aca"
-dashboard_blob: "cbb1f028442946c0ba2fd69eedc90de844eae68c"
-owner_ipad_blob: "3b94e5221ec26ec74d8e1fe4e4e41285ee27c792"
-staff_blob: "59e66cb480aa5795c646ab99a1ff71070013ad26"
-completed_at: "2026-07-25T23:58:46+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30162695681"
+step_backup_tag: "backup-gym-before-next-10-r7-20260726"
+step_backup_sha: "3ac8657a514c5b06ce828ac9e53ce80deb5cd56f"
+delivery_commit_sha: "8608da3874be949cb9ac771bf844b1c8f2932ced"
+pdf_blob: "7cb60ee6e710d1d9d84fff3a9c08b9b11bbe0e3f"
+png_blob: "135783120f7f9b030786ab8c84ef419d73c55efb"
+completed_at: "2026-07-26T08:47:58+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30179979508"
 worker_name: "dpro-gym-line-api"
 worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
 worker_version: "GYM-NEXT-9-WORKER-R2-20260725"
-worker_sha256: "9405f4c300f2d73cdf77606dcb33dfa8b5c9afb7e5ca247a445e0b25d4d2439f"
 worker_deployed: true
 supabase_changed: false
-runtime_files_changed: true
-worker_changed: true
-api_changed: true
-changed_files:
-  - "system-check.html"
-completed_features:
-  security_headers: true
-  query_string_auth_disabled: true
-  request_body_limit: true
-  json_content_type_required: true
-  compact_json_payload: true
-  integrated_system_check: true
-  resilient_optional_system_probes: true
-  performance_budget_check: true
-  public_payload_budget_check: true
-  automatic_line_broadcast: false
+runtime_files_changed: false
+product_site_changed: false
+operation_sheet:
+  pdf_url: "https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf"
+  png_url: "https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.png"
+  html_url: "https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/operation-sheet.html"
+  qr_report_url: "https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/operation-sheet-qr-check.json"
+  page_count: 1
+  orientation: "A4 portrait"
+  qr_physical_size_mm: 23
+  pdf_render_dpi: 300
+  actual_screen_count: 6
+  qr_count: 6
+  source_qr_decoded_count: 6
+  qr_decoded_count: 6
+  qr_exact_url_match_count: 6
+  published_pdf_exact_match: true
+product_site:
+  repository: "dpromstk2000-lab/dpro-line-systems-site"
+  current_page: "https://dpromstk2000-lab.github.io/dpro-line-systems-site/systems/gym.html"
+  update_pending: true
 recovery:
-  failed_verify_revision: "R2"
-  failed_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30162210349"
-  failure_reason: "owner-ipad.htmlを旧管理API文字列で確認していた"
-  corrected_owner_ipad_marker: "/api/staff/today"
+  failed_workflow_revisions:
+    - "R1"
+    - "R2"
+    - "R3"
+    - "R4"
+    - "R5"
+    - "R6"
+  failed_run_urls:
+    - "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30163371447"
+    - "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30163983359"
+    - "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30164399121"
+    - "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30164790974"
+    - "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30179041254"
+    - "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30179540881"
+  failure_reason_r1: "会員マイページ用QRがPDF描画後に読取不能"
+  failure_reason_r2: "QR検査Pythonの終了記号PYが二重"
+  failure_reason_r3: "開始数の正規表現がファイル名中の文字nを誤除外"
+  failure_reason_r4: "生成HTMLの行末空白をgit diff --cached --checkが検出"
+  failure_reason_r5: "正規化レポートを作成前の必須ファイル確認で要求"
+  failure_reason_r6: "git空白検査にPDF・PNGを含めバイナリをテキスト扱い"
+  text_binary_validation_separated: true
+  binary_null_command_substitution_removed: true
+  binary_signature_check: true
+  normalization_report_order_fixed: true
+  normalization_report_post_creation_check: true
+  operation_html_dedented: true
+  generated_text_normalized: true
+  trailing_whitespace_guard: true
+  extra_blank_eof_guard: true
+  duplicate_python_terminator_removed: true
+  heredoc_counter_fixed: true
+  heredoc_line_matcher: true
+  heredoc_balance_check: true
+  member_demo_url_shortened: true
+  qr_physical_size_mm: 23
+  pdf_render_dpi: 300
+  multi_pass_qr_decode: true
   runtime_rewrite_required: false
 checks:
   previous_step: "OK"
   backup_tag: "OK"
   worker_health: "OK"
   integrated_system_check: "OK"
-  activity_log_action_column: "OK"
-  optional_probes_isolated: "OK"
-  admin_header_auth: "OK"
-  staff_header_auth: "OK"
-  admin_query_auth_rejected: "OK"
-  staff_query_auth_rejected: "OK"
-  non_json_rejected: "OK"
-  oversized_json_rejected: "OK"
-  security_headers: "OK"
-  compact_json: "OK"
   next4_preserved: "OK"
   next5_preserved: "OK"
   next8_preserved: "OK"
+  next9_preserved: "OK"
   role_separation_preserved: "OK"
-  owner_ipad_staff_api: "OK"
   member_history_preserved: "OK"
-  html_structure: "OK"
-  javascript_syntax: "OK"
-  duplicate_html_ids: "OK"
-  public_file_budgets: "OK"
-  public_system_check: "OK"
+  actual_screen_capture: "OK"
+  operation_html_dedented: "OK"
+  normalization_report_order: "OK"
+  normalization_report_created: "OK"
+  text_only_git_whitespace_check: "OK"
+  binary_pdf_signature: "OK"
+  binary_png_signatures: "OK"
+  binary_mime_types: "OK"
+  null_byte_command_substitution: "REMOVED"
+  generated_text_normalized: "OK"
+  trailing_whitespace: "OK"
+  extra_blank_eof: "OK"
+  screenshot_not_blank: "OK"
+  pdf_generation: "OK"
+  pdf_page_count: "OK"
+  qr_source_generation: "OK"
+  qr_source_decode: "OK"
+  member_demo_url_shortened: "OK"
+  qr_23mm: "OK"
+  pdf_render_300dpi: "OK"
+  qr_multi_pass_decode: "OK"
+  qr_rendered_pdf_decode: "OK"
+  qr_url_exact_match: "OK"
+  public_delivery_files: "OK"
+  public_pdf_sha_match: "OK"

@@ -1,0 +1,25 @@
+# DPRO パーソナルジム LINE｜GYM-NEXT-10A COMPLETE
+
+- 結果: OK
+- Workflow修正版: R7
+- 復旧内容: 会員QR URL短縮・QR 23mm・300dpi・複数方式読取
+- 実画面スクリーンショット: 6枚
+- A4縦1ページ操作体験シート: OK
+- QRコード: 6個
+- PDF描画後QR読取: 6/6
+- QR URL完全一致: 6/6
+- 公開PDFとCommit済みPDFのSHA一致: OK
+- Worker: GYM-NEXT-9-WORKER-R2-20260725
+- 最終system-check: OK
+- Worker変更: なし
+- Supabase変更: なし
+- 本体画面変更: なし
+- 製品サイト反映: 次工程
+- PDF: https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf
+- PNG: https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.png
+- 操作体験HTML: https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/operation-sheet.html
+- QR検査結果: https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/operation-sheet-qr-check.json
+- バックアップタグ: backup-gym-before-next-10-r7-20260726
+- 納品素材コミット: 8608da3874be949cb9ac771bf844b1c8f2932ced
+- 完了日時: 2026-07-26T08:47:58+0900
+- Actions: https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30179979508
