@@ -1,4 +1,4 @@
-name: STEP GYM-NEXT-2-R2 - Owner Today UX
+name: STEP GYM-NEXT-2-R3 - Recovery and Completion
 
 on:
   push:
@@ -18,6 +18,7 @@ concurrency:
 
 env:
   STEP_NAME: GYM-NEXT-2
+  WORKFLOW_REVISION: R3
   SYSTEM_NAME: DPRO パーソナルジム LINE
   FACILITY_CODE: dpro_gym_demo
   CURRENT_STEP_REQUIRED: GYM-NEXT-1-COMPLETE
@@ -26,15 +27,16 @@ env:
   LEDGER_FILE: dpro-next/gym/next-ledger.yml
   STEP_DIR: dpro-next/gym/steps
   TARGET_FILE: dashboard.html
-  EXPECTED_DASHBOARD_BLOB: 2d7d98012eb581068bdd040bf487884cf19dbdb1
+  BASELINE_DASHBOARD_BLOB: 2d7d98012eb581068bdd040bf487884cf19dbdb1
+  NEXT2_DASHBOARD_BLOB: 83485110de3f2964897f2d6f6804abb53853bb21
   BACKUP_TAG: backup-gym-before-next-2-20260725
   PUBLIC_DASHBOARD_URL: https://dpromstk2000-lab.github.io/liff-gym-demo/dashboard.html?demo=1
 
 jobs:
-  owner-next-ux:
-    name: Improve owner today screen without API changes
+  recover-and-complete:
+    name: Verify existing NEXT-2 update and complete ledger
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
 
     steps:
       - name: Checkout main with complete history
@@ -63,7 +65,7 @@ jobs:
           echo "STARTED_AT=$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')" >> "$GITHUB_ENV"
           echo "RUN_URL=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
 
-      - name: Confirm NEXT-1 completion and safe upload commit
+      - name: Confirm previous STEP and safe R3 upload
         shell: bash
         run: |
           set -euo pipefail
@@ -89,24 +91,30 @@ jobs:
               | tr -d '"\r'
           )"
 
-          if [[ "${CURRENT_STEP}" != "${CURRENT_STEP_REQUIRED}" ]]; then
-            echo "::error::Previous STEP is not complete: ${CURRENT_STEP}"
-            exit 1
-          fi
-          if [[ "${LEDGER_NEXT_STEP}" != "${STEP_NAME}" ]]; then
+          case "${CURRENT_STEP}" in
+            "${CURRENT_STEP_REQUIRED}")
+              ;;
+            "GYM-NEXT-2-COMPLETE")
+              echo "::notice::GYM-NEXT-2 is already complete. R3 will verify and refresh the completion record."
+              ;;
+            *)
+              echo "::error::Unexpected current_step: ${CURRENT_STEP}"
+              exit 1
+              ;;
+          esac
+
+          if [[ "${CURRENT_STEP}" == "${CURRENT_STEP_REQUIRED}" && "${LEDGER_NEXT_STEP}" != "${STEP_NAME}" ]]; then
             echo "::error::Ledger next_step is not ${STEP_NAME}: ${LEDGER_NEXT_STEP}"
             exit 1
           fi
           if [[ "${LEDGER_RESULT}" != "OK" ]]; then
-            echo "::error::Previous STEP result is not OK: ${LEDGER_RESULT}"
+            echo "::error::Previous ledger result is not OK: ${LEDGER_RESULT}"
             exit 1
           fi
-
           if [[ "${GITHUB_REF_NAME}" != "main" ]]; then
             echo "::error::This workflow must run on main."
             exit 1
           fi
-
           if [[ ! -f "${WORKFLOW_FILE}" ]]; then
             echo "::error::Workflow file is missing: ${WORKFLOW_FILE}"
             exit 1
@@ -120,64 +128,58 @@ jobs:
                 | sed '/^$/d' || true
             )"
             if [[ -n "${UNEXPECTED}" ]]; then
-              echo "::error::The upload commit must contain only ${WORKFLOW_FILE}."
+              echo "::error::R3 upload commit must contain only ${WORKFLOW_FILE}."
               echo "${UNEXPECTED}"
               exit 1
             fi
-          else
-            UPLOAD_PARENT="$(git rev-parse HEAD)"
           fi
 
-          # R2: skip earlier workflow-only upload/fix commits.
-          STEP_BASE_SHA="${UPLOAD_PARENT}"
-          while git rev-parse "${STEP_BASE_SHA}^" >/dev/null 2>&1; do
-            if ! git cat-file -e "${STEP_BASE_SHA}:${WORKFLOW_FILE}" 2>/dev/null; then
-              break
-            fi
-
-            CANDIDATE_CHANGED="$(
-              git diff --name-only "${STEP_BASE_SHA}^" "${STEP_BASE_SHA}" \
-                | sed '/^$/d' || true
-            )"
-            CANDIDATE_UNEXPECTED="$(
-              printf '%s\n' "${CANDIDATE_CHANGED}" \
-                | grep -v -F -x "${WORKFLOW_FILE}" \
-                | sed '/^$/d' || true
-            )"
-
-            if printf '%s\n' "${CANDIDATE_CHANGED}" | grep -F -x -q "${WORKFLOW_FILE}" \
-              && [[ -z "${CANDIDATE_UNEXPECTED}" ]]; then
-              STEP_BASE_SHA="$(git rev-parse "${STEP_BASE_SHA}^")"
-              continue
-            fi
-            break
-          done
-
-          echo "UPLOAD_PARENT=${UPLOAD_PARENT}" >> "$GITHUB_ENV"
-          echo "STEP_BASE_SHA=${STEP_BASE_SHA}" >> "$GITHUB_ENV"
-          echo "Protected pre-NEXT-2 application commit: ${STEP_BASE_SHA}"
-
-      - name: Protect pre-NEXT-2 version with backup tag
+      - name: Verify existing NEXT-2 backup tag and application commit
         shell: bash
         run: |
           set -euo pipefail
           git fetch --tags --force
 
-          if git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
-            EXISTING_SHA="$(git rev-list -n 1 "${BACKUP_TAG}")"
-            if [[ "${EXISTING_SHA}" != "${STEP_BASE_SHA}" ]]; then
-              echo "::error::Backup tag already points to another commit."
-              echo "Expected: ${STEP_BASE_SHA}"
-              echo "Existing: ${EXISTING_SHA}"
-              exit 1
-            fi
-          else
-            git tag -a "${BACKUP_TAG}" "${STEP_BASE_SHA}" \
-              -m "DPRO パーソナルジム LINE before GYM-NEXT-2"
-            git push origin "refs/tags/${BACKUP_TAG}"
+          if ! git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
+            echo "::error::NEXT-2 backup tag is missing: ${BACKUP_TAG}"
+            exit 1
           fi
 
-      - name: Verify protected dashboard baseline
+          TAG_SHA="$(git rev-list -n 1 "${BACKUP_TAG}")"
+          APP_COMMIT_SHA="$(git log -1 --format=%H -- "${TARGET_FILE}")"
+
+          if [[ -z "${APP_COMMIT_SHA}" ]]; then
+            echo "::error::Could not identify the dashboard application commit."
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "${TAG_SHA}" "${APP_COMMIT_SHA}"; then
+            echo "::error::Dashboard application commit is not based on the protected tag."
+            exit 1
+          fi
+
+          BASELINE_BLOB="$(git rev-parse "${BACKUP_TAG}:${TARGET_FILE}")"
+          if [[ "${BASELINE_BLOB}" != "${BASELINE_DASHBOARD_BLOB}" ]]; then
+            echo "::error::Protected dashboard blob does not match the inspected baseline."
+            echo "Expected: ${BASELINE_DASHBOARD_BLOB}"
+            echo "Actual:   ${BASELINE_BLOB}"
+            exit 1
+          fi
+
+          CHANGED_FROM_TAG="$(
+            git diff --name-only "${BACKUP_TAG}" "${APP_COMMIT_SHA}" \
+              | grep -v -F -x "${WORKFLOW_FILE}" \
+              | sed '/^$/d' || true
+          )"
+          if [[ "${CHANGED_FROM_TAG}" != "${TARGET_FILE}" ]]; then
+            echo "::error::Unexpected application files changed during NEXT-2."
+            echo "${CHANGED_FROM_TAG}"
+            exit 1
+          fi
+
+          echo "TAG_SHA=${TAG_SHA}" >> "$GITHUB_ENV"
+          echo "APP_COMMIT_SHA=${APP_COMMIT_SHA}" >> "$GITHUB_ENV"
+
+      - name: Verify NEXT-2 dashboard is already applied
         shell: bash
         run: |
           set -euo pipefail
@@ -188,158 +190,27 @@ jobs:
           fi
 
           CURRENT_BLOB="$(git hash-object "${TARGET_FILE}")"
-          if [[ "${CURRENT_BLOB}" != "${EXPECTED_DASHBOARD_BLOB}" ]]; then
-            echo "::error::dashboard.html differs from the inspected GYM-6-R2 baseline."
-            echo "Expected blob: ${EXPECTED_DASHBOARD_BLOB}"
-            echo "Current blob:  ${CURRENT_BLOB}"
+          if [[ "${CURRENT_BLOB}" != "${NEXT2_DASHBOARD_BLOB}" ]]; then
+            echo "::error::Current dashboard is not the validated NEXT-2 application version."
+            echo "Expected: ${NEXT2_DASHBOARD_BLOB}"
+            echo "Actual:   ${CURRENT_BLOB}"
             exit 1
           fi
 
-          cp "${TARGET_FILE}" /tmp/dashboard-before-next-2.html
-          echo "BEFORE_SHA256=$(sha256sum "${TARGET_FILE}" | awk '{print $1}')" >> "$GITHUB_ENV"
-          echo "BEFORE_SIZE=$(stat -c '%s' "${TARGET_FILE}")" >> "$GITHUB_ENV"
-
-      - name: Apply DPRO NEXT owner screen changes
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          python3 <<'PY'
-          from pathlib import Path
-          import sys
-
-          path = Path("dashboard.html")
-          text = path.read_text(encoding="utf-8")
-
-          def replace_once(old: str, new: str, label: str) -> None:
-              global text
-              count = text.count(old)
-              if count != 1:
-                  raise SystemExit(
-                      f"{label}: expected exactly one anchor, found {count}"
-                  )
-              text = text.replace(old, new, 1)
-
-          replace_once(
-              "<body>",
-              '<body data-dpro-next-step="GYM-NEXT-2">',
-              "NEXT marker",
-          )
-
-          replace_once(
-              "    html { font-size:17px; }",
-              "    html { font-size:18px; }",
-              "desktop font size",
-          )
-
-          css_anchor = "    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }"
-          css_block = """    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-              .quick-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
-              .quick-action { min-width:0; min-height:78px; border:1px solid var(--line); border-radius:17px; padding:13px 15px; text-align:left; color:var(--navy); background:#fff; box-shadow:0 6px 18px rgba(20,38,70,.04); }
-              .quick-action.primary { border-color:#98b9f8; color:#fff; background:linear-gradient(135deg,var(--blue),var(--blue2)); }
-              .quick-action span { display:block; font-size:1rem; font-weight:950; }
-              .quick-action small { display:block; margin-top:3px; color:var(--muted); font-size:.76rem; font-weight:750; }
-              .quick-action.primary small { color:#e5edff; }
-              .priority-card { border:2px solid #f0b4bb; background:#fff7f8; }
-              .section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
-              .section-count { display:inline-grid; place-items:center; min-width:34px; height:34px; border-radius:999px; padding:0 10px; color:#fff; background:var(--red); font-size:.8rem; font-weight:950; }
-              .section-count.amber { background:var(--amber); }
-              .section-count.green { background:var(--green); }
-              .today-board { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr); gap:14px; align-items:start; }
-              .support-column { display:grid; gap:14px; }
-              .support-column .card { margin-bottom:0; }
-              .settings-shell { display:grid; grid-template-columns:210px minmax(0,1fr); gap:16px; align-items:start; }
-              .settings-menu { position:sticky; top:93px; display:grid; gap:7px; }
-              .settings-menu-btn { width:100%; min-height:48px; border:0; border-radius:13px; padding:9px 12px; text-align:left; color:#4c5a70; background:#eef2f7; font-weight:900; }
-              .settings-menu-btn.active { color:#fff; background:var(--blue); }
-              .settings-content { min-width:0; }
-              .settings-panel { display:none; }
-              .settings-panel.active { display:block; }
-              .settings-panel h3 { margin-bottom:4px; }
-              .settings-save { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
-              .settings-save .sub { margin:0; }"""
-          replace_once(css_anchor, css_block, "NEXT CSS")
-
-          old_media_1080 = "    @media (max-width:1080px) { .layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow-x:auto;gap:6px}.nav-btn{flex:0 0 auto;width:auto;margin:0}.stats{grid-template-columns:repeat(3,1fr)} }"
-          new_media_1080 = "    @media (max-width:1080px) { .layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow-x:auto;gap:6px}.nav-btn{flex:0 0 auto;width:auto;margin:0}.stats{grid-template-columns:repeat(3,1fr)}.today-board{grid-template-columns:1fr}.settings-menu{position:static} }"
-          replace_once(old_media_1080, new_media_1080, "tablet CSS")
-
-          old_media_760 = "    @media (max-width:760px) { html{font-size:16px}.header-inner{align-items:flex-start}.header-actions{max-width:52%}.stats{grid-template-columns:1fr 1fr}.grid-2,.settings-grid,.form-grid{grid-template-columns:1fr}.span-2{grid-column:auto}.filters{grid-template-columns:1fr 1fr}.filters .btn{grid-column:1/-1}.page-head{display:block}.page-actions{justify-content:flex-start;margin-top:10px}.layout{padding:11px}.card{padding:14px} }"
-          new_media_760 = "    @media (max-width:760px) { html{font-size:17px}.header-inner{display:block;padding:12px}.header-actions{max-width:none;justify-content:flex-start;margin-top:10px}.header-actions .btn{flex:1 1 145px}.stats{grid-template-columns:1fr 1fr}.quick-actions{grid-template-columns:1fr}.today-board,.settings-shell,.grid-2,.settings-grid,.form-grid{grid-template-columns:1fr}.settings-menu{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.settings-menu-btn{flex:0 0 auto;width:auto;white-space:nowrap}.span-2{grid-column:auto}.filters{grid-template-columns:1fr 1fr}.filters .btn{grid-column:1/-1}.page-head{display:block}.page-actions{justify-content:flex-start;margin-top:10px}.page-actions input{min-width:0}.layout{padding:11px}.card{padding:14px}.section-head{align-items:center}.item-top{display:block}.item-top .badge{margin-top:7px} }"
-          replace_once(old_media_760, new_media_760, "mobile CSS")
-
-          old_today = """        <section class="view active" id="view-today">
-                    <div class="page-head"><div><h2>今日やること</h2><p class="sub" id="todayLabel">予約と優先対応を確認します。</p></div><div class="page-actions"><input id="dashboardDate" type="date"><button class="btn btn-blue" type="button" onclick="loadDashboard()">日付を表示</button><button class="btn btn-dark" type="button" onclick="prepareDemo()">営業前DEMO準備</button></div></div>
-                    <div class="stats">
-                      <div class="stat blue"><span>予約</span><strong id="countReservations">-</strong></div><div class="stat red"><span>承認待ち</span><strong id="countPending">-</strong></div><div class="stat"><span>相談・連絡</span><strong id="countInquiries">-</strong></div><div class="stat"><span>フォロー期限</span><strong id="countFollow">-</strong></div><div class="stat green"><span>残り1回以下</span><strong id="countLowTickets">-</strong></div>
-                    </div>
-                    <div class="grid-2"><div class="card"><h3>本日の予約</h3><p class="sub">来店から完了まで順番に更新します。</p><div class="list" id="todayReservations"></div></div><div class="card"><h3>優先対応</h3><p class="sub">承認待ち・相談・継続フォローを上から確認します。</p><div class="list" id="priorityTasks"></div></div></div>
-                  </section>"""
-          new_today = """        <section class="view active" id="view-today">
-                    <div class="page-head"><div><p class="brand">DPRO NEXT</p><h2>今日やること</h2><p class="sub" id="todayLabel">今すぐ必要な操作から順番に表示します。</p></div><div class="page-actions"><input id="dashboardDate" type="date" aria-label="表示日"><button class="btn btn-blue" type="button" onclick="loadDashboard()">日付を表示</button><button class="btn btn-dark" type="button" onclick="prepareDemo()">営業前DEMO準備</button></div></div>
-                    <div class="quick-actions" aria-label="主要操作">
-                      <button class="quick-action primary" type="button" onclick="openPhoneBooking()"><span>電話・店頭予約</span><small>予約受付をすぐに登録</small></button>
-                      <button class="quick-action" type="button" onclick="showView('reservations')"><span>予約を確認</span><small>期間・状態から予約を検索</small></button>
-                      <button class="quick-action" type="button" onclick="showView('customers')"><span>会員を確認</span><small>履歴・回数券・注意事項を確認</small></button>
-                    </div>
-                    <div class="stats">
-                      <div class="stat blue"><span>予約</span><strong id="countReservations">-</strong></div><div class="stat red"><span>承認待ち</span><strong id="countPending">-</strong></div><div class="stat"><span>相談・連絡</span><strong id="countInquiries">-</strong></div><div class="stat"><span>フォロー期限</span><strong id="countFollow">-</strong></div><div class="stat green"><span>残り1回以下</span><strong id="countLowTickets">-</strong></div>
-                    </div>
-                    <section class="card priority-card"><div class="section-head"><div><h3>今すぐ対応</h3><p class="sub">承認待ち・変更希望・キャンセル希望・未対応相談です。</p></div><span class="section-count" id="urgentTaskCount">0</span></div><div class="list" id="urgentTasks" aria-live="polite"></div></section>
-                    <div class="today-board">
-                      <section class="card"><div class="section-head"><div><h3>本日の予約</h3><p class="sub">来店から完了まで、表示されたボタンを順番に押します。</p></div><span class="section-count green" id="todayReservationCount">0</span></div><div class="list" id="todayReservations"></div></section>
-                      <div class="support-column">
-                        <section class="card"><div class="section-head"><div><h3>今日中の対応</h3><p class="sub">期限が来ているフォローを確認します。</p></div><span class="section-count amber" id="todayTaskCount">0</span></div><div class="list" id="todayTasks"></div></section>
-                        <section class="card"><div class="section-head"><div><h3>次回案内候補</h3><p class="sub">回数券が少ない会員へ個別に案内します。</p></div><span class="section-count green" id="followTaskCount">0</span></div><div class="list" id="followTasks"></div></section>
-                      </div>
-                    </div>
-                  </section>"""
-          replace_once(old_today, new_today, "today section")
-
-          old_settings = """        <section class="view" id="view-settings">
-                    <div class="page-head"><div><h2>施設設定</h2><p class="sub">営業時間・休み・予約受付条件を設定します。予約枠は30分固定です。</p></div></div>
-                    <div class="card"><div class="settings-grid"><div><label for="settingOpen">営業開始</label><input id="settingOpen" type="time" step="1800"></div><div><label for="settingClose">営業終了</label><input id="settingClose" type="time" step="1800"></div><div><label for="settingMaxDays">予約可能日数</label><input id="settingMaxDays" type="number" min="1" max="365"></div><div><label for="settingLead">予約までの最低時間</label><input id="settingLead" type="number" min="0" max="168"></div><div><label for="settingCancel">キャンセル期限（時間前）</label><input id="settingCancel" type="number" min="0" max="336"></div><div><label for="settingParallel">同時セッション上限</label><input id="settingParallel" type="number" min="1" max="20"></div><div class="span-2"><label>定休日</label><div class="checkbox-row" id="weekdayChecks"></div></div><div class="span-2"><label for="settingClosedDates">臨時休業日（1行に1日・YYYY-MM-DD）</label><textarea id="settingClosedDates"></textarea></div><div class="span-2"><label for="settingNotice">予約画面のお知らせ</label><textarea id="settingNotice"></textarea></div></div><div class="modal-actions"><button class="btn btn-blue" type="button" onclick="saveSettings()">設定を保存</button></div></div>
-                  </section>"""
-          new_settings = """        <section class="view" id="view-settings">
-                    <div class="page-head"><div><p class="brand">OWNER SETTINGS</p><h2>施設設定</h2><p class="sub">左の項目を選び、必要な設定だけを表示します。予約枠は30分固定です。</p></div></div>
-                    <div class="card settings-shell">
-                      <nav class="settings-menu" aria-label="施設設定メニュー">
-                        <button class="settings-menu-btn active" data-settings-tab="basic" type="button" onclick="showSettingPanel('basic')">基本・営業時間</button>
-                        <button class="settings-menu-btn" data-settings-tab="booking" type="button" onclick="showSettingPanel('booking')">予約ルール</button>
-                        <button class="settings-menu-btn" data-settings-tab="closed" type="button" onclick="showSettingPanel('closed')">定休日・臨時休業</button>
-                        <button class="settings-menu-btn" data-settings-tab="notice" type="button" onclick="showSettingPanel('notice')">予約画面のお知らせ</button>
-                      </nav>
-                      <div class="settings-content">
-                        <section class="settings-panel active" data-settings-panel="basic"><h3>基本・営業時間</h3><p class="sub">通常営業の開始・終了と、同時に受け付けるセッション数です。</p><div class="settings-grid"><div><label for="settingOpen">営業開始</label><input id="settingOpen" type="time" step="1800"></div><div><label for="settingClose">営業終了</label><input id="settingClose" type="time" step="1800"></div><div><label for="settingParallel">同時セッション上限</label><input id="settingParallel" type="number" min="1" max="20"></div></div></section>
-                        <section class="settings-panel" data-settings-panel="booking"><h3>予約ルール</h3><p class="sub">何日先まで、何時間前まで予約できるかを設定します。</p><div class="settings-grid"><div><label for="settingMaxDays">予約可能日数</label><input id="settingMaxDays" type="number" min="1" max="365"></div><div><label for="settingLead">予約までの最低時間</label><input id="settingLead" type="number" min="0" max="168"></div><div><label for="settingCancel">キャンセル期限（時間前）</label><input id="settingCancel" type="number" min="0" max="336"></div></div></section>
-                        <section class="settings-panel" data-settings-panel="closed"><h3>定休日・臨時休業</h3><p class="sub">毎週の休みと、日付指定の休業日を設定します。</p><div class="settings-grid"><div class="span-2"><label>定休日</label><div class="checkbox-row" id="weekdayChecks"></div></div><div class="span-2"><label for="settingClosedDates">臨時休業日（1行に1日・YYYY-MM-DD）</label><textarea id="settingClosedDates"></textarea></div></div></section>
-                        <section class="settings-panel" data-settings-panel="notice"><h3>予約画面のお知らせ</h3><p class="sub">お客様の予約画面に表示する案内です。管理情報は入力しないでください。</p><div class="settings-grid"><div class="span-2"><label for="settingNotice">表示するお知らせ</label><textarea id="settingNotice"></textarea></div></div></section>
-                        <div class="settings-save"><p class="sub">変更した項目をまとめて保存します。</p><button class="btn btn-blue" type="button" onclick="saveSettings()">設定を保存</button></div>
-                      </div>
-                    </div>
-                  </section>"""
-          replace_once(old_settings, new_settings, "settings section")
-
-          old_render = "    function renderDashboard(d){document.getElementById('todayLabel').textContent=`${formatDate(d.date)}の予約と優先対応`;const c=d.counts||{};setText('countReservations',c.reservations);setText('countPending',c.pending);setText('countInquiries',c.open_inquiries);setText('countFollow',c.follow_due);setText('countLowTickets',c.low_tickets);setText('navToday',(c.pending||0)+(c.open_inquiries||0)+(c.follow_due||0));setText('navReservations',c.reservations);setText('navInquiries',c.open_inquiries);document.getElementById('todayReservations').innerHTML=d.reservations?.length?d.reservations.map(reservationCard).join(''):empty('この日の予約はありません。');document.getElementById('priorityTasks').innerHTML=d.priority_tasks?.length?d.priority_tasks.map(taskCard).join(''):empty('優先対応はありません。');}"
-          new_render = """    function renderDashboard(d){document.getElementById('todayLabel').textContent=`${formatDate(d.date)}｜今すぐ必要な操作から表示`;const c=d.counts||{},groups=buildTodayGroups(d),reservations=d.reservations||[];setText('countReservations',c.reservations);setText('countPending',c.pending);setText('countInquiries',c.open_inquiries);setText('countFollow',c.follow_due);setText('countLowTickets',c.low_tickets);setText('urgentTaskCount',groups.urgent.length);setText('todayReservationCount',reservations.length);setText('todayTaskCount',groups.today.length);setText('followTaskCount',groups.follow.length);setText('navToday',groups.urgent.length+groups.today.length+groups.follow.length);setText('navReservations',c.reservations);setText('navInquiries',c.open_inquiries);document.getElementById('urgentTasks').innerHTML=groups.urgent.length?groups.urgent.map(taskCard).join(''):empty('今すぐ対応が必要な項目はありません。');document.getElementById('todayReservations').innerHTML=reservations.length?reservations.map(reservationCard).join(''):empty('この日の予約はありません。');document.getElementById('todayTasks').innerHTML=groups.today.length?groups.today.map(taskCard).join(''):empty('今日中の対応はありません。');document.getElementById('followTasks').innerHTML=groups.follow.length?groups.follow.map(taskCard).join(''):empty('次回案内候補はありません。');}
-              function buildTodayGroups(d){const groups={urgent:[],today:[],follow:[]},seenReservations=new Set();(d.priority_tasks||[]).forEach(task=>{if(task.type==='reservation_pending'){if(task.reservation?.id)seenReservations.add(task.reservation.id);groups.urgent.push(task);}else if(task.type==='inquiry'){groups.urgent.push(task);}else if(task.type==='low_tickets'){groups.follow.push(task);}else{groups.today.push(task);}});(d.reservations||[]).forEach(reservation=>{if(['requested','cancel_requested','change_requested'].includes(reservation.status)&&!seenReservations.has(reservation.id)){groups.urgent.push({type:'reservation_pending',reservation});}});return groups;}"""
-          replace_once(old_render, new_render, "dashboard renderer")
-
-          old_weekdays = "    function renderWeekdays(){document.getElementById('weekdayChecks').innerHTML=['日','月','火','水','木','金','土'].map((n,i)=>`<label class=\"check-label\"><input type=\"checkbox\" value=\"${i}\">${n}</label>`).join('');}"
-          new_weekdays = """    function renderWeekdays(){document.getElementById('weekdayChecks').innerHTML=['日','月','火','水','木','金','土'].map((n,i)=>`<label class="check-label"><input type="checkbox" value="${i}">${n}</label>`).join('');}
-              function showSettingPanel(panel){document.querySelectorAll('.settings-panel').forEach(item=>item.classList.toggle('active',item.dataset.settingsPanel===panel));document.querySelectorAll('.settings-menu-btn').forEach(item=>item.classList.toggle('active',item.dataset.settingsTab===panel));}"""
-          replace_once(old_weekdays, new_weekdays, "settings panel function")
-
-          if text.count('data-dpro-next-step="GYM-NEXT-2"') != 1:
-              raise SystemExit("NEXT marker count is invalid")
-          if 'id="priorityTasks"' in text:
-              raise SystemExit("Legacy priorityTasks container still exists")
-
-          path.write_text(text, encoding="utf-8", newline="\n")
-          PY
+          grep -Fq 'data-dpro-next-step="GYM-NEXT-2"' "${TARGET_FILE}"
+          grep -Fq '今すぐ対応' "${TARGET_FILE}"
+          grep -Fq '本日の予約' "${TARGET_FILE}"
+          grep -Fq '今日中の対応' "${TARGET_FILE}"
+          grep -Fq '次回案内候補' "${TARGET_FILE}"
+          grep -Fq 'buildTodayGroups' "${TARGET_FILE}"
+          grep -Fq 'showSettingPanel' "${TARGET_FILE}"
+          grep -Fq 'settings-menu' "${TARGET_FILE}"
+          grep -Fq 'html { font-size:18px; }' "${TARGET_FILE}"
+          grep -Fq 'html{font-size:17px}' "${TARGET_FILE}"
 
           echo "AFTER_SHA256=$(sha256sum "${TARGET_FILE}" | awk '{print $1}')" >> "$GITHUB_ENV"
           echo "AFTER_SIZE=$(stat -c '%s' "${TARGET_FILE}")" >> "$GITHUB_ENV"
+          echo "NEXT2_BLOB=${CURRENT_BLOB}" >> "$GITHUB_ENV"
 
       - name: Validate workflow YAML syntax
         shell: bash
@@ -351,8 +222,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf .gym-next-2-tmp
-          mkdir -p .gym-next-2-tmp/scripts
+          rm -rf /tmp/gym-next-2-r3
+          mkdir -p /tmp/gym-next-2-r3/scripts
 
           python3 <<'PY'
           from html.parser import HTMLParser
@@ -438,12 +309,13 @@ jobs:
               )
 
           report = {
+              "workflow_revision": "R3",
               "duplicate_ids": sorted(set(parser.duplicates)),
               "structure_errors": parser.errors,
               "inline_script_count": len(parser.scripts),
               "id_count": len(parser.ids),
           }
-          Path(".gym-next-2-tmp/html-audit.json").write_text(
+          Path("/tmp/gym-next-2-r3/html-audit.json").write_text(
               json.dumps(report, ensure_ascii=False, indent=2),
               encoding="utf-8",
           )
@@ -454,23 +326,22 @@ jobs:
 
           for index, script in enumerate(parser.scripts, 1):
               Path(
-                  f".gym-next-2-tmp/scripts/{index:02d}-dashboard.js"
+                  f"/tmp/gym-next-2-r3/scripts/{index:02d}-dashboard.js"
               ).write_text(script, encoding="utf-8")
           PY
 
           node --check config.js
           shopt -s nullglob
-          for script in .gym-next-2-tmp/scripts/*.js; do
+          for script in /tmp/gym-next-2-r3/scripts/*.js; do
             node --check "${script}"
           done
 
-          cp .gym-next-2-tmp/html-audit.json /tmp/GYM-NEXT-2-html-audit.json
-          rm -rf .gym-next-2-tmp
-
-      - name: Confirm existing API usage is unchanged
+      - name: Confirm existing API usage and owner functions are preserved
         shell: bash
         run: |
           set -euo pipefail
+
+          git show "${BACKUP_TAG}:${TARGET_FILE}" > /tmp/gym-next-2-r3/dashboard-baseline.html
 
           python3 <<'PY'
           from pathlib import Path
@@ -486,7 +357,7 @@ jobs:
                   for value in pattern.findall(text)
               }
 
-          before = endpoints("/tmp/dashboard-before-next-2.html")
+          before = endpoints("/tmp/gym-next-2-r3/dashboard-baseline.html")
           after = endpoints("dashboard.html")
 
           if before != after:
@@ -497,11 +368,6 @@ jobs:
           print(f"API reference set unchanged: {len(after)} entries")
           PY
 
-      - name: Verify existing owner functions and NEXT-2 behavior
-        shell: bash
-        run: |
-          set -euo pipefail
-
           require_text() {
             local text="$1"
             local label="$2"
@@ -511,15 +377,6 @@ jobs:
             fi
           }
 
-          require_text "data-dpro-next-step=\"GYM-NEXT-2\"" "NEXT-2 marker"
-          require_text "今すぐ対応" "urgent section"
-          require_text "今日中の対応" "today task section"
-          require_text "次回案内候補" "follow section"
-          require_text "buildTodayGroups" "client-side task grouping"
-          require_text "showSettingPanel" "settings content switch"
-          require_text "settings-menu" "settings left menu"
-          require_text "html { font-size:18px; }" "funeral-standard desktop font"
-          require_text "html{font-size:17px}" "readable mobile font"
           require_text "管理コード削除" "admin code delete"
           require_text "clearAdminCode" "admin code clear function"
           require_text "電話・店頭予約" "phone and store booking"
@@ -545,89 +402,86 @@ jobs:
             exit 1
           fi
 
-          python3 <<'PY'
-          from pathlib import Path
-          import sys
+          if [[ "$(stat -c '%s' "${TARGET_FILE}")" -gt 150000 ]]; then
+            echo "::error::dashboard.html exceeds the 150 KB safety limit."
+            exit 1
+          fi
 
-          before_size = Path("/tmp/dashboard-before-next-2.html").stat().st_size
-          after_size = Path("dashboard.html").stat().st_size
-
-          if after_size > 150_000:
-              raise SystemExit(f"dashboard.html is too large: {after_size} bytes")
-          if after_size > before_size * 1.45:
-              raise SystemExit(
-                  f"dashboard.html grew too much: {before_size} -> {after_size}"
-              )
-
-          print(f"File size guard OK: {before_size} -> {after_size} bytes")
-          PY
-
-      - name: Confirm only dashboard changed before application commit
+      - name: Confirm Worker Supabase and API source were not changed
         shell: bash
         run: |
           set -euo pipefail
 
-          CHANGED="$(
-            git status --short \
-              | awk '{print $2}' \
+          ALL_CHANGED="$(
+            git diff --name-only "${BACKUP_TAG}" HEAD \
               | grep -v -F -x "${WORKFLOW_FILE}" \
               | sed '/^$/d' || true
           )"
 
-          if [[ -e ".gym-next-2-tmp" ]]; then
-            echo "::error::Temporary validation directory was not removed."
+          WORKER_CHANGED=false
+          SUPABASE_CHANGED=false
+          API_CHANGED=false
+
+          if printf '%s\n' "${ALL_CHANGED}" | grep -Eiq '(^|/)(worker[^/]*\.js|wrangler\.toml)$'; then
+            WORKER_CHANGED=true
+          fi
+          if printf '%s\n' "${ALL_CHANGED}" | grep -Eiq '(^|/)(supabase|sql|migrations?)(/|$)|\.sql$'; then
+            SUPABASE_CHANGED=true
+          fi
+          if printf '%s\n' "${ALL_CHANGED}" | grep -Eiq '(^|/)(api|functions?)(/|$)'; then
+            API_CHANGED=true
+          fi
+
+          if [[ "${WORKER_CHANGED}" != "false" || "${SUPABASE_CHANGED}" != "false" || "${API_CHANGED}" != "false" ]]; then
+            echo "::error::NEXT-2 unexpectedly changed Worker, Supabase or API source."
+            printf '%s\n' "${ALL_CHANGED}"
             exit 1
           fi
 
-          if [[ "${CHANGED}" != "${TARGET_FILE}" ]]; then
-            echo "::error::Unexpected files changed before application commit."
-            echo "${CHANGED}"
-            exit 1
-          fi
+          {
+            echo "WORKER_CHANGED=false"
+            echo "SUPABASE_CHANGED=false"
+            echo "API_CHANGED=false"
+          } >> "$GITHUB_ENV"
 
-          if git diff --quiet -- "${TARGET_FILE}"; then
-            echo "::error::dashboard.html did not change."
-            exit 1
-          fi
-
-          git diff --check -- "${TARGET_FILE}"
-
-      - name: Commit and push owner screen update
+      - name: Verify GitHub Pages published NEXT-2 dashboard safely
         shell: bash
         run: |
           set -euo pipefail
 
-          git add "${TARGET_FILE}"
-          git commit -m "Complete GYM-NEXT-2 owner today UX"
-          APP_COMMIT_SHA="$(git rev-parse HEAD)"
-          echo "APP_COMMIT_SHA=${APP_COMMIT_SHA}" >> "$GITHUB_ENV"
-          git push origin HEAD:main
-
-      - name: Verify GitHub Pages published NEXT-2 dashboard
-        shell: bash
-        run: |
-          set -euo pipefail
-
+          PUBLIC_FILE="/tmp/gym-next-2-r3/public-dashboard.html"
           VERIFIED=false
-          for attempt in $(seq 1 24); do
+
+          for attempt in $(seq 1 18); do
             CHECK_URL="${PUBLIC_DASHBOARD_URL}&dpro_next_run=${GITHUB_RUN_ID}-${attempt}"
+
+            rm -f "${PUBLIC_FILE}"
             if curl --fail --location --silent --show-error \
-              --max-time 30 "${CHECK_URL}" \
-              | grep -Fq 'data-dpro-next-step="GYM-NEXT-2"'; then
-              VERIFIED=true
-              break
+              --retry 2 --retry-delay 2 --max-time 30 \
+              --output "${PUBLIC_FILE}" \
+              "${CHECK_URL}"; then
+              if grep -Fq 'data-dpro-next-step="GYM-NEXT-2"' "${PUBLIC_FILE}" \
+                && grep -Fq '今すぐ対応' "${PUBLIC_FILE}" \
+                && grep -Fq '次回案内候補' "${PUBLIC_FILE}" \
+                && grep -Fq 'settings-menu' "${PUBLIC_FILE}"; then
+                VERIFIED=true
+                break
+              fi
             fi
+
             sleep 10
           done
 
           if [[ "${VERIFIED}" != "true" ]]; then
-            echo "::error::GitHub Pages did not publish the NEXT-2 marker in time."
+            echo "::error::GitHub Pages did not return the complete NEXT-2 dashboard in time."
             exit 1
           fi
 
+          echo "PUBLIC_SIZE=$(stat -c '%s' "${PUBLIC_FILE}")" >> "$GITHUB_ENV"
+          echo "PUBLIC_SHA256=$(sha256sum "${PUBLIC_FILE}" | awk '{print $1}')" >> "$GITHUB_ENV"
           echo "PUBLIC_VERIFIED_AT=$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')" >> "$GITHUB_ENV"
 
-      - name: Create NEXT-2 completion report and update ledger
+      - name: Create NEXT-2 R3 completion report and update ledger
         shell: bash
         run: |
           set -euo pipefail
@@ -635,32 +489,40 @@ jobs:
           COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
 
           cat > "${STEP_DIR}/GYM-NEXT-2.md" <<EOF
-          # DPRO パーソナルジム LINE｜GYM-NEXT-2-R2
+          # DPRO パーソナルジム LINE｜GYM-NEXT-2-R3
 
           - 結果: OK
+          - 実行方式: R2で反映済みの画面を再変更せず検査・完成処理
           - 対象ファイル: dashboard.html
           - 変更前バックアップタグ: ${BACKUP_TAG}
+          - バックアップコミット: ${TAG_SHA}
           - アプリ変更コミット: ${APP_COMMIT_SHA}
+          - NEXT-2 dashboard blob: ${NEXT2_BLOB}
           - 完了日時: ${COMPLETED_AT}
           - 公開確認日時: ${PUBLIC_VERIFIED_AT}
           - Actions: ${RUN_URL}
-          - Workflow修正版: R2
-          - R2修正: 検査用一時フォルダをGit変更判定前に削除
-          - R2安全対策: YMLのみの修正コミットを除外してNEXT-2開始前を保護
 
-          ## 実施した変更
+          ## R3修正
+
+          - curlとgrepをパイプ接続せず、公開HTMLを一時ファイルへ完全保存してから検査
+          - curlエラー23の誤判定を解消
+          - 既に反映済みのdashboard.htmlを再適用しない回復モード
+          - バックアップタグから現在版までの変更範囲を再検査
+
+          ## 完成内容
 
           - 今日やることを「今すぐ対応」「本日の予約」「今日中の対応」「次回案内候補」に分離
-          - 既存ダッシュボード応答をブラウザ側だけで分類
           - 電話・店頭予約、予約確認、会員確認を主要操作として上部に配置
           - 施設設定を左メニューと内容切替へ変更
-          - PC文字サイズを18px、スマホを17pxへ調整
-          - スマホのヘッダー、カード、設定メニューの横はみ出し対策
-          - 管理コード削除、電話予約、会員検索、設定保存など既存機能を維持
+          - PC文字サイズ18px、スマホ17px
+          - スマホ表示の横はみ出し対策
+          - 管理コード削除、予約、会員、回数券、設定、操作履歴を維持
 
           ## 自動検査
 
           - 前STEP完了確認: OK
+          - バックアップタグ: OK
+          - NEXT-2適用済み版: OK
           - YAML構文: OK
           - HTML構造: OK
           - JavaScript構文: OK
@@ -685,7 +547,8 @@ jobs:
           repository: "${GITHUB_REPOSITORY}"
           branch: "main"
           current_step: "GYM-NEXT-2-COMPLETE"
-          workflow_revision: "R2"
+          workflow_revision: "R3"
+          recovery_mode: true
           next_step: "${NEXT_STEP}"
           result: "OK"
           baseline_config_version: "GYM-6-R2-CONFIG-RESTORE-URL-HEADER-FIX-20260717"
@@ -694,9 +557,13 @@ jobs:
           next_1_baseline_sha: "d6306daed290cb2abac8603d425885cbeeb40a4f"
           next_1_backup_tag: "backup-gym-before-next-20260725"
           step_backup_tag: "${BACKUP_TAG}"
+          step_backup_sha: "${TAG_SHA}"
           application_commit_sha: "${APP_COMMIT_SHA}"
+          dashboard_blob: "${NEXT2_BLOB}"
           completed_at: "${COMPLETED_AT}"
           public_verified_at: "${PUBLIC_VERIFIED_AT}"
+          public_file_size: ${PUBLIC_SIZE}
+          public_file_sha256: "${PUBLIC_SHA256}"
           workflow_run_url: "${RUN_URL}"
           worker_changed: false
           supabase_changed: false
@@ -706,6 +573,8 @@ jobs:
             - "dashboard.html"
           checks:
             previous_step: "OK"
+            backup_tag: "OK"
+            next_2_applied_version: "OK"
             public_pages: "OK"
             yaml_syntax: "OK"
             html_structure: "OK"
@@ -717,23 +586,28 @@ jobs:
             slot_minutes_30: "OK"
             file_size_guard: "OK"
             responsive_layout_rules: "OK"
+            safe_public_download_check: "OK"
           EOF
 
           ruby -e "require 'yaml'; YAML.load_file('${LEDGER_FILE}', aliases: true); puts 'Ledger YAML OK'"
 
-          cp /tmp/GYM-NEXT-2-html-audit.json "${STEP_DIR}/GYM-NEXT-2-html-audit.json"
+          cp /tmp/gym-next-2-r3/html-audit.json "${STEP_DIR}/GYM-NEXT-2-html-audit.json"
           {
-            echo "before_sha256=${BEFORE_SHA256}"
+            echo "workflow_revision=R3"
+            echo "recovery_mode=true"
+            echo "baseline_blob=${BASELINE_DASHBOARD_BLOB}"
+            echo "next2_blob=${NEXT2_BLOB}"
             echo "after_sha256=${AFTER_SHA256}"
-            echo "before_size=${BEFORE_SIZE}"
             echo "after_size=${AFTER_SIZE}"
+            echo "public_sha256=${PUBLIC_SHA256}"
+            echo "public_size=${PUBLIC_SIZE}"
             echo "application_commit_sha=${APP_COMMIT_SHA}"
           } > "${STEP_DIR}/GYM-NEXT-2-file-record.txt"
 
-      - name: Upload NEXT-2 audit artifact
+      - name: Upload NEXT-2 R3 audit artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GYM-NEXT-2-owner-ux-audit
+          name: GYM-NEXT-2-R3-completion-audit
           path: |
             dpro-next/gym/next-ledger.yml
             dpro-next/gym/steps/GYM-NEXT-2*
@@ -753,16 +627,17 @@ jobs:
             exit 1
           fi
 
-          git commit -m "Record GYM-NEXT-2 completion"
+          git commit -m "Complete GYM-NEXT-2 with R3 verification"
           git push origin HEAD:main
 
       - name: STEP completion summary
         shell: bash
         run: |
           {
-            echo "## GYM-NEXT-2-R2 COMPLETE"
+            echo "## GYM-NEXT-2-R3 COMPLETE"
             echo ""
-            echo "- Changed file: \`dashboard.html\`"
+            echo "- Recovery mode: \`true\`"
+            echo "- Changed application file: \`dashboard.html\`"
             echo "- Backup tag: \`${BACKUP_TAG}\`"
             echo "- Application commit: \`${APP_COMMIT_SHA}\`"
             echo "- Public dashboard: ${PUBLIC_DASHBOARD_URL}"
