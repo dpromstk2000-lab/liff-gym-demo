@@ -1,4 +1,4 @@
-name: STEP GYM-NEXT-4 - Prepare Session Records Deployment
+name: STEP GYM-NEXT-4-R2 - Prepare Session Records Deployment
 
 on:
   push:
@@ -236,19 +236,54 @@ jobs:
         run: |
           set -euo pipefail
 
-          CHANGED="$(
-            git status --short |
-              awk '{print $2}' |
+          # R2: Git may collapse an untracked directory to its parent when
+          # --untracked-files=all is not used. Inspect every generated file.
+          mapfile -t CHANGED_FILES < <(
+            git status --porcelain=v1 --untracked-files=all |
+              sed -E 's/^.. //' |
+              sed 's/^"//;s/"$//' |
               grep -v -F -x "${WORKFLOW_FILE}" |
               grep -v -F -x "${STALE_WORKFLOW_FILE}" |
               sed '/^$/d' || true
-          )"
+          )
 
-          if [[ "${CHANGED}" != "${PACKAGE_DIR}/" ]]; then
-            echo "::error::Unexpected files changed during preparation."
-            echo "${CHANGED}"
+          if [[ "${#CHANGED_FILES[@]}" -eq 0 ]]; then
+            echo "::error::Deployment package files were not generated."
             exit 1
           fi
+
+          for changed_file in "${CHANGED_FILES[@]}"; do
+            case "${changed_file}" in
+              "${PACKAGE_DIR}/"*)
+                ;;
+              *)
+                echo "::error::Unexpected file changed during preparation: ${changed_file}"
+                printf 'All changed files:\n%s\n' "${CHANGED_FILES[*]}"
+                exit 1
+                ;;
+            esac
+          done
+
+          REQUIRED_PACKAGE_FILES=(
+            "${PACKAGE_DIR}/worker.js"
+            "${PACKAGE_DIR}/GYM-NEXT-4.sql"
+            "${PACKAGE_DIR}/GYM-NEXT-4.txt"
+            "${PACKAGE_DIR}/GYM-NEXT-4-ROLLBACK.sql"
+            "${PACKAGE_DIR}/GYM-NEXT-4-ROLLBACK.txt"
+            "${PACKAGE_DIR}/DEPLOY.md"
+            "${PACKAGE_DIR}/manifest.yml"
+            "${PACKAGE_DIR}/GYM-NEXT-4-WORKER.zip"
+            "${PACKAGE_DIR}/GYM-NEXT-4-SQL.zip"
+            "${PACKAGE_DIR}/GYM-NEXT-4-DEPLOYMENT-PACKAGE.zip"
+            "${PACKAGE_DIR}/SHA256SUMS.txt"
+          )
+
+          for required_file in "${REQUIRED_PACKAGE_FILES[@]}"; do
+            if [[ ! -s "${required_file}" ]]; then
+              echo "::error::Required deployment file is missing or empty: ${required_file}"
+              exit 1
+            fi
+          done
 
           for file in config.js index.html member.html dashboard.html owner-ipad.html system-check.html; do
             git diff --quiet -- "${file}" || {
@@ -256,6 +291,8 @@ jobs:
               exit 1
             }
           done
+
+          echo "Validated ${#CHANGED_FILES[@]} generated files under ${PACKAGE_DIR}/ only."
 
       - name: Commit deployment package
         shell: bash
@@ -275,13 +312,16 @@ jobs:
           PREPARED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
 
           cat > "${STEP_DIR}/GYM-NEXT-4-PREPARED.md" <<EOF
-          # DPRO パーソナルジム LINE｜GYM-NEXT-4 PREPARED
+          # DPRO パーソナルジム LINE｜GYM-NEXT-4-R2 PREPARED
 
           - 結果: PREPARED
           - バックアップタグ: ${BACKUP_TAG}
           - パッケージコミット: ${PACKAGE_COMMIT_SHA}
           - 準備日時: ${PREPARED_AT}
           - Actions: ${RUN_URL}
+          - Workflow修正版: R2
+          - R2修正: Gitの未追跡親フォルダ省略表示を廃止し、生成ファイルを個別検査
+          - R2安全性: 指定Deployフォルダ外の変更は引き続き停止
 
           ## 現行ソース再確認
 
@@ -319,6 +359,7 @@ jobs:
           repository: "${GITHUB_REPOSITORY}"
           branch: "main"
           current_step: "GYM-NEXT-4-PREPARED"
+          workflow_revision: "R2"
           next_step: "GYM-NEXT-4-VERIFY"
           next_action: "${NEXT_ACTION}"
           result: "PREPARED"
@@ -372,7 +413,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## GYM-NEXT-4 PREPARED"
+            echo "## GYM-NEXT-4-R2 PREPARED"
             echo ""
             echo "- Runtime changed: \`false\`"
             echo "- Existing Worker changed: \`false\`"
