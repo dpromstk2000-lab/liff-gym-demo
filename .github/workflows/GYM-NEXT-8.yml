@@ -1,0 +1,1023 @@
+name: STEP GYM-NEXT-8 - Prepare Retention Follow-up Board
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/GYM-NEXT-8.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gym-next-8-main
+  cancel-in-progress: false
+
+env:
+  STEP_NAME: GYM-NEXT-8
+  CURRENT_STEP_REQUIRED: GYM-NEXT-7-COMPLETE
+  WORKFLOW_FILE: .github/workflows/GYM-NEXT-8.yml
+  LEDGER_FILE: dpro-next/gym/next-ledger.yml
+  SOURCE_WORKER: dpro-next/gym/deploy/GYM-NEXT-7/worker.js
+  PACKAGE_DIR: dpro-next/gym/deploy/GYM-NEXT-8
+  STEP_DIR: dpro-next/gym/steps
+  BACKUP_TAG: backup-gym-before-next-8-20260725
+  WORKER_BASE: https://dpro-gym-line-api.dpromstk2000.workers.dev
+  CURRENT_WORKER_VERSION: GYM-NEXT-7-WORKER-20260725
+  EXPECTED_WORKER_VERSION: GYM-NEXT-8-WORKER-20260725
+
+jobs:
+  prepare:
+    name: Prepare retention follow-up Worker without runtime changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout main with complete history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Configure Git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO NEXT Actions"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Confirm NEXT-7 completion and safe upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "${LEDGER_FILE}"
+          test -f "${WORKFLOW_FILE}"
+
+          CURRENT_STEP="$(
+            sed -n 's/^current_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          NEXT_STEP="$(
+            sed -n 's/^next_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          RESULT="$(
+            sed -n 's/^result:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+
+          [[ "${CURRENT_STEP}" == "${CURRENT_STEP_REQUIRED}" ]] || {
+            echo "::error::Expected ${CURRENT_STEP_REQUIRED}, got ${CURRENT_STEP}"
+            exit 1
+          }
+          [[ "${NEXT_STEP}" == "${STEP_NAME}" ]] || {
+            echo "::error::Expected next_step ${STEP_NAME}, got ${NEXT_STEP}"
+            exit 1
+          }
+          [[ "${RESULT}" == "OK" ]] || {
+            echo "::error::Previous STEP result is not OK."
+            exit 1
+          }
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            UPLOAD_PARENT="$(git rev-parse "${GITHUB_SHA}^")"
+            UNEXPECTED="$(
+              git diff --name-only "${UPLOAD_PARENT}" "${GITHUB_SHA}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            if [[ -n "${UNEXPECTED}" ]]; then
+              echo "::error::Upload commit must contain only ${WORKFLOW_FILE}"
+              echo "${UNEXPECTED}"
+              exit 1
+            fi
+          else
+            UPLOAD_PARENT="$(git rev-parse HEAD)"
+          fi
+
+          STEP_BASE_SHA="${UPLOAD_PARENT}"
+          while git rev-parse "${STEP_BASE_SHA}^" >/dev/null 2>&1; do
+            if ! git cat-file -e "${STEP_BASE_SHA}:${WORKFLOW_FILE}" 2>/dev/null; then
+              break
+            fi
+            CHANGED="$(
+              git diff --name-only "${STEP_BASE_SHA}^" "${STEP_BASE_SHA}" |
+                sed '/^$/d' || true
+            )"
+            OTHER="$(
+              printf '%s\n' "${CHANGED}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            if printf '%s\n' "${CHANGED}" |
+                 grep -F -x -q "${WORKFLOW_FILE}" &&
+               [[ -z "${OTHER}" ]]; then
+              STEP_BASE_SHA="$(git rev-parse "${STEP_BASE_SHA}^")"
+              continue
+            fi
+            break
+          done
+
+          echo "STEP_BASE_SHA=${STEP_BASE_SHA}" >> "$GITHUB_ENV"
+          echo "RUN_URL=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Protect pre-NEXT-8 version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
+            EXISTING="$(git rev-list -n 1 "${BACKUP_TAG}")"
+            [[ "${EXISTING}" == "${STEP_BASE_SHA}" ]] || {
+              echo "::error::Backup tag points to another commit."
+              exit 1
+            }
+          else
+            git tag -a "${BACKUP_TAG}" "${STEP_BASE_SHA}"               -m "DPRO パーソナルジム LINE before GYM-NEXT-8"
+            git push origin "refs/tags/${BACKUP_TAG}"
+          fi
+
+      - name: Verify current source and Worker baselines
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_blob() {
+            local file="$1"
+            local expected="$2"
+            local actual
+            test -f "${file}"
+            actual="$(git hash-object "${file}")"
+            [[ "${actual}" == "${expected}" ]] || {
+              echo "::error::${file} differs from inspected baseline."
+              echo "Expected: ${expected}"
+              echo "Actual:   ${actual}"
+              exit 1
+            }
+          }
+
+          check_blob config.js 68028432d9177a907e1e91e81c316b47b8845147
+          check_blob index.html 6ea48136d70e328366a8584ebecaa55562372d20
+          check_blob member.html ed7e59d0a1101adfd328e24e1eb09a8f62a41aca
+          check_blob dashboard.html 538199c142e44d4ee03953d29359c1b341c4ca28
+          check_blob owner-ipad.html 3b94e5221ec26ec74d8e1fe4e4e41285ee27c792
+          check_blob staff.html 59e66cb480aa5795c646ab99a1ff71070013ad26
+          check_blob "${SOURCE_WORKER}" 6d485c431c0e49adf4b91a071bc4b4f66ed2f67d
+
+          mkdir -p /tmp/gym-next-8
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             --output /tmp/gym-next-8/health.json             "${WORKER_BASE}/api/health?prepare=${GITHUB_RUN_ID}"
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path("/tmp/gym-next-8/health.json")
+              .read_text(encoding="utf-8")
+          )
+          assert data.get("ok") is True, data
+          assert data.get("version") == "GYM-NEXT-7-WORKER-20260725", data
+          assert data.get("next4", {}).get("ok") is True, data
+          assert data.get("next5", {}).get("ok") is True, data
+          features = data.get("features", {})
+          assert features.get("staff_api") is True, data
+          assert features.get("role_separation") is True, data
+          assert features.get("member_session_history") is True, data
+          assert features.get("repeat_booking_prefill") is True, data
+          PY
+
+      - name: Generate NEXT-8 Worker package from compact patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${PACKAGE_DIR}" /tmp/gym-next-8
+          cp "${SOURCE_WORKER}" "${PACKAGE_DIR}/worker.js"
+
+          cat > /tmp/gym-next-8/worker.patch <<'PATCH'
+          --- a/worker.js
+          +++ b/worker.js
+          @@ -1,8 +1,8 @@
+           /* ============================================================
+          -  STEP GYM-NEXT-7
+          +  STEP GYM-NEXT-8
+             DPRO パーソナルジム LINE API
+             Worker name: dpro-gym-line-api
+          -  Worker version: GYM-NEXT-7-WORKER-20260725
+          +  Worker version: GYM-NEXT-8-WORKER-20260725
+ 
+             Cloudflare Secrets:
+               SUPABASE_URL
+          @@ -17,7 +17,7 @@
+               ALLOW_DEMO_ADMIN_FALLBACK   false（通常は設定不要）
+           ============================================================ */
+ 
+          -const VERSION = 'GYM-NEXT-7-WORKER-20260725';
+          +const VERSION = 'GYM-NEXT-8-WORKER-20260725';
+           const SERVICE = 'DPRO Personal Gym LINE API';
+           const DEFAULT_FACILITY_CODE = 'dpro_gym_demo';
+           const DEMO_CONFIRM_TEXT = 'DEMOパーソナルジムだけ実行';
+          @@ -160,6 +160,15 @@
+                     return json(await handleAdminDashboard(url, env));
+                   }
+ 
+          +        // STEP GYM-NEXT-8: 継続・再来店フォロー
+          +        if (path === '/api/admin/follow-ups' && request.method === 'GET') {
+          +          return json(await handleAdminFollowUps(url, env));
+          +        }
+          +
+          +        if (path === '/api/admin/follow-ups/action' && request.method === 'POST') {
+          +          return json(await handleAdminFollowUpAction(request, env));
+          +        }
+          +
+                   if (path === '/api/admin/customers' && request.method === 'GET') {
+                     return json(await handleAdminCustomers(url, env));
+                   }
+          @@ -318,6 +327,13 @@
+               trial_pipeline: false,
+               atomic_admission: false,
+               membership_grant_guard: false
+          +  };
+          +  let next8 = {
+          +    ok: false,
+          +    follow_up_board: false,
+          +    interaction_log: false,
+          +    derived_without_schema_change: false,
+          +    manual_line_copy_only: true
+             };
+ 
+             try {
+          @@ -367,8 +383,39 @@
+               };
+             }
+ 
+          -  return {
+          -    ok: Boolean(database.ok && next4?.ok && next5?.ok),
+          +  try {
+          +    await Promise.all([
+          +      selectRows(env, TABLES.customers, {
+          +        select: 'id',
+          +        facility_code: `eq.${facilityCode}`,
+          +        limit: '1'
+          +      }),
+          +      selectRows(env, TABLES.interactionLogs, {
+          +        select: 'id',
+          +        facility_code: `eq.${facilityCode}`,
+          +        limit: '1'
+          +      })
+          +    ]);
+          +    next8 = {
+          +      ok: true,
+          +      follow_up_board: true,
+          +      interaction_log: true,
+          +      derived_without_schema_change: true,
+          +      manual_line_copy_only: true
+          +    };
+          +  } catch (error) {
+          +    next8 = {
+          +      ok: false,
+          +      error: safeErrorMessage(error),
+          +      follow_up_board: false,
+          +      interaction_log: false,
+          +      derived_without_schema_change: false,
+          +      manual_line_copy_only: true
+          +    };
+          +  }
+          +
+          +  return {
+          +    ok: Boolean(database.ok && next4?.ok && next5?.ok && next8?.ok),
+               service: SERVICE,
+               version: VERSION,
+               time: new Date().toISOString(),
+          @@ -376,6 +423,7 @@
+               database,
+               next4,
+               next5,
+          +    next8,
+               admin_token_configured: Boolean(env.ADMIN_TOKEN),
+               staff_token_configured: Boolean(env.STAFF_TOKEN),
+               features: {
+          @@ -405,6 +453,11 @@
+                 member_session_history: Boolean(next4?.session_records),
+                 repeat_booking_prefill: true,
+                 member_private_note_guard: true,
+          +      follow_up_board: Boolean(next8?.follow_up_board),
+          +      follow_up_prioritization: true,
+          +      follow_up_action_log: Boolean(next8?.interaction_log),
+          +      follow_up_message_copy_only: true,
+          +      automatic_line_broadcast: false,
+                 system_check: true,
+                 demo_prepare: true
+               }
+          @@ -914,6 +967,451 @@
+               customer: staffCustomer(result?.customer),
+               session_record: staffSessionRecord(result?.session_record)
+             };
+          +}
+          +
+          +
+          +async function handleAdminFollowUps(url, env) {
+          +  const facilityCode = getFacilityCode(url, env);
+          +  const today = clean(url.searchParams.get('date')) || todayJst();
+          +  const reasonFilter = clean(url.searchParams.get('reason'));
+          +  const priorityFilter = clean(url.searchParams.get('priority'));
+          +  const query = clean(url.searchParams.get('q'));
+          +  const needle = normalizeSearch(query);
+          +
+          +  if (!isYmd(today)) {
+          +    throw new HttpError(400, 'INVALID_DATE', '日付が正しくありません。');
+          +  }
+          +
+          +  const rangeStart = jstDateTime(today, '00:00');
+          +  const rangeEnd = addDays(rangeStart, 120);
+          +
+          +  const [facility, customers, reservations, interactions] = await Promise.all([
+          +    getFacility(env, facilityCode),
+          +    selectRows(env, TABLES.customers, {
+          +      select: '*',
+          +      facility_code: `eq.${facilityCode}`,
+          +      order: 'updated_at.desc',
+          +      limit: '1000'
+          +    }),
+          +    selectRows(env, TABLES.reservations, {
+          +      select: 'id,customer_id,start_at,end_at,status',
+          +      facility_code: `eq.${facilityCode}`,
+          +      start_at: `gte.${rangeStart.toISOString()}`,
+          +      end_at: `lt.${rangeEnd.toISOString()}`,
+          +      order: 'start_at.asc',
+          +      limit: '2000'
+          +    }),
+          +    selectRows(env, TABLES.interactionLogs, {
+          +      select: 'id,customer_id,interaction_type,title,status,created_at',
+          +      facility_code: `eq.${facilityCode}`,
+          +      interaction_type: 'eq.follow_up',
+          +      order: 'created_at.desc',
+          +      limit: '1000'
+          +    })
+          +  ]);
+          +
+          +  const activeReservationStatuses = new Set([
+          +    'requested',
+          +    'confirmed',
+          +    'arrived',
+          +    'in_session',
+          +    'change_requested'
+          +  ]);
+          +  const upcomingCustomerIds = new Set(
+          +    reservations
+          +      .filter(row => activeReservationStatuses.has(row.status))
+          +      .map(row => row.customer_id)
+          +      .filter(Boolean)
+          +  );
+          +
+          +  const latestInteraction = new Map();
+          +  interactions.forEach(row => {
+          +    if (row.customer_id && !latestInteraction.has(row.customer_id)) {
+          +      latestInteraction.set(row.customer_id, row);
+          +    }
+          +  });
+          +
+          +  const candidates = [];
+          +
+          +  customers.forEach(customer => {
+          +    if (customer.status === 'trial' || customer.status === 'withdrawn') {
+          +      return;
+          +    }
+          +
+          +    const reasons = [];
+          +    const nextFollow = isYmd(customer.next_follow_on)
+          +      ? customer.next_follow_on
+          +      : null;
+          +    const explicitDue =
+          +      ['needed', 'scheduled'].includes(customer.follow_status) &&
+          +      (!nextFollow || nextFollow <= today);
+          +
+          +    if (explicitDue) reasons.push('follow_due');
+          +
+          +    const ticketRemaining = Number(customer.ticket_remaining || 0);
+          +    if (
+          +      ['member', 'continuation'].includes(customer.status) &&
+          +      ticketRemaining <= 1
+          +    ) {
+          +      reasons.push('low_tickets');
+          +    }
+          +
+          +    let daysToExpiry = null;
+          +    if (isYmd(customer.ticket_expires_on)) {
+          +      daysToExpiry = followUpDayDiff(today, customer.ticket_expires_on);
+          +      if (
+          +        ['member', 'continuation'].includes(customer.status) &&
+          +        daysToExpiry >= 0 &&
+          +        daysToExpiry <= 14
+          +      ) {
+          +        reasons.push('expiring_soon');
+          +      }
+          +    }
+          +
+          +    let daysSinceVisit = null;
+          +    const hasUpcomingReservation = upcomingCustomerIds.has(customer.id);
+          +    if (isYmd(customer.last_visit_on)) {
+          +      daysSinceVisit = followUpDayDiff(customer.last_visit_on, today);
+          +      if (
+          +        ['member', 'continuation'].includes(customer.status) &&
+          +        daysSinceVisit >= 14 &&
+          +        !hasUpcomingReservation
+          +      ) {
+          +        reasons.push('no_next_booking');
+          +      }
+          +    }
+          +
+          +    if (customer.status === 'continuation') {
+          +      reasons.push('continuation');
+          +    }
+          +
+          +    const uniqueReasons = [...new Set(reasons)];
+          +    if (!uniqueReasons.length) return;
+          +
+          +    const scored = uniqueReasons.map(reason => ({
+          +      reason,
+          +      score: followUpReasonScore(reason, {
+          +        customer,
+          +        today,
+          +        nextFollow,
+          +        daysToExpiry,
+          +        daysSinceVisit
+          +      })
+          +    })).sort((a, b) => b.score - a.score);
+          +
+          +    const primaryReason = scored[0].reason;
+          +    const priorityScore = scored[0].score;
+          +    const priority = priorityScore >= 90
+          +      ? 'urgent'
+          +      : priorityScore >= 65
+          +        ? 'today'
+          +        : 'follow';
+          +
+          +    const latest = latestInteraction.get(customer.id) || null;
+          +    const candidate = {
+          +      customer: adminCustomer(customer),
+          +      reasons: uniqueReasons,
+          +      primary_reason: primaryReason,
+          +      priority,
+          +      priority_score: priorityScore,
+          +      due_on: nextFollow || (
+          +        primaryReason === 'expiring_soon'
+          +          ? customer.ticket_expires_on
+          +          : today
+          +      ),
+          +      overdue_days: nextFollow && nextFollow < today
+          +        ? followUpDayDiff(nextFollow, today)
+          +        : 0,
+          +      days_to_expiry: daysToExpiry,
+          +      days_since_visit: daysSinceVisit,
+          +      has_upcoming_reservation: hasUpcomingReservation,
+          +      latest_interaction: latest ? {
+          +        id: latest.id,
+          +        title: latest.title,
+          +        status: latest.status,
+          +        created_at: latest.created_at
+          +      } : null,
+          +      recommended_message: buildFollowUpMessage(
+          +        facility,
+          +        customer,
+          +        uniqueReasons,
+          +        { daysToExpiry, daysSinceVisit }
+          +      ),
+          +      message_delivery: 'copy_only'
+          +    };
+          +
+          +    const searchText = normalizeSearch([
+          +      customer.full_name,
+          +      customer.full_name_kana,
+          +      customer.customer_no,
+          +      customer.phone,
+          +      customer.plan_name
+          +    ].filter(Boolean).join(' '));
+          +
+          +    if (needle && !searchText.includes(needle)) return;
+          +    if (reasonFilter && !uniqueReasons.includes(reasonFilter)) return;
+          +    if (priorityFilter && priority !== priorityFilter) return;
+          +
+          +    candidates.push(candidate);
+          +  });
+          +
+          +  candidates.sort((a, b) =>
+          +    b.priority_score - a.priority_score ||
+          +    String(a.due_on || '').localeCompare(String(b.due_on || '')) ||
+          +    String(a.customer?.full_name || '').localeCompare(
+          +      String(b.customer?.full_name || ''),
+          +      'ja'
+          +    )
+          +  );
+          +
+          +  const counts = {
+          +    total: candidates.length,
+          +    urgent: candidates.filter(row => row.priority === 'urgent').length,
+          +    today: candidates.filter(row => row.priority === 'today').length,
+          +    follow: candidates.filter(row => row.priority === 'follow').length,
+          +    follow_due: candidates.filter(
+          +      row => row.reasons.includes('follow_due')
+          +    ).length,
+          +    low_tickets: candidates.filter(
+          +      row => row.reasons.includes('low_tickets')
+          +    ).length,
+          +    expiring_soon: candidates.filter(
+          +      row => row.reasons.includes('expiring_soon')
+          +    ).length,
+          +    no_next_booking: candidates.filter(
+          +      row => row.reasons.includes('no_next_booking')
+          +    ).length,
+          +    continuation: candidates.filter(
+          +      row => row.reasons.includes('continuation')
+          +    ).length
+          +  };
+          +
+          +  return {
+          +    ok: true,
+          +    facility: publicFacility(facility),
+          +    date: today,
+          +    query,
+          +    reason_filter: reasonFilter || null,
+          +    priority_filter: priorityFilter || null,
+          +    counts,
+          +    follow_ups: candidates.slice(0, 300),
+          +    automatic_line_send: false,
+          +    message_delivery: 'copy_only',
+          +    version: VERSION
+          +  };
+          +}
+          +
+          +async function handleAdminFollowUpAction(request, env) {
+          +  const body = await readJson(request);
+          +  const facilityCode = clean(body.facility_code) ||
+          +    getDefaultFacilityCode(env);
+          +  const customerId = clean(body.customer_id);
+          +  const action = clean(body.action);
+          +  const allowedActions = new Set([
+          +    'done',
+          +    'needed',
+          +    'snooze_3',
+          +    'snooze_7',
+          +    'schedule'
+          +  ]);
+          +
+          +  if (!customerId || !allowedActions.has(action)) {
+          +    throw new HttpError(
+          +      400,
+          +      'INVALID_FOLLOW_UP_ACTION',
+          +      '会員とフォロー操作を正しく指定してください。'
+          +    );
+          +  }
+          +
+          +  const customer = await selectOne(env, TABLES.customers, {
+          +    select: '*',
+          +    id: `eq.${customerId}`,
+          +    facility_code: `eq.${facilityCode}`
+          +  });
+          +  if (!customer) {
+          +    throw new HttpError(
+          +      404,
+          +      'CUSTOMER_NOT_FOUND',
+          +      '会員が見つかりません。'
+          +    );
+          +  }
+          +
+          +  const today = todayJst();
+          +  let followStatus = 'scheduled';
+          +  let nextFollowOn = null;
+          +  let title = 'フォロー予定を更新';
+          +
+          +  if (action === 'done') {
+          +    followStatus = 'done';
+          +    nextFollowOn = null;
+          +    title = '継続・再来店フォロー対応済み';
+          +  } else if (action === 'needed') {
+          +    followStatus = 'needed';
+          +    nextFollowOn = isYmd(body.next_follow_on)
+          +      ? body.next_follow_on
+          +      : today;
+          +    title = '継続・再来店フォロー要対応';
+          +  } else if (action === 'snooze_3') {
+          +    nextFollowOn = formatJstDate(
+          +      addDays(jstDateTime(today, '00:00'), 3)
+          +    );
+          +    title = '継続・再来店フォローを3日後に設定';
+          +  } else if (action === 'snooze_7') {
+          +    nextFollowOn = formatJstDate(
+          +      addDays(jstDateTime(today, '00:00'), 7)
+          +    );
+          +    title = '継続・再来店フォローを7日後に設定';
+          +  } else {
+          +    if (!isYmd(body.next_follow_on)) {
+          +      throw new HttpError(
+          +        400,
+          +        'FOLLOW_UP_DATE_REQUIRED',
+          +        '次回フォロー日を指定してください。'
+          +      );
+          +    }
+          +    nextFollowOn = body.next_follow_on;
+          +    title = '継続・再来店フォロー日を設定';
+          +  }
+          +
+          +  const updatedRows = await patchRows(
+          +    env,
+          +    TABLES.customers,
+          +    {
+          +      id: `eq.${customer.id}`,
+          +      facility_code: `eq.${facilityCode}`
+          +    },
+          +    {
+          +      follow_status: followStatus,
+          +      next_follow_on: nextFollowOn
+          +    }
+          +  );
+          +
+          +  const interactionRows = await insertRows(
+          +    env,
+          +    TABLES.interactionLogs,
+          +    [{
+          +      facility_code: facilityCode,
+          +      customer_id: customer.id,
+          +      reservation_id: null,
+          +      interaction_type: 'follow_up',
+          +      title,
+          +      message_body: cleanMultiline(body.message_body, 5000) || null,
+          +      status: action === 'done' ? 'completed' : 'scheduled',
+          +      owner_note: cleanMultiline(body.owner_note, 2000) || null,
+          +      created_by: clean(body.created_by) || 'admin'
+          +    }]
+          +  );
+          +
+          +  await logActivity(
+          +    env,
+          +    facilityCode,
+          +    'admin_follow_up_action',
+          +    'customer',
+          +    customer.id,
+          +    {
+          +      action,
+          +      follow_status: followStatus,
+          +      next_follow_on: nextFollowOn,
+          +      automatic_line_send: false
+          +    },
+          +    clean(body.created_by) || 'admin'
+          +  );
+          +
+          +  return {
+          +    ok: true,
+          +    action,
+          +    customer: adminCustomer(updatedRows[0]),
+          +    interaction: interactionRows[0],
+          +    automatic_line_send: false,
+          +    message_delivery: 'copy_only',
+          +    version: VERSION
+          +  };
+          +}
+          +
+          +function followUpReasonScore(reason, context) {
+          +  const customer = context.customer || {};
+          +  if (reason === 'follow_due') {
+          +    if (
+          +      context.nextFollow &&
+          +      context.nextFollow < context.today
+          +    ) {
+          +      return 110 + Math.min(
+          +        30,
+          +        followUpDayDiff(context.nextFollow, context.today)
+          +      );
+          +    }
+          +    return 100;
+          +  }
+          +  if (reason === 'low_tickets') {
+          +    return Number(customer.ticket_remaining || 0) <= 0 ? 95 : 82;
+          +  }
+          +  if (reason === 'expiring_soon') {
+          +    return Number(context.daysToExpiry) <= 7 ? 88 : 68;
+          +  }
+          +  if (reason === 'no_next_booking') {
+          +    return Number(context.daysSinceVisit) >= 30 ? 72 : 58;
+          +  }
+          +  if (reason === 'continuation') return 65;
+          +  return 40;
+          +}
+          +
+          +function followUpDayDiff(fromYmd, toYmd) {
+          +  if (!isYmd(fromYmd) || !isYmd(toYmd)) return null;
+          +  const from = jstDateTime(fromYmd, '00:00').getTime();
+          +  const to = jstDateTime(toYmd, '00:00').getTime();
+          +  return Math.round((to - from) / (24 * 60 * 60 * 1000));
+          +}
+          +
+          +function buildFollowUpMessage(facility, customer, reasons, context) {
+          +  const customerName = clean(customer.full_name)
+          +    ? `${clean(customer.full_name)}様`
+          +    : 'お客様';
+          +  const facilityName = clean(facility?.facility_name) ||
+          +    'DPRO パーソナルジム';
+          +
+          +  const lines = [
+          +    `${customerName}`,
+          +    '',
+          +    `${facilityName}です。`
+          +  ];
+          +
+          +  if (reasons.includes('low_tickets')) {
+          +    lines.push(
+          +      `現在のトレーニング回数は残り${Number(customer.ticket_remaining || 0)}回です。`
+          +    );
+          +  }
+          +
+          +  if (
+          +    reasons.includes('expiring_soon') &&
+          +    isYmd(customer.ticket_expires_on)
+          +  ) {
+          +    lines.push(
+          +      `ご利用期限は${customer.ticket_expires_on}です。`
+          +    );
+          +  }
+          +
+          +  if (reasons.includes('no_next_booking')) {
+          +    lines.push(
+          +      'その後のお身体の調子はいかがでしょうか。'
+          +    );
+          +  }
+          +
+          +  if (reasons.includes('continuation')) {
+          +    lines.push(
+          +      '今後の目標や継続プランについて、いつでもご相談ください。'
+          +    );
+          +  } else {
+          +    lines.push(
+          +      '次回のご予約や今後のプランについて、LINEからお気軽にご相談ください。'
+          +    );
+          +  }
+          +
+          +  lines.push(
+          +    '',
+          +    'ご都合のよい日時がありましたら、このトークへご返信ください。'
+          +  );
+          +
+          +  return lines.join('\n');
+           }
+ 
+           async function handleAdminDashboard(url, env) {
+          PATCH
+
+          (
+            cd "${PACKAGE_DIR}"
+            patch -p1 --forward --batch               -i /tmp/gym-next-8/worker.patch
+          )
+
+          cat > "${PACKAGE_DIR}/manifest.yml" <<'YAML'
+          package_version: "GYM-NEXT-8-PREP-20260725"
+          system_name: "DPRO パーソナルジム LINE"
+          phase: "PREPARED"
+          worker_name: "dpro-gym-line-api"
+          worker_expected_version: "GYM-NEXT-8-WORKER-20260725"
+          supabase_changed: false
+          runtime_changed: false
+          follow_up_sources:
+            - "明示されたフォロー期限"
+            - "回数券が残り1回以下"
+            - "有効期限が14日以内"
+            - "最終来店から14日以上かつ次回予約なし"
+            - "継続相談中"
+          actions:
+            - "個別LINE文面を作成・コピー"
+            - "3日後に再連絡"
+            - "7日後に再連絡"
+            - "手動対応後に完了"
+            - "会員情報を開く"
+          safety:
+            automatic_line_send: false
+            bulk_line_send: false
+            message_delivery: "copy_only"
+            interaction_log: true
+            existing_tables_only: true
+          planned_ui:
+            dashboard.html:
+              - "継続フォロー専用メニュー"
+              - "理由・優先順位・期限フィルター"
+              - "案内文コピー"
+              - "対応済み・再連絡記録"
+          next_action: "Deploy Worker, then run GYM-NEXT-8-VERIFY"
+          YAML
+
+          cp "${PACKAGE_DIR}/worker.js" /tmp/gym-next-8/worker.mjs
+          node --check /tmp/gym-next-8/worker.mjs
+          ruby -e "require 'yaml'; YAML.load_file('${PACKAGE_DIR}/manifest.yml', aliases: true)"
+
+          require_marker() {
+            local marker="$1"
+            grep -Fq "${marker}" "${PACKAGE_DIR}/worker.js" || {
+              echo "::error::Missing NEXT-8 marker: ${marker}"
+              exit 1
+            }
+          }
+
+          require_marker "const VERSION = '${EXPECTED_WORKER_VERSION}';"
+          require_marker "/api/admin/follow-ups"
+          require_marker "/api/admin/follow-ups/action"
+          require_marker "async function handleAdminFollowUps"
+          require_marker "async function handleAdminFollowUpAction"
+          require_marker "follow_up_board: Boolean(next8?.follow_up_board)"
+          require_marker "follow_up_message_copy_only: true"
+          require_marker "automatic_line_broadcast: false"
+          require_marker "automatic_line_send: false"
+          require_marker "message_delivery: 'copy_only'"
+
+          for existing in             "/api/public/reservations"             "/api/member/home"             "/api/staff/today"             "/api/staff/sessions/complete"             "/api/admin/dashboard"             "/api/admin/trial-pipeline"             "/api/admin/customers/admit"             "/api/admin/sessions/complete"             "/api/admin/interactions"
+          do
+            require_marker "${existing}"
+          done
+
+          for forbidden in             "/api/admin/line/broadcast"             "/api/admin/line/push"             "sendLineBroadcast("             "sendLinePush("
+          do
+            if grep -Fq "${forbidden}" "${PACKAGE_DIR}/worker.js"; then
+              echo "::error::Automatic LINE sending is forbidden: ${forbidden}"
+              exit 1
+            fi
+          done
+
+          (
+            cd "${PACKAGE_DIR}"
+            zip -q GYM-NEXT-8-WORKER.zip worker.js
+          )
+          sha256sum "${PACKAGE_DIR}/worker.js"             > "${PACKAGE_DIR}/SHA256SUMS.txt"
+
+      - name: Confirm preparation changed no runtime files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t CHANGED_FILES < <(
+            git status --porcelain=v1 --untracked-files=all |
+              sed -E 's/^.. //' |
+              sed 's/^"//;s/"$//' |
+              grep -v -F -x "${WORKFLOW_FILE}" |
+              sed '/^$/d' || true
+          )
+
+          [[ "${#CHANGED_FILES[@]}" -gt 0 ]] || {
+            echo "::error::NEXT-8 package was not generated."
+            exit 1
+          }
+
+          for changed_file in "${CHANGED_FILES[@]}"; do
+            case "${changed_file}" in
+              "${PACKAGE_DIR}/"*)
+                ;;
+              *)
+                echo "::error::Unexpected file changed: ${changed_file}"
+                exit 1
+                ;;
+            esac
+          done
+
+          for file in             "${PACKAGE_DIR}/worker.js"             "${PACKAGE_DIR}/manifest.yml"             "${PACKAGE_DIR}/GYM-NEXT-8-WORKER.zip"             "${PACKAGE_DIR}/SHA256SUMS.txt"
+          do
+            [[ -s "${file}" ]] || {
+              echo "::error::Required file missing or empty: ${file}"
+              exit 1
+            }
+          done
+
+          for file in             config.js index.html member.html dashboard.html             owner-ipad.html staff.html system-check.html
+          do
+            git diff --quiet -- "${file}" || {
+              echo "::error::Runtime file changed during preparation: ${file}"
+              exit 1
+            }
+          done
+
+      - name: Commit NEXT-8 deployment package
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add "${PACKAGE_DIR}"
+          git diff --cached --check
+          git commit -m "Prepare GYM-NEXT-8 retention follow-up Worker"
+          PACKAGE_COMMIT_SHA="$(git rev-parse HEAD)"
+          echo "PACKAGE_COMMIT_SHA=${PACKAGE_COMMIT_SHA}" >> "$GITHUB_ENV"
+          git push origin HEAD:main
+
+      - name: Record prepared state and self-delete
+        shell: bash
+        run: |
+          set -euo pipefail
+          PREPARED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
+          WORKER_SHA256="$(
+            sha256sum "${PACKAGE_DIR}/worker.js" |
+              awk '{print $1}'
+          )"
+
+          cat > "${STEP_DIR}/GYM-NEXT-8-PREPARED.md" <<EOF
+          # DPRO パーソナルジム LINE｜GYM-NEXT-8 PREPARED
+
+          - 結果: PREPARED
+          - Supabase変更: なし
+          - 正式Worker: dpro-gym-line-api
+          - 更新後バージョン: ${EXPECTED_WORKER_VERSION}
+          - 継続フォロー候補の優先順位付け: 準備済み
+          - 対応履歴保存: 準備済み
+          - 個別LINE案内文: コピー方式
+          - LINE自動送信・一斉送信: なし
+          - 公開画面: まだ変更なし
+          - Worker SHA-256: ${WORKER_SHA256}
+          - バックアップタグ: ${BACKUP_TAG}
+          - パッケージコミット: ${PACKAGE_COMMIT_SHA}
+          - 準備日時: ${PREPARED_AT}
+          - Actions: ${RUN_URL}
+          EOF
+
+          cat > "${LEDGER_FILE}" <<EOF
+          system_name: "DPRO パーソナルジム LINE"
+          repository: "${GITHUB_REPOSITORY}"
+          branch: "main"
+          current_step: "GYM-NEXT-8-PREPARED"
+          workflow_revision: "R1"
+          next_step: "GYM-NEXT-8-VERIFY"
+          next_action: "DEPLOY_WORKER_THEN_VERIFY"
+          result: "PREPARED"
+          facility_code: "dpro_gym_demo"
+          slot_minutes: 30
+          step_backup_tag: "${BACKUP_TAG}"
+          step_backup_sha: "${STEP_BASE_SHA}"
+          package_commit_sha: "${PACKAGE_COMMIT_SHA}"
+          prepared_at: "${PREPARED_AT}"
+          workflow_run_url: "${RUN_URL}"
+          worker_name: "dpro-gym-line-api"
+          current_worker_version: "${CURRENT_WORKER_VERSION}"
+          expected_worker_version: "${EXPECTED_WORKER_VERSION}"
+          worker_sha256: "${WORKER_SHA256}"
+          supabase_changed: false
+          runtime_files_changed: false
+          worker_deployed: false
+          planned_runtime_files:
+            - "dashboard.html"
+          planned_features:
+            follow_up_board: true
+            follow_up_prioritization: true
+            follow_up_action_log: true
+            follow_up_message_copy_only: true
+            automatic_line_broadcast: false
+          candidate_rules:
+            - "follow_due"
+            - "low_tickets"
+            - "expiring_soon"
+            - "no_next_booking"
+            - "continuation"
+          checks:
+            previous_step: "OK"
+            backup_tag: "OK"
+            current_worker_health: "OK"
+            next4_preserved: "OK"
+            next5_preserved: "OK"
+            staff_role_preserved: "OK"
+            member_history_preserved: "OK"
+            source_worker_blob: "OK"
+            worker_diff_patch: "OK"
+            worker_javascript_syntax: "OK"
+            existing_api_contract: "OK"
+            automatic_line_send_absent: "OK"
+            runtime_unchanged: "OK"
+          EOF
+
+          ruby -e "require 'yaml'; YAML.load_file('${LEDGER_FILE}', aliases: true)"
+          git add "${LEDGER_FILE}" "${STEP_DIR}"
+          git rm "${WORKFLOW_FILE}"
+          git commit -m "Record GYM-NEXT-8 prepared state"
+          git push origin HEAD:main
+
+      - name: Upload NEXT-8 deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GYM-NEXT-8-worker-package
+          path: |
+            dpro-next/gym/deploy/GYM-NEXT-8/
+            dpro-next/gym/next-ledger.yml
+            dpro-next/gym/steps/GYM-NEXT-8-PREPARED.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: STEP summary
+        shell: bash
+        run: |
+          {
+            echo "## GYM-NEXT-8 PREPARED"
+            echo ""
+            echo "- Supabase change: false"
+            echo "- Runtime UI changed: false"
+            echo "- Retention follow-up Worker: ready"
+            echo "- Interaction log: ready"
+            echo "- LINE delivery: copy only"
+            echo "- Automatic/bulk LINE send: false"
+            echo "- Next: deploy Worker, then GYM-NEXT-8-VERIFY"
+          } >> "$GITHUB_STEP_SUMMARY"
