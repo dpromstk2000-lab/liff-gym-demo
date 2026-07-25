@@ -119,12 +119,26 @@
     .history-entry small { display:block; margin-top:3px; color:var(--muted); }
     .session-summary { border-radius:13px; padding:10px 12px; margin-bottom:12px; color:#174dac; background:#eaf2ff; font-size:.82rem; font-weight:850; }
     .required-label::after { content:" 必須"; color:var(--red); font-size:.68rem; }
+
+    .trial-layout { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(330px,.65fr); gap:14px; align-items:start; }
+    .trial-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .trial-card { border:1px solid var(--line); border-radius:15px; padding:13px; background:#fafbfd; }
+    .trial-card.due { border:2px solid #e7ad49; background:#fff9ec; }
+    .trial-meta { margin-top:5px; color:var(--muted); font-size:.8rem; }
+    .decision-line { margin-top:8px; border-radius:11px; padding:8px 10px; color:#536176; background:#edf1f6; font-size:.78rem; }
+    .plan-grid { display:grid; gap:9px; margin-top:12px; }
+    .plan-card { border:1px solid var(--line); border-radius:14px; padding:12px; background:#fafbfd; }
+    .plan-card.inactive { opacity:.68; }
+    .plan-price { color:var(--blue2); font-weight:950; }
+    .plan-preview { border-radius:13px; padding:10px 12px; margin-top:10px; color:#174dac; background:#eaf2ff; font-size:.82rem; font-weight:850; }
+    .membership-list { display:grid; gap:8px; margin-top:10px; max-height:290px; overflow:auto; }
+    @media (max-width:1100px) { .trial-layout{grid-template-columns:1fr}.trial-stats{grid-template-columns:1fr 1fr}.history-columns{grid-template-columns:1fr} }
     .toast { position:fixed; right:18px; bottom:18px; z-index:120; max-width:420px; border-radius:14px; padding:12px 16px; color:#fff; background:var(--green); box-shadow:0 12px 40px rgba(0,0,0,.23); font-weight:900; }
     @media (max-width:1080px) { .layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow-x:auto;gap:6px}.nav-btn{flex:0 0 auto;width:auto;margin:0}.stats{grid-template-columns:repeat(3,1fr)}.today-board{grid-template-columns:1fr}.settings-menu{position:static} }
     @media (max-width:760px) { html{font-size:17px}.header-inner{display:block;padding:12px}.header-actions{max-width:none;justify-content:flex-start;margin-top:10px}.header-actions .btn{flex:1 1 145px}.stats{grid-template-columns:1fr 1fr}.quick-actions{grid-template-columns:1fr}.today-board,.settings-shell,.grid-2,.settings-grid,.form-grid{grid-template-columns:1fr}.settings-menu{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.settings-menu-btn{flex:0 0 auto;width:auto;white-space:nowrap}.span-2{grid-column:auto}.filters{grid-template-columns:1fr 1fr}.filters .btn{grid-column:1/-1}.page-head{display:block}.page-actions{justify-content:flex-start;margin-top:10px}.page-actions input{min-width:0}.layout{padding:11px}.card{padding:14px}.section-head{align-items:center}.item-top{display:block}.item-top .badge{margin-top:7px} }
   </style>
 </head>
-<body data-dpro-next-step="GYM-NEXT-4">
+<body data-dpro-next-step="GYM-NEXT-5">
   <div class="gate" id="loginGate">
     <div class="gate-card">
       <p class="brand">DPRO PERSONAL GYM LINE</p><h1>PC管理画面</h1><p class="sub">管理コードを入力してください。営業デモURLでは1234を自動設定します。</p>
@@ -141,6 +155,7 @@
         <button class="nav-btn active" data-view="today" type="button" onclick="showView('today')">今日やること <span class="nav-count" id="navToday">-</span></button>
         <button class="nav-btn" data-view="reservations" type="button" onclick="showView('reservations')">予約一覧 <span class="nav-count" id="navReservations">-</span></button>
         <button class="nav-btn" data-view="customers" type="button" onclick="showView('customers')">会員検索</button>
+        <button class="nav-btn" data-view="trials" type="button" onclick="showView('trials')">体験・入会 <span class="nav-count" id="navTrials">-</span></button>
         <button class="nav-btn" data-view="inquiries" type="button" onclick="showView('inquiries')">相談・連絡 <span class="nav-count" id="navInquiries">-</span></button>
         <button class="nav-btn" data-view="settings" type="button" onclick="showView('settings')">施設設定</button>
         <button class="nav-btn" data-view="history" type="button" onclick="showView('history')">操作履歴</button>
@@ -152,7 +167,7 @@
           <div class="quick-actions" aria-label="主要操作">
             <button class="quick-action primary" type="button" onclick="openPhoneBooking()"><span>電話・店頭予約</span><small>予約受付をすぐに登録</small></button>
             <button class="quick-action" type="button" onclick="showView('reservations')"><span>予約を確認</span><small>期間・状態から予約を検索</small></button>
-            <button class="quick-action" type="button" onclick="showView('customers')"><span>会員を確認</span><small>履歴・回数券・注意事項を確認</small></button>
+            <button class="quick-action" type="button" onclick="showView('trials')"><span>体験・入会</span><small>体験結果から入会処理まで管理</small></button>
           </div>
           <div class="stats">
             <div class="stat blue"><span>予約</span><strong id="countReservations">-</strong></div><div class="stat red"><span>承認待ち</span><strong id="countPending">-</strong></div><div class="stat"><span>相談・連絡</span><strong id="countInquiries">-</strong></div><div class="stat"><span>フォロー期限</span><strong id="countFollow">-</strong></div><div class="stat green"><span>残り1回以下</span><strong id="countLowTickets">-</strong></div>
@@ -176,6 +191,43 @@
         <section class="view" id="view-customers">
           <div class="page-head"><div><h2>会員検索</h2><p class="sub">氏名・電話番号・会員番号で検索できます。電話番号は全角や+81も同一判定します。</p></div><div class="page-actions"><button class="btn btn-blue" type="button" onclick="openCustomerEditor()">新規会員</button></div></div>
           <div class="card"><div class="search-row"><input id="customerQuery" type="search" placeholder="氏名・電話番号・会員番号"><button class="btn btn-blue" type="button" onclick="loadCustomers()">検索</button></div><div class="list" id="customerList"></div></div>
+        </section>
+
+
+        <section class="view" id="view-trials">
+          <div class="page-head">
+            <div>
+              <p class="brand">TRIAL / ADMISSION</p>
+              <h2>体験・入会管理</h2>
+              <p class="sub">体験後の検討、再連絡、見送り、入会処理を一か所で管理します。</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn btn-soft" type="button" onclick="loadTrialPipeline()">再読込</button>
+              <button class="btn btn-blue" type="button" onclick="openPlanEditor()">プランを追加</button>
+            </div>
+          </div>
+          <div class="trial-stats">
+            <div class="stat blue"><span>対象者</span><strong id="trialCountTotal">-</strong></div>
+            <div class="stat"><span>体験段階</span><strong id="trialCountTrial">-</strong></div>
+            <div class="stat"><span>検討・再連絡</span><strong id="trialCountConsidering">-</strong></div>
+            <div class="stat red"><span>期限到来</span><strong id="trialCountDue">-</strong></div>
+          </div>
+          <div class="trial-layout">
+            <section class="card">
+              <div class="section-head">
+                <div><h3>体験者・検討中</h3><p class="sub">フォロー期限が来ている方を優先表示します。</p></div>
+                <span class="section-count amber" id="trialPipelineCount">0</span>
+              </div>
+              <div class="list" id="trialPipelineList"></div>
+            </section>
+            <section class="card">
+              <div class="section-head">
+                <div><h3>入会プラン</h3><p class="sub">入会時の回数と有効期間を登録します。</p></div>
+                <span class="section-count green" id="planCount">0</span>
+              </div>
+              <div class="plan-grid" id="planList"></div>
+            </section>
+          </div>
         </section>
 
         <section class="view" id="view-inquiries">
@@ -220,6 +272,11 @@
     <h3>回数券履歴</h3>
     <p class="sub">増減理由と残数を確認できます。</p>
     <div class="history-list" id="customerTicketLedger"></div>
+  </section>
+  <section class="history-panel">
+    <h3>入会・プラン履歴</h3>
+    <p class="sub">入会時のプラン、開始日、有効期限を確認できます。</p>
+    <div class="membership-list" id="customerMembershipHistory"></div>
   </section>
 </div><div class="modal-actions"><button class="btn btn-soft" type="button" onclick="closeModal('customerModal')">閉じる</button><button class="btn btn-blue" type="button" onclick="saveCustomer()">会員情報を保存</button></div></div></div>
 
@@ -267,17 +324,109 @@
       </div>
     </div>
   </div>
+
+  <div class="modal hidden" id="trialDecisionModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><p class="brand">TRIAL RESULT</p><h2 id="trialDecisionTitle">体験結果を記録</h2></div>
+        <button class="close" type="button" onclick="closeModal('trialDecisionModal')">×</button>
+      </div>
+      <div class="form-grid">
+        <div>
+          <label for="trialDecisionValue">結果</label>
+          <select id="trialDecisionValue" onchange="toggleTrialFollowDate()">
+            <option value="considering">検討中</option>
+            <option value="follow_up">再連絡</option>
+            <option value="declined">見送り</option>
+          </select>
+        </div>
+        <div>
+          <label for="trialNextFollowOn">次回連絡日</label>
+          <input id="trialNextFollowOn" type="date">
+        </div>
+        <div class="span-2">
+          <label for="trialDecisionReason">理由・会話メモ</label>
+          <textarea id="trialDecisionReason" placeholder="検討理由、再連絡時に確認する内容、見送り理由など"></textarea>
+        </div>
+      </div>
+      <p class="notice">自動LINE送信は行いません。記録だけを安全に保存します。</p>
+      <div class="modal-actions">
+        <button class="btn btn-soft" type="button" onclick="closeModal('trialDecisionModal')">閉じる</button>
+        <button class="btn btn-blue" type="button" onclick="saveTrialDecision()">体験結果を保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="admissionModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><p class="brand">ADMISSION</p><h2 id="admissionTitle">入会処理</h2></div>
+        <button class="close" type="button" onclick="closeModal('admissionModal')">×</button>
+      </div>
+      <div class="form-grid">
+        <div>
+          <label for="admissionPlan">入会プラン</label>
+          <select id="admissionPlan" onchange="renderAdmissionPreview()"></select>
+        </div>
+        <div>
+          <label for="admissionStartedOn">開始日</label>
+          <input id="admissionStartedOn" type="date">
+        </div>
+        <div class="span-2">
+          <label for="admissionNote">入会メモ</label>
+          <textarea id="admissionNote" placeholder="契約時の確認事項など"></textarea>
+        </div>
+      </div>
+      <div class="plan-preview" id="admissionPreview">プランを選択してください。</div>
+      <p class="notice">入会、プラン設定、回数券付与、有効期限、履歴保存を一度に実行します。同じ入会処理を再実行しても回数券は二重付与されません。</p>
+      <div class="modal-actions">
+        <button class="btn btn-soft" type="button" onclick="closeModal('admissionModal')">閉じる</button>
+        <button class="btn btn-green" type="button" onclick="admitCustomer()">この内容で入会</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="planModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div><p class="brand">PLAN MASTER</p><h2 id="planModalTitle">入会プラン</h2></div>
+        <button class="close" type="button" onclick="closeModal('planModal')">×</button>
+      </div>
+      <div class="form-grid">
+        <div><label for="planCode">プランコード</label><input id="planCode" type="text" placeholder="ticket_8"></div>
+        <div><label for="planName">プラン名</label><input id="planName" type="text" placeholder="8回プラン"></div>
+        <div>
+          <label for="planType">種類</label>
+          <select id="planType"><option value="ticket">回数券</option><option value="monthly">月額</option><option value="other">その他</option></select>
+        </div>
+        <div><label for="planIncludedSessions">付与回数</label><input id="planIncludedSessions" type="number" min="0" max="365"></div>
+        <div><label for="planValidityDays">有効日数</label><input id="planValidityDays" type="number" min="1" max="730"></div>
+        <div><label for="planPriceYen">料金（税込・円）</label><input id="planPriceYen" type="number" min="0" step="1"></div>
+        <div><label for="planSortOrder">表示順</label><input id="planSortOrder" type="number" step="1"></div>
+        <div>
+          <label for="planActive">利用状態</label>
+          <select id="planActive"><option value="true">利用中</option><option value="false">停止</option></select>
+        </div>
+        <div class="span-2"><label for="planDescription">説明</label><textarea id="planDescription"></textarea></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-soft" type="button" onclick="closeModal('planModal')">閉じる</button>
+        <button class="btn btn-blue" type="button" onclick="savePlan()">プランを保存</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal hidden" id="messageModal"><div class="modal-card"><div class="modal-head"><div><p class="brand">LINE MESSAGE</p><h2 id="messageTitle">LINE案内文</h2></div><button class="close" type="button" onclick="closeModal('messageModal')">×</button></div><textarea class="message-text" id="messageText"></textarea><div class="modal-actions"><button class="btn btn-soft" type="button" onclick="closeModal('messageModal')">閉じる</button><button class="btn btn-blue" type="button" onclick="copyMessageText()">文面をコピー</button></div></div></div>
   <div class="toast hidden" id="toast"></div>
 
   <script src="config.js"></script>
   <script>
     const CONFIG=window.DPRO_GYM_CONFIG, API=String(CONFIG.workerBaseUrl||'').replace(/\/$/,''), FACILITY=CONFIG.facilityCode;
-    const params=new URLSearchParams(location.search); const state={adminKey:'',view:'today',dashboard:null,reservations:[],customers:[],inquiries:[],facilityData:null,settingsData:null,selectedCustomer:null,selectedReservation:null,bookingCustomer:null};
+    const params=new URLSearchParams(location.search); const state={adminKey:'',view:'today',dashboard:null,reservations:[],customers:[],inquiries:[],facilityData:null,settingsData:null,selectedCustomer:null,selectedReservation:null,bookingCustomer:null,trialPipeline:null,plans:[],selectedTrial:null,selectedPlan:null};
     document.addEventListener('DOMContentLoaded',()=>{const today=todayYmd();document.getElementById('dashboardDate').value=today;document.getElementById('reservationFrom').value=today;document.getElementById('reservationTo').value=addDaysYmd(today,30);document.getElementById('bookingDate').value=today;renderWeekdays();if(params.get('demo')==='1'){document.getElementById('adminCode').value=CONFIG.demoAdminCode||'1234';login();}});
     async function login(){const key=document.getElementById('adminCode').value.trim();if(!key)return setLoginMessage('管理コードを入力してください。');const b=document.getElementById('loginButton');b.disabled=true;b.textContent='確認中…';try{state.adminKey=key;const [dash,facility]=await Promise.all([api(`/api/admin/dashboard?facility_code=${FACILITY}&date=${todayYmd()}`),publicApi(`/api/public/facility?facility_code=${FACILITY}`)]);state.dashboard=dash;state.facilityData=facility;document.getElementById('facilityName').textContent=`${dash.facility.facility_name}｜PC管理`;document.getElementById('loginGate').classList.add('hidden');document.getElementById('app').classList.remove('hidden');renderDashboard(dash);}catch(e){state.adminKey='';setLoginMessage(e.message);}finally{b.disabled=false;b.textContent='管理画面を開く';}}
     function clearAdminCode(){document.getElementById('adminCode').value='';document.getElementById('adminCode').focus();}function logout(){state.adminKey='';clearAdminCode();document.getElementById('app').classList.add('hidden');document.getElementById('loginGate').classList.remove('hidden');}function setLoginMessage(t){document.getElementById('loginMessage').textContent=t;}
-    function showView(view){state.view=view;document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));document.querySelectorAll('.nav-btn').forEach(v=>v.classList.toggle('active',v.dataset.view===view));if(view==='reservations')loadReservations();if(view==='customers')loadCustomers();if(view==='inquiries')loadInquiries();if(view==='settings')loadSettings();if(view==='history')loadActivityLogs();}
+    function showView(view){state.view=view;document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));document.querySelectorAll('.nav-btn').forEach(v=>v.classList.toggle('active',v.dataset.view===view));if(view==='reservations')loadReservations();if(view==='customers')loadCustomers();if(view==='trials')loadTrialPipeline();if(view==='inquiries')loadInquiries();if(view==='settings')loadSettings();if(view==='history')loadActivityLogs();}
     function reloadCurrent(){if(state.view==='today')loadDashboard();else showView(state.view);}
     async function loadDashboard(){const date=document.getElementById('dashboardDate').value||todayYmd();try{const data=await api(`/api/admin/dashboard?facility_code=${FACILITY}&date=${date}`);state.dashboard=data;renderDashboard(data);}catch(e){toast(e.message,true);}}
     function renderDashboard(d){document.getElementById('todayLabel').textContent=`${formatDate(d.date)}｜今すぐ必要な操作から表示`;const c=d.counts||{},groups=buildTodayGroups(d),reservations=d.reservations||[];setText('countReservations',c.reservations);setText('countPending',c.pending);setText('countInquiries',c.open_inquiries);setText('countFollow',c.follow_due);setText('countLowTickets',c.low_tickets);setText('urgentTaskCount',groups.urgent.length);setText('todayReservationCount',reservations.length);setText('todayTaskCount',groups.today.length);setText('followTaskCount',groups.follow.length);setText('navToday',groups.urgent.length+groups.today.length+groups.follow.length);setText('navReservations',c.reservations);setText('navInquiries',c.open_inquiries);document.getElementById('urgentTasks').innerHTML=groups.urgent.length?groups.urgent.map(taskCard).join(''):empty('今すぐ対応が必要な項目はありません。');document.getElementById('todayReservations').innerHTML=reservations.length?reservations.map(reservationCard).join(''):empty('この日の予約はありません。');document.getElementById('todayTasks').innerHTML=groups.today.length?groups.today.map(taskCard).join(''):empty('今日中の対応はありません。');document.getElementById('followTasks').innerHTML=groups.follow.length?groups.follow.map(taskCard).join(''):empty('次回案内候補はありません。');}
@@ -289,7 +438,7 @@
     async function loadReservations(){const from=document.getElementById('reservationFrom').value,to=document.getElementById('reservationTo').value,status=document.getElementById('reservationStatusFilter').value;const q=new URLSearchParams({facility_code:FACILITY,date_from:from,date_to:to});if(status)q.set('status',status);const list=document.getElementById('reservationList');list.innerHTML=loading();try{const d=await api(`/api/admin/reservations?${q}`);state.reservations=d.reservations||[];list.innerHTML=state.reservations.length?state.reservations.map(reservationCard).join(''):empty('条件に一致する予約はありません。');}catch(e){list.innerHTML=empty(e.message);}}
     async function loadCustomers(){const q=document.getElementById('customerQuery').value.trim();const list=document.getElementById('customerList');list.innerHTML=loading();try{const d=await api(`/api/admin/customers?facility_code=${FACILITY}&q=${encodeURIComponent(q)}`);state.customers=d.customers||[];list.innerHTML=state.customers.length?state.customers.map(customerCard).join(''):empty('会員が見つかりません。');}catch(e){list.innerHTML=empty(e.message);}}
     function customerCard(c){return `<div class="item"><div class="item-top"><div><div class="item-name">${esc(c.full_name)}　<span class="badge ${c.status==='member'?'green':'amber'}">${esc(customerStatus(c.status))}</span></div><div class="item-meta">${esc(c.customer_no)}　${esc(c.phone||'電話未登録')}<br>プラン：${esc(c.plan_name||'未設定')} / 残り${Number(c.ticket_remaining||0)}回 / 最終来店 ${esc(c.last_visit_on||'-')}</div></div></div><div class="item-actions"><button class="btn btn-blue" onclick="openCustomerById('${attr(c.id)}')">詳細・編集</button><button class="btn btn-soft" onclick="selectCustomerForBooking('${attr(c.id)}');openPhoneBooking(true)">この会員で予約</button></div></div>`;}
-    function openCustomerEditor(c=null){state.selectedCustomer=c;document.getElementById('customerModalTitle').textContent=c?`${c.full_name} 様`:'新規会員';const map={customerId:c?.id||'',customerName:c?.full_name||'',customerKana:c?.full_name_kana||'',customerPhone:c?.phone||'',customerStatus:c?.status||'trial',customerPlan:c?.plan_name||'',customerExpiry:c?.ticket_expires_on||'',customerFollow:c?.follow_status||'none',customerFollowDate:c?.next_follow_on||'',customerGoal:c?.goal||'',customerConcern:c?.concern||'',customerPrecautions:c?.precautions||'',customerNote:c?.owner_note||''};Object.entries(map).forEach(([id,v])=>document.getElementById(id).value=v);document.getElementById('ticketPanel').classList.toggle('hidden',!c);setText('ticketBalanceText',`残り${Number(c?.ticket_remaining||0)}回`);document.getElementById('customerModal').classList.remove('hidden');if(c?.id)loadCustomerHistory(c.id);else{document.getElementById('customerSessionHistory').innerHTML=empty('会員保存後に履歴を表示します。');document.getElementById('customerTicketLedger').innerHTML=empty('会員保存後に履歴を表示します。');}}
+    function openCustomerEditor(c=null){state.selectedCustomer=c;document.getElementById('customerModalTitle').textContent=c?`${c.full_name} 様`:'新規会員';const map={customerId:c?.id||'',customerName:c?.full_name||'',customerKana:c?.full_name_kana||'',customerPhone:c?.phone||'',customerStatus:c?.status||'trial',customerPlan:c?.plan_name||'',customerExpiry:c?.ticket_expires_on||'',customerFollow:c?.follow_status||'none',customerFollowDate:c?.next_follow_on||'',customerGoal:c?.goal||'',customerConcern:c?.concern||'',customerPrecautions:c?.precautions||'',customerNote:c?.owner_note||''};Object.entries(map).forEach(([id,v])=>document.getElementById(id).value=v);document.getElementById('ticketPanel').classList.toggle('hidden',!c);setText('ticketBalanceText',`残り${Number(c?.ticket_remaining||0)}回`);document.getElementById('customerModal').classList.remove('hidden');if(c?.id)loadCustomerHistory(c.id);else{document.getElementById('customerSessionHistory').innerHTML=empty('会員保存後に履歴を表示します。');document.getElementById('customerTicketLedger').innerHTML=empty('会員保存後に履歴を表示します。');document.getElementById('customerMembershipHistory').innerHTML=empty('会員保存後に履歴を表示します。');}}
     async function openCustomerById(id){let c=state.customers.find(x=>x.id===id)||state.dashboard?.reservations?.find(x=>x.customer_id===id)?.customer||state.reservations.find(x=>x.customer_id===id)?.customer;if(!c){const d=await api(`/api/admin/customers?facility_code=${FACILITY}`);state.customers=d.customers||[];c=state.customers.find(x=>x.id===id);}if(c)openCustomerEditor(c);else toast('会員情報が見つかりません。',true);}
     async function saveCustomer(){const id=document.getElementById('customerId').value;const body={facility_code:FACILITY,customer_id:id||undefined,full_name:val('customerName'),full_name_kana:val('customerKana'),phone:val('customerPhone'),status:val('customerStatus'),plan_name:val('customerPlan'),ticket_expires_on:val('customerExpiry')||null,follow_status:val('customerFollow'),next_follow_on:val('customerFollowDate')||null,goal:val('customerGoal'),concern:val('customerConcern'),precautions:val('customerPrecautions'),owner_note:val('customerNote')};try{const d=await api('/api/admin/customers/upsert',{method:'POST',body});state.selectedCustomer=d.customer;toast('会員情報を保存しました。');openCustomerEditor(d.customer);await loadCustomers();}catch(e){toast(e.message,true);}}
     async function changeTickets(amount){if(!state.selectedCustomer)return;try{const d=await api('/api/admin/customers/tickets',{method:'POST',body:{facility_code:FACILITY,customer_id:state.selectedCustomer.id,change_amount:amount,reason:'PC管理画面で回数調整'}});state.selectedCustomer=d.customer;setText('ticketBalanceText',`残り${Number(d.customer.ticket_remaining||0)}回`);toast('回数券を更新しました。');await loadCustomers();}catch(e){toast(e.message,true);}}
@@ -299,9 +448,26 @@
     function sessionRecordBody(){const reservation=state.selectedReservation;return{facility_code:FACILITY,reservation_id:reservation?.id,record_status:reservation?.status==='completed'?'completed':'draft',condition_note:val('sessionCondition'),training_summary:val('sessionTrainingSummary'),trainer_note:val('sessionTrainerNote'),next_focus:val('sessionNextFocus'),member_visible_comment:val('sessionMemberComment'),created_by:'owner_pc'};}
     async function saveSessionRecord(){if(!state.selectedReservation)return toast('予約を選択してください。',true);try{await api('/api/admin/session-records/upsert',{method:'POST',body:sessionRecordBody()});toast(state.selectedReservation.status==='completed'?'セッション記録を更新しました。':'下書きを保存しました。');if(state.selectedReservation.customer_id)loadCustomerHistory(state.selectedReservation.customer_id);}catch(e){toast(e.message,true);}}
     async function completeSession(){const reservation=state.selectedReservation;if(!reservation)return toast('予約を選択してください。',true);if(!val('sessionTrainingSummary'))return toast('実施したトレーニング内容を入力してください。',true);if(!confirm('記録を保存してセッションを完了し、回数券対象メニューは1回減算します。よろしいですか？'))return;const body=sessionRecordBody();delete body.record_status;try{const data=await api('/api/admin/sessions/complete',{method:'POST',body});toast(data.idempotent?'完了済み予約の記録を更新しました。':'セッションを完了しました。');closeModal('sessionModal');await loadDashboard();if(state.view==='reservations')await loadReservations();if(reservation.customer_id)loadCustomerHistory(reservation.customer_id);}catch(e){toast(e.message,true);}}
-    async function loadCustomerHistory(customerId){const sessions=document.getElementById('customerSessionHistory'),ledger=document.getElementById('customerTicketLedger');sessions.innerHTML=loading();ledger.innerHTML=loading();try{const [sessionData,ticketData]=await Promise.all([api(`/api/admin/customers/${encodeURIComponent(customerId)}/session-records?facility_code=${FACILITY}&limit=20`),api(`/api/admin/customers/${encodeURIComponent(customerId)}/ticket-ledger?facility_code=${FACILITY}&limit=30`)]);sessions.innerHTML=sessionData.session_records?.length?sessionData.session_records.map(sessionHistoryEntry).join(''):empty('セッション記録はまだありません。');ledger.innerHTML=ticketData.ticket_ledger?.length?ticketData.ticket_ledger.map(ticketLedgerEntry).join(''):empty('回数券履歴はまだありません。');}catch(e){sessions.innerHTML=empty(e.message);ledger.innerHTML=empty(e.message);}}
+    async function loadCustomerHistory(customerId){const sessions=document.getElementById('customerSessionHistory'),ledger=document.getElementById('customerTicketLedger'),memberships=document.getElementById('customerMembershipHistory');sessions.innerHTML=loading();ledger.innerHTML=loading();memberships.innerHTML=loading();try{const [sessionData,ticketData,membershipData]=await Promise.all([api(`/api/admin/customers/${encodeURIComponent(customerId)}/session-records?facility_code=${FACILITY}&limit=20`),api(`/api/admin/customers/${encodeURIComponent(customerId)}/ticket-ledger?facility_code=${FACILITY}&limit=30`),api(`/api/admin/customers/${encodeURIComponent(customerId)}/memberships?facility_code=${FACILITY}&limit=30`)]);sessions.innerHTML=sessionData.session_records?.length?sessionData.session_records.map(sessionHistoryEntry).join(''):empty('セッション記録はまだありません。');ledger.innerHTML=ticketData.ticket_ledger?.length?ticketData.ticket_ledger.map(ticketLedgerEntry).join(''):empty('回数券履歴はまだありません。');memberships.innerHTML=membershipData.memberships?.length?membershipData.memberships.map(membershipHistoryEntry).join(''):empty('入会・プラン履歴はまだありません。');}catch(e){sessions.innerHTML=empty(e.message);ledger.innerHTML=empty(e.message);memberships.innerHTML=empty(e.message);}}
     function sessionHistoryEntry(record){return `<div class="history-entry"><strong>${esc(formatDateTime(record.performed_at))}　${esc(record.record_status==='completed'?'完了記録':'下書き')}</strong><small>${esc(record.training_summary||'実施内容未入力')}</small>${record.next_focus?`<small>次回：${esc(record.next_focus)}</small>`:''}<div class="item-actions"><button class="btn btn-soft" type="button" onclick="openSessionRecord('${attr(record.reservation_id)}')">開く</button></div></div>`;}
-    function ticketLedgerEntry(row){const amount=Number(row.change_amount||0);return `<div class="history-entry"><strong>${amount>0?'+':''}${amount}回　残り${Number(row.balance_after||0)}回</strong><small>${esc(formatDateTime(row.created_at))} / ${esc(row.reason||'回数調整')} / ${esc(row.created_by||'system')}</small></div>`;}
+    function ticketLedgerEntry(row){const amount=Number(row.change_amount||0);return `<div class="history-entry"><strong>${amount>0?'+':''}${amount}回　残り${Number(row.balance_after||0)}回</strong><small>${esc(formatDateTime(row.created_at))} / ${esc(row.reason||'回数調整')} / ${esc(row.created_by||'system')}</small></div>`;}function membershipHistoryEntry(row){return `<div class="history-entry"><strong>${esc(row.plan_name_snapshot||row.plan_code||'プラン')}</strong><small>${esc(formatDate(row.started_on))}開始 / ${esc(formatDate(row.expires_on))}まで / ${Number(row.included_sessions||0)}回</small><small>${esc(membershipStatusLabel(row.status))} / ${esc(row.source||'manual')}</small></div>`;}
+
+    async function loadTrialPipeline(silent=false){const list=document.getElementById('trialPipelineList'),plans=document.getElementById('planList');if(!silent){list.innerHTML=loading();plans.innerHTML=loading();}try{const [pipelineData,planData]=await Promise.all([api(`/api/admin/trial-pipeline?facility_code=${FACILITY}`),api(`/api/admin/plans?facility_code=${FACILITY}&include_inactive=1`)]);state.trialPipeline=pipelineData;state.plans=planData.plans||[];const counts=pipelineData.counts||{},items=pipelineData.pipeline||[];setText('trialCountTotal',counts.total||0);setText('trialCountTrial',counts.trial||0);setText('trialCountConsidering',counts.considering||0);setText('trialCountDue',counts.follow_due||0);setText('trialPipelineCount',items.length);setText('planCount',state.plans.filter(plan=>plan.is_active).length);setText('navTrials',counts.follow_due||items.length);list.innerHTML=items.length?items.sort(trialSort).map(trialPipelineCard).join(''):empty('体験者・検討中の方はいません。');plans.innerHTML=state.plans.length?state.plans.map(planCard).join(''):empty('入会プランがありません。');}catch(e){if(!silent){list.innerHTML=empty(e.message);plans.innerHTML=empty(e.message);}toast(e.message,true);}}
+    function trialSort(a,b){const today=todayYmd(),ad=a.customer?.status==='continuation'&&(!a.customer?.next_follow_on||a.customer.next_follow_on<=today),bd=b.customer?.status==='continuation'&&(!b.customer?.next_follow_on||b.customer.next_follow_on<=today);if(ad!==bd)return ad?-1:1;return String(b.latest_trial_reservation?.start_at||b.customer?.updated_at||'').localeCompare(String(a.latest_trial_reservation?.start_at||a.customer?.updated_at||''));}
+    function trialPipelineCard(item){const c=item.customer||{},r=item.latest_trial_reservation,d=item.latest_decision,due=c.status==='continuation'&&(!c.next_follow_on||c.next_follow_on<=todayYmd()),decision=d?`${trialDecisionLabel(d.decision)}${d.reason?`｜${d.reason}`:''}`:'結果未記録';return `<div class="trial-card ${due?'due':''}"><div class="item-top"><div><div class="item-name">${esc(c.full_name||'氏名未登録')}　<span class="badge ${c.status==='trial'?'blue':'amber'}">${esc(customerStatus(c.status))}</span></div><div class="trial-meta">${esc(c.customer_no||'')}　${esc(c.phone||'電話未登録')}<br>体験：${r?esc(formatDateTime(r.start_at)):'予約なし'} / 次回連絡：${esc(c.next_follow_on||'-')}</div></div>${due?'<span class="badge red">期限到来</span>':''}</div><div class="decision-line">${esc(decision)}</div><div class="item-actions"><button class="btn btn-green" type="button" onclick="openAdmission('${attr(c.id)}')">入会処理</button><button class="btn btn-blue" type="button" onclick="openTrialDecision('${attr(c.id)}','considering')">検討中</button><button class="btn btn-amber" type="button" onclick="openTrialDecision('${attr(c.id)}','follow_up')">再連絡</button><button class="btn btn-red" type="button" onclick="openTrialDecision('${attr(c.id)}','declined')">見送り</button><button class="btn btn-soft" type="button" onclick="openCustomerById('${attr(c.id)}')">会員情報</button></div></div>`;}
+    function planCard(plan){return `<div class="plan-card ${plan.is_active?'':'inactive'}"><div class="item-top"><div><div class="item-name">${esc(plan.plan_name)}</div><div class="item-meta">${esc(planTypeLabel(plan.plan_type))} / ${Number(plan.included_sessions||0)}回 / ${Number(plan.validity_days||0)}日</div></div><span class="badge ${plan.is_active?'green':''}">${plan.is_active?'利用中':'停止'}</span></div><div class="plan-price">${plan.price_yen===null?'料金未設定':formatYen(plan.price_yen)}</div>${plan.description?`<div class="trial-meta">${esc(plan.description)}</div>`:''}<div class="item-actions"><button class="btn btn-soft" type="button" onclick="openPlanEditor('${attr(plan.plan_code)}')">編集</button></div></div>`;}
+    function openTrialDecision(customerId,decision){const item=(state.trialPipeline?.pipeline||[]).find(row=>row.customer?.id===customerId);if(!item)return toast('体験者情報が見つかりません。',true);state.selectedTrial=item;setText('trialDecisionTitle',`${item.customer.full_name} 様｜体験結果`);valSet('trialDecisionValue',decision||item.latest_decision?.decision||'considering');valSet('trialDecisionReason',item.latest_decision?.reason||'');valSet('trialNextFollowOn',item.customer.next_follow_on||addDaysYmd(todayYmd(),3));toggleTrialFollowDate();document.getElementById('trialDecisionModal').classList.remove('hidden');}
+    function toggleTrialFollowDate(){const decision=val('trialDecisionValue'),input=document.getElementById('trialNextFollowOn');input.disabled=decision==='declined';if(input.disabled)input.value='';else if(!input.value)input.value=addDaysYmd(todayYmd(),3);}
+    async function saveTrialDecision(){const item=state.selectedTrial;if(!item)return toast('体験者を選択してください。',true);const body={facility_code:FACILITY,customer_id:item.customer.id,reservation_id:item.latest_trial_reservation?.id||null,decision:val('trialDecisionValue'),reason:val('trialDecisionReason'),next_follow_on:val('trialNextFollowOn')||null,created_by:'owner_pc'};try{await api('/api/admin/trial-decisions',{method:'POST',body});toast('体験結果を保存しました。');closeModal('trialDecisionModal');await loadTrialPipeline();}catch(e){toast(e.message,true);}}
+    function openAdmission(customerId){const item=(state.trialPipeline?.pipeline||[]).find(row=>row.customer?.id===customerId);if(!item)return toast('体験者情報が見つかりません。',true);const active=state.plans.filter(plan=>plan.is_active);if(!active.length)return toast('利用中の入会プランを先に登録してください。',true);state.selectedTrial=item;setText('admissionTitle',`${item.customer.full_name} 様｜入会処理`);document.getElementById('admissionPlan').innerHTML=active.map(plan=>`<option value="${attr(plan.plan_code)}">${esc(plan.plan_name)}（${Number(plan.included_sessions||0)}回・${Number(plan.validity_days||0)}日）</option>`).join('');valSet('admissionStartedOn',todayYmd());valSet('admissionNote','');renderAdmissionPreview();document.getElementById('admissionModal').classList.remove('hidden');}
+    function renderAdmissionPreview(){const plan=state.plans.find(item=>item.plan_code===val('admissionPlan'));setText('admissionPreview',plan?`${plan.plan_name}｜${Number(plan.included_sessions||0)}回付与｜開始日から${Number(plan.validity_days||0)}日有効｜${plan.price_yen===null?'料金未設定':formatYen(plan.price_yen)}`:'プランを選択してください。');}
+    async function admitCustomer(){const item=state.selectedTrial,planCode=val('admissionPlan'),startedOn=val('admissionStartedOn');if(!item||!planCode||!startedOn)return toast('体験者、プラン、開始日を確認してください。',true);const plan=state.plans.find(row=>row.plan_code===planCode);if(!confirm(`${item.customer.full_name} 様を「${plan?.plan_name||planCode}」で入会処理します。よろしいですか？`))return;try{const data=await api('/api/admin/customers/admit',{method:'POST',body:{facility_code:FACILITY,customer_id:item.customer.id,plan_code:planCode,started_on:startedOn,source:'trial',admission_note:val('admissionNote'),created_by:'owner_pc'}});toast(data.idempotent?'同じ入会処理は完了済みです。二重付与はありません。':'入会処理が完了しました。');closeModal('admissionModal');await loadTrialPipeline();await loadCustomers();}catch(e){toast(e.message,true);}}
+    function openPlanEditor(planCode=''){const plan=state.plans.find(item=>item.plan_code===planCode)||null;state.selectedPlan=plan;setText('planModalTitle',plan?'入会プランを編集':'入会プランを追加');valSet('planCode',plan?.plan_code||'');document.getElementById('planCode').readOnly=Boolean(plan);valSet('planName',plan?.plan_name||'');valSet('planType',plan?.plan_type||'ticket');valSet('planIncludedSessions',plan?.included_sessions??8);valSet('planValidityDays',plan?.validity_days??90);valSet('planPriceYen',plan?.price_yen??'');valSet('planSortOrder',plan?.sort_order??100);valSet('planActive',plan?.is_active===false?'false':'true');valSet('planDescription',plan?.description||'');document.getElementById('planModal').classList.remove('hidden');}
+    async function savePlan(){const body={facility_code:FACILITY,plan_code:val('planCode'),plan_name:val('planName'),plan_type:val('planType'),included_sessions:Number(val('planIncludedSessions')),validity_days:Number(val('planValidityDays')),price_yen:val('planPriceYen')===''?null:Number(val('planPriceYen')),sort_order:Number(val('planSortOrder')||100),is_active:val('planActive')==='true',description:val('planDescription'),created_by:'owner_pc'};if(!body.plan_code||!body.plan_name)return toast('プランコードとプラン名を入力してください。',true);try{await api('/api/admin/plans/upsert',{method:'POST',body});toast('入会プランを保存しました。');closeModal('planModal');await loadTrialPipeline();}catch(e){toast(e.message,true);}}
+    function trialDecisionLabel(value){return ({considering:'検討中',follow_up:'再連絡',declined:'見送り'})[value]||value||'未記録';}
+    function planTypeLabel(value){return ({ticket:'回数券',monthly:'月額',other:'その他'})[value]||value||'-';}
+    function membershipStatusLabel(value){return ({active:'利用中',expired:'期限終了',cancelled:'取消'})[value]||value||'-';}
+    function formatYen(value){return `${Number(value||0).toLocaleString('ja-JP')}円`;}
     async function loadInquiries(){const list=document.getElementById('inquiryList');list.innerHTML=loading();try{const d=await api(`/api/admin/inquiries?facility_code=${FACILITY}`);state.inquiries=d.inquiries||[];setText('navInquiries',state.inquiries.filter(x=>x.status!=='closed').length);list.innerHTML=state.inquiries.length?state.inquiries.map(inquiryCard).join(''):empty('未対応の相談はありません。');}catch(e){list.innerHTML=empty(e.message);}}
     function inquiryCard(i){const c=i.customer||{};return `<div class="item"><div class="item-top"><div><div class="item-name">${esc(c.full_name||'会員')}｜${esc(inquiryType(i.inquiry_type))}</div><div class="item-meta">${esc(formatDateTime(i.created_at))}<br>${esc(i.message)}</div></div><span class="badge ${i.status==='closed'?'green':i.status==='in_progress'?'blue':'red'}">${esc(i.status==='closed'?'完了':i.status==='in_progress'?'対応中':'未対応')}</span></div><div class="item-actions"><button class="btn btn-blue" onclick="updateInquiry('${attr(i.id)}','in_progress')">対応中</button><button class="btn btn-green" onclick="updateInquiry('${attr(i.id)}','closed')">完了</button>${c.id?`<button class="btn btn-soft" onclick="openCustomerById('${attr(c.id)}')">会員情報</button>`:''}</div></div>`;}
     async function updateInquiry(id,status){try{await api('/api/admin/inquiries/status',{method:'POST',body:{facility_code:FACILITY,inquiry_id:id,status}});toast('相談状態を更新しました。');loadInquiries();}catch(e){toast(e.message,true);}}
