@@ -1,4 +1,4 @@
-name: STEP GYM-NEXT-2 - Owner Today UX
+name: STEP GYM-NEXT-2-R2 - Owner Today UX
 
 on:
   push:
@@ -128,7 +128,34 @@ jobs:
             UPLOAD_PARENT="$(git rev-parse HEAD)"
           fi
 
+          # R2: skip earlier workflow-only upload/fix commits.
+          STEP_BASE_SHA="${UPLOAD_PARENT}"
+          while git rev-parse "${STEP_BASE_SHA}^" >/dev/null 2>&1; do
+            if ! git cat-file -e "${STEP_BASE_SHA}:${WORKFLOW_FILE}" 2>/dev/null; then
+              break
+            fi
+
+            CANDIDATE_CHANGED="$(
+              git diff --name-only "${STEP_BASE_SHA}^" "${STEP_BASE_SHA}" \
+                | sed '/^$/d' || true
+            )"
+            CANDIDATE_UNEXPECTED="$(
+              printf '%s\n' "${CANDIDATE_CHANGED}" \
+                | grep -v -F -x "${WORKFLOW_FILE}" \
+                | sed '/^$/d' || true
+            )"
+
+            if printf '%s\n' "${CANDIDATE_CHANGED}" | grep -F -x -q "${WORKFLOW_FILE}" \
+              && [[ -z "${CANDIDATE_UNEXPECTED}" ]]; then
+              STEP_BASE_SHA="$(git rev-parse "${STEP_BASE_SHA}^")"
+              continue
+            fi
+            break
+          done
+
           echo "UPLOAD_PARENT=${UPLOAD_PARENT}" >> "$GITHUB_ENV"
+          echo "STEP_BASE_SHA=${STEP_BASE_SHA}" >> "$GITHUB_ENV"
+          echo "Protected pre-NEXT-2 application commit: ${STEP_BASE_SHA}"
 
       - name: Protect pre-NEXT-2 version with backup tag
         shell: bash
@@ -138,14 +165,14 @@ jobs:
 
           if git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
             EXISTING_SHA="$(git rev-list -n 1 "${BACKUP_TAG}")"
-            if [[ "${EXISTING_SHA}" != "${UPLOAD_PARENT}" ]]; then
+            if [[ "${EXISTING_SHA}" != "${STEP_BASE_SHA}" ]]; then
               echo "::error::Backup tag already points to another commit."
-              echo "Expected: ${UPLOAD_PARENT}"
+              echo "Expected: ${STEP_BASE_SHA}"
               echo "Existing: ${EXISTING_SHA}"
               exit 1
             fi
           else
-            git tag -a "${BACKUP_TAG}" "${UPLOAD_PARENT}" \
+            git tag -a "${BACKUP_TAG}" "${STEP_BASE_SHA}" \
               -m "DPRO パーソナルジム LINE before GYM-NEXT-2"
             git push origin "refs/tags/${BACKUP_TAG}"
           fi
@@ -437,6 +464,9 @@ jobs:
             node --check "${script}"
           done
 
+          cp .gym-next-2-tmp/html-audit.json /tmp/GYM-NEXT-2-html-audit.json
+          rm -rf .gym-next-2-tmp
+
       - name: Confirm existing API usage is unchanged
         shell: bash
         run: |
@@ -544,6 +574,11 @@ jobs:
               | sed '/^$/d' || true
           )"
 
+          if [[ -e ".gym-next-2-tmp" ]]; then
+            echo "::error::Temporary validation directory was not removed."
+            exit 1
+          fi
+
           if [[ "${CHANGED}" != "${TARGET_FILE}" ]]; then
             echo "::error::Unexpected files changed before application commit."
             echo "${CHANGED}"
@@ -600,7 +635,7 @@ jobs:
           COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
 
           cat > "${STEP_DIR}/GYM-NEXT-2.md" <<EOF
-          # DPRO パーソナルジム LINE｜GYM-NEXT-2
+          # DPRO パーソナルジム LINE｜GYM-NEXT-2-R2
 
           - 結果: OK
           - 対象ファイル: dashboard.html
@@ -609,6 +644,9 @@ jobs:
           - 完了日時: ${COMPLETED_AT}
           - 公開確認日時: ${PUBLIC_VERIFIED_AT}
           - Actions: ${RUN_URL}
+          - Workflow修正版: R2
+          - R2修正: 検査用一時フォルダをGit変更判定前に削除
+          - R2安全対策: YMLのみの修正コミットを除外してNEXT-2開始前を保護
 
           ## 実施した変更
 
@@ -647,6 +685,7 @@ jobs:
           repository: "${GITHUB_REPOSITORY}"
           branch: "main"
           current_step: "GYM-NEXT-2-COMPLETE"
+          workflow_revision: "R2"
           next_step: "${NEXT_STEP}"
           result: "OK"
           baseline_config_version: "GYM-6-R2-CONFIG-RESTORE-URL-HEADER-FIX-20260717"
@@ -682,7 +721,7 @@ jobs:
 
           ruby -e "require 'yaml'; YAML.load_file('${LEDGER_FILE}', aliases: true); puts 'Ledger YAML OK'"
 
-          cp .gym-next-2-tmp/html-audit.json "${STEP_DIR}/GYM-NEXT-2-html-audit.json"
+          cp /tmp/GYM-NEXT-2-html-audit.json "${STEP_DIR}/GYM-NEXT-2-html-audit.json"
           {
             echo "before_sha256=${BEFORE_SHA256}"
             echo "after_sha256=${AFTER_SHA256}"
@@ -721,7 +760,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## GYM-NEXT-2 COMPLETE"
+            echo "## GYM-NEXT-2-R2 COMPLETE"
             echo ""
             echo "- Changed file: \`dashboard.html\`"
             echo "- Backup tag: \`${BACKUP_TAG}\`"
