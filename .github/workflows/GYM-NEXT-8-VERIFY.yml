@@ -1,0 +1,560 @@
+name: STEP GYM-NEXT-8-VERIFY - Retention Follow-up Board UI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/GYM-NEXT-8-VERIFY.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gym-next-8-verify-main
+  cancel-in-progress: false
+
+env:
+  STEP_NAME: GYM-NEXT-8-VERIFY
+  CURRENT_STEP_REQUIRED: GYM-NEXT-8-PREPARED
+  NEXT_STEP: GYM-NEXT-9
+  WORKFLOW_FILE: .github/workflows/GYM-NEXT-8-VERIFY.yml
+  LEDGER_FILE: dpro-next/gym/next-ledger.yml
+  STEP_DIR: dpro-next/gym/steps
+  BACKUP_TAG: backup-gym-before-next-8-verify-20260725
+  PUBLIC_BASE: https://dpromstk2000-lab.github.io/liff-gym-demo
+  WORKER_BASE: https://dpro-gym-line-api.dpromstk2000.workers.dev
+  EXPECTED_WORKER_VERSION: GYM-NEXT-8-WORKER-R2-20260725
+  PATCH_SCRIPT_B64: "CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAoKZGVmIHJlcGxhY2Vfb25jZSh0ZXh0LCBvbGQsIG5ldywgbGFiZWwpOgogICAgY291bnQgPSB0ZXh0LmNvdW50KG9sZCkKICAgIGlmIGNvdW50ICE9IDE6CiAgICAgICAgcmFpc2UgU3lzdGVtRXhpdCgKICAgICAgICAgICAgZiJ7bGFiZWx9OiBleHBlY3RlZCBleGFjdGx5IDEgbWF0Y2gsIGZvdW5kIHtjb3VudH0iCiAgICAgICAgKQogICAgcmV0dXJuIHRleHQucmVwbGFjZShvbGQsIG5ldywgMSkKCmRlZiBpbnNlcnRfYmVmb3JlX29uY2UodGV4dCwgbWFya2VyLCBhZGRpdGlvbiwgbGFiZWwpOgogICAgcmV0dXJuIHJlcGxhY2Vfb25jZSh0ZXh0LCBtYXJrZXIsIGFkZGl0aW9uICsgbWFya2VyLCBsYWJlbCkKCnBhdGggPSBQYXRoKCJkYXNoYm9hcmQuaHRtbCIpCmh0bWwgPSBwYXRoLnJlYWRfdGV4dChlbmNvZGluZz0idXRmLTgiKQoKaHRtbCA9IHJlcGxhY2Vfb25jZSgKICAgIGh0bWwsCiAgICAnPGJvZHkgZGF0YS1kcHJvLW5leHQtc3RlcD0iR1lNLU5FWFQtNSI+JywKICAgICc8Ym9keSBkYXRhLWRwcm8tbmV4dC1zdGVwPSJHWU0tTkVYVC04Ij4nLAogICAgImRhc2hib2FyZCBORVhUIG1hcmtlciIsCikKCmZvbGxvd19jc3MgPSByJycnCiAgICAuZm9sbG93LXN0YXRzIHsgZGlzcGxheTpncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6cmVwZWF0KDQsMWZyKTsgZ2FwOjEwcHg7IG1hcmdpbi1ib3R0b206MTRweDsgfQogICAgLmZvbGxvdy1maWx0ZXJzIHsgZGlzcGxheTpncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6bWlubWF4KDE3MHB4LDEuMjVmcikgbWlubWF4KDE1MHB4LC44ZnIpIG1pbm1heCgxNTBweCwuOGZyKSBtaW5tYXgoMTUwcHgsLjhmcikgYXV0bzsgZ2FwOjlweDsgYWxpZ24taXRlbXM6ZW5kOyB9CiAgICAuZm9sbG93LWJvYXJkIHsgZGlzcGxheTpncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6cmVwZWF0KDMsbWlubWF4KDAsMWZyKSk7IGdhcDoxNHB4OyBhbGlnbi1pdGVtczpzdGFydDsgfQogICAgLmZvbGxvdy1jb2x1bW4geyBtaW4td2lkdGg6MDsgfQogICAgLmZvbGxvdy1jb2x1bW4udXJnZW50IHsgYm9yZGVyOjJweCBzb2xpZCAjZWZiMGI4OyBiYWNrZ3JvdW5kOiNmZmY3Zjg7IH0KICAgIC5mb2xsb3ctY29sdW1uLnRvZGF5IHsgYm9yZGVyOjJweCBzb2xpZCAjZWRjYTgyOyBiYWNrZ3JvdW5kOiNmZmZhZjA7IH0KICAgIC5mb2xsb3ctY29sdW1uLmZ1dHVyZSB7IGJvcmRlcjoycHggc29saWQgI2E2ZDVjMzsgYmFja2dyb3VuZDojZjRmYmY4OyB9CiAgICAuZm9sbG93LWNhcmQgeyBib3JkZXI6MXB4IHNvbGlkIHZhcigtLWxpbmUpOyBib3JkZXItcmFkaXVzOjE1cHg7IHBhZGRpbmc6MTNweDsgYmFja2dyb3VuZDojZmZmOyB9CiAgICAuZm9sbG93LWNhcmQgKyAuZm9sbG93LWNhcmQgeyBtYXJnaW4tdG9wOjlweDsgfQogICAgLmZvbGxvdy1jYXJkLnVyZ2VudCB7IGJvcmRlci1sZWZ0OjZweCBzb2xpZCB2YXIoLS1yZWQpOyB9CiAgICAuZm9sbG93LWNhcmQudG9kYXkgeyBib3JkZXItbGVmdDo2cHggc29saWQgdmFyKC0tYW1iZXIpOyB9CiAgICAuZm9sbG93LWNhcmQuZm9sbG93IHsgYm9yZGVyLWxlZnQ6NnB4IHNvbGlkIHZhcigtLWdyZWVuKTsgfQogICAgLmZvbGxvdy1yZWFzb25zIHsgZGlzcGxheTpmbGV4OyBmbGV4LXdyYXA6d3JhcDsgZ2FwOjZweDsgbWFyZ2luLXRvcDo5cHg7IH0KICAgIC5yZWFzb24tY2hpcCB7IGRpc3BsYXk6aW5saW5lLWZsZXg7IGJvcmRlci1yYWRpdXM6OTk5cHg7IHBhZGRpbmc6NHB4IDhweDsgY29sb3I6IzRjNWE3MDsgYmFja2dyb3VuZDojZTllZWY1OyBmb250LXNpemU6LjY4cmVtOyBmb250LXdlaWdodDo5MDA7IH0KICAgIC5mb2xsb3ctZGV0YWlsIHsgZGlzcGxheTpncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6MWZyIDFmcjsgZ2FwOjdweDsgbWFyZ2luLXRvcDoxMHB4OyB9CiAgICAuZm9sbG93LWRldGFpbCBkaXYgeyBib3JkZXItcmFkaXVzOjExcHg7IHBhZGRpbmc6OHB4IDlweDsgY29sb3I6IzUyNjE3NzsgYmFja2dyb3VuZDojZjFmNGY4OyBmb250LXNpemU6Ljc2cmVtOyB9CiAgICAuZm9sbG93LWRldGFpbCBzdHJvbmcgeyBkaXNwbGF5OmJsb2NrOyBjb2xvcjp2YXIoLS1uYXZ5KTsgZm9udC1zaXplOi44NXJlbTsgfQogICAgLmZvbGxvdy1tZXNzYWdlLXByZXZpZXcgeyBtYXJnaW4tdG9wOjEwcHg7IGJvcmRlci1yYWRpdXM6MTJweDsgcGFkZGluZzo5cHggMTFweDsgY29sb3I6IzE3NGRhYzsgYmFja2dyb3VuZDojZWFmMmZmOyBmb250LXNpemU6Ljc3cmVtOyB9CiAgICAuY29weS1vbmx5LW5vdGUgeyBib3JkZXItcmFkaXVzOjEzcHg7IHBhZGRpbmc6MTBweCAxMnB4OyBtYXJnaW4tYm90dG9tOjE0cHg7IGNvbG9yOiMwNzVmNDM7IGJhY2tncm91bmQ6I2U4ZjhmMTsgZm9udC1zaXplOi44MnJlbTsgZm9udC13ZWlnaHQ6ODUwOyB9CiAgICBAbWVkaWEgKG1heC13aWR0aDoxMTgwcHgpIHsgLmZvbGxvdy1ib2FyZHtncmlkLXRlbXBsYXRlLWNvbHVtbnM6MWZyfS5mb2xsb3ctc3RhdHN7Z3JpZC10ZW1wbGF0ZS1jb2x1bW5zOjFmciAxZnJ9IH0KICAgIEBtZWRpYSAobWF4LXdpZHRoOjc2MHB4KSB7IC5mb2xsb3ctZmlsdGVyc3tncmlkLXRlbXBsYXRlLWNvbHVtbnM6MWZyIDFmcn0uZm9sbG93LWZpbHRlcnMgLmJ0bntncmlkLWNvbHVtbjoxLy0xfS5mb2xsb3ctZGV0YWlse2dyaWQtdGVtcGxhdGUtY29sdW1uczoxZnJ9IH0KJycnCmh0bWwgPSBpbnNlcnRfYmVmb3JlX29uY2UoCiAgICBodG1sLAogICAgIiAgICAudG9hc3QgeyBwb3NpdGlvbjpmaXhlZDsiLAogICAgZm9sbG93X2NzcywKICAgICJmb2xsb3ctdXAgQ1NTIiwKKQoKb2xkX25hdiA9ICcnJyAgICAgICAgPGJ1dHRvbiBjbGFzcz0ibmF2LWJ0biIgZGF0YS12aWV3PSJ0cmlhbHMiIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0ic2hvd1ZpZXcoJ3RyaWFscycpIj7kvZPpqJPjg7vlhaXkvJogPHNwYW4gY2xhc3M9Im5hdi1jb3VudCIgaWQ9Im5hdlRyaWFscyI+LTwvc3Bhbj48L2J1dHRvbj4KICAgICAgICA8YnV0dG9uIGNsYXNzPSJuYXYtYnRuIiBkYXRhLXZpZXc9ImlucXVpcmllcyIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJzaG93VmlldygnaW5xdWlyaWVzJykiPuebuOirh+ODu+mAo+e1oSA8c3BhbiBjbGFzcz0ibmF2LWNvdW50IiBpZD0ibmF2SW5xdWlyaWVzIj4tPC9zcGFuPjwvYnV0dG9uPicnJwpuZXdfbmF2ID0gJycnICAgICAgICA8YnV0dG9uIGNsYXNzPSJuYXYtYnRuIiBkYXRhLXZpZXc9InRyaWFscyIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJzaG93VmlldygndHJpYWxzJykiPuS9k+mok+ODu+WFpeS8miA8c3BhbiBjbGFzcz0ibmF2LWNvdW50IiBpZD0ibmF2VHJpYWxzIj4tPC9zcGFuPjwvYnV0dG9uPgogICAgICAgIDxidXR0b24gY2xhc3M9Im5hdi1idG4iIGRhdGEtdmlldz0iZm9sbG93dXBzIiB0eXBlPSJidXR0b24iIG9uY2xpY2s9InNob3dWaWV3KCdmb2xsb3d1cHMnKSI+57aZ57aa44OV44Kp44Ot44O8IDxzcGFuIGNsYXNzPSJuYXYtY291bnQiIGlkPSJuYXZGb2xsb3dVcHMiPi08L3NwYW4+PC9idXR0b24+CiAgICAgICAgPGJ1dHRvbiBjbGFzcz0ibmF2LWJ0biIgZGF0YS12aWV3PSJpbnF1aXJpZXMiIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0ic2hvd1ZpZXcoJ2lucXVpcmllcycpIj7nm7joq4fjg7vpgKPntaEgPHNwYW4gY2xhc3M9Im5hdi1jb3VudCIgaWQ9Im5hdklucXVpcmllcyI+LTwvc3Bhbj48L2J1dHRvbj4nJycKaHRtbCA9IHJlcGxhY2Vfb25jZSgKICAgIGh0bWwsCiAgICBvbGRfbmF2LAogICAgbmV3X25hdiwKICAgICJmb2xsb3ctdXAgbmF2aWdhdGlvbiIsCikKCmZvbGxvd192aWV3ID0gcicnJwogICAgICAgIDxzZWN0aW9uIGNsYXNzPSJ2aWV3IiBpZD0idmlldy1mb2xsb3d1cHMiPgogICAgICAgICAgPGRpdiBjbGFzcz0icGFnZS1oZWFkIj4KICAgICAgICAgICAgPGRpdj4KICAgICAgICAgICAgICA8cCBjbGFzcz0iYnJhbmQiPlJFVEVOVElPTiBGT0xMT1ctVVA8L3A+CiAgICAgICAgICAgICAgPGgyPue2mee2muODu+WGjeadpeW6l+ODleOCqeODreODvDwvaDI+CiAgICAgICAgICAgICAgPHAgY2xhc3M9InN1YiI+6YCj57Wh44GM5b+F6KaB44Gq55CG55Sx44Go5pyf6ZmQ44KS56K66KqN44GX44CB5YCL5Yil5a++5b+c44KS6KiY6Yyy44GX44G+44GZ44CCPC9wPgogICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgPGRpdiBjbGFzcz0icGFnZS1hY3Rpb25zIj4KICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLXNvZnQiIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0ibG9hZEZvbGxvd1VwcygpIj7lho3oqq3ovrw8L2J1dHRvbj4KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICA8ZGl2IGNsYXNzPSJjb3B5LW9ubHktbm90ZSI+CiAgICAgICAgICAgIExJTkXjga/oh6rli5XpgIHkv6HjgZXjgozjgb7jgZvjgpPjgILjgIxMSU5F5paH6Z2i44CN44Gn5YaF5a6544KS56K66KqN44GX44Gm44Kz44OU44O844GX44CB5omL5YuV6YCB5L+h5b6M44Gr44CM5a++5b+c5riI44G/44CN44KS5oq844GX44Gm44GP44Gg44GV44GE44CCCiAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICA8ZGl2IGNsYXNzPSJmb2xsb3ctc3RhdHMiPgogICAgICAgICAgICA8ZGl2IGNsYXNzPSJzdGF0IHJlZCI+PHNwYW4+57eK5oClPC9zcGFuPjxzdHJvbmcgaWQ9ImZvbGxvd0NvdW50VXJnZW50Ij4tPC9zdHJvbmc+PC9kaXY+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InN0YXQiPjxzcGFuPuacrOaXpeWvvuW/nDwvc3Bhbj48c3Ryb25nIGlkPSJmb2xsb3dDb3VudFRvZGF5Ij4tPC9zdHJvbmc+PC9kaXY+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InN0YXQgZ3JlZW4iPjxzcGFuPuS7iuW+jOOBruWAmeijnDwvc3Bhbj48c3Ryb25nIGlkPSJmb2xsb3dDb3VudEZ1dHVyZSI+LTwvc3Ryb25nPjwvZGl2PgogICAgICAgICAgICA8ZGl2IGNsYXNzPSJzdGF0IGJsdWUiPjxzcGFuPuWFqOWAmeijnDwvc3Bhbj48c3Ryb25nIGlkPSJmb2xsb3dDb3VudFRvdGFsIj4tPC9zdHJvbmc+PC9kaXY+CiAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICA8c2VjdGlvbiBjbGFzcz0iY2FyZCI+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvbGxvdy1maWx0ZXJzIj4KICAgICAgICAgICAgICA8ZGl2PgogICAgICAgICAgICAgICAgPGxhYmVsIGZvcj0iZm9sbG93VXBRdWVyeSI+5Lya5ZOh5qSc57SiPC9sYWJlbD4KICAgICAgICAgICAgICAgIDxpbnB1dCBpZD0iZm9sbG93VXBRdWVyeSIgdHlwZT0ic2VhcmNoIiBwbGFjZWhvbGRlcj0i5rCP5ZCN44O76Zu76Kmx55Wq5Y+344O75Lya5ZOh55Wq5Y+3Ij4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICA8ZGl2PgogICAgICAgICAgICAgICAgPGxhYmVsIGZvcj0iZm9sbG93VXBSZWFzb24iPueQhueUsTwvbGFiZWw+CiAgICAgICAgICAgICAgICA8c2VsZWN0IGlkPSJmb2xsb3dVcFJlYXNvbiI+CiAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IiI+44GZ44G544GmPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9ImZvbGxvd19kdWUiPuacn+mZkOWIsOadpTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJsb3dfdGlja2V0cyI+5q6L44KKMeWbnuS7peS4izwvb3B0aW9uPgogICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJleHBpcmluZ19zb29uIj7mnInlirnmnJ/pmZAxNOaXpeS7peWGhTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJub19uZXh0X2Jvb2tpbmciPuasoeWbnuS6iOe0hOOBquOBlzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJjb250aW51YXRpb24iPue2mee2muebuOirh+S4rTwvb3B0aW9uPgogICAgICAgICAgICAgICAgPC9zZWxlY3Q+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgPGRpdj4KICAgICAgICAgICAgICAgIDxsYWJlbCBmb3I9ImZvbGxvd1VwUHJpb3JpdHkiPuWEquWFiOW6pjwvbGFiZWw+CiAgICAgICAgICAgICAgICA8c2VsZWN0IGlkPSJmb2xsb3dVcFByaW9yaXR5Ij4KICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iIj7jgZnjgbnjgaY8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0idXJnZW50Ij7nt4rmgKU8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0idG9kYXkiPuacrOaXpTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJmb2xsb3ciPuS7iuW+jDwvb3B0aW9uPgogICAgICAgICAgICAgICAgPC9zZWxlY3Q+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgPGRpdj4KICAgICAgICAgICAgICAgIDxsYWJlbCBmb3I9ImZvbGxvd1VwRGF0ZSI+5Z+65rqW5pelPC9sYWJlbD4KICAgICAgICAgICAgICAgIDxpbnB1dCBpZD0iZm9sbG93VXBEYXRlIiB0eXBlPSJkYXRlIj4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJidG4gYnRuLWJsdWUiIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0ibG9hZEZvbGxvd1VwcygpIj7ooajnpLo8L2J1dHRvbj4KICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICA8L3NlY3Rpb24+CgogICAgICAgICAgPGRpdiBjbGFzcz0iZm9sbG93LWJvYXJkIj4KICAgICAgICAgICAgPHNlY3Rpb24gY2xhc3M9ImNhcmQgZm9sbG93LWNvbHVtbiB1cmdlbnQiPgogICAgICAgICAgICAgIDxkaXYgY2xhc3M9InNlY3Rpb24taGVhZCI+CiAgICAgICAgICAgICAgICA8ZGl2PjxoMz7nt4rmgKU8L2gzPjxwIGNsYXNzPSJzdWIiPuacn+mZkOi2hemBjuOChOWbnuaVsOe1guS6huOBquOBqeOAgeWFiOOBq+eiuuiqjeOBl+OBvuOBmeOAgjwvcD48L2Rpdj4KICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJzZWN0aW9uLWNvdW50IiBpZD0iZm9sbG93VXJnZW50Qm9hcmRDb3VudCI+MDwvc3Bhbj4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJsaXN0IiBpZD0iZm9sbG93VXJnZW50TGlzdCI+PC9kaXY+CiAgICAgICAgICAgIDwvc2VjdGlvbj4KCiAgICAgICAgICAgIDxzZWN0aW9uIGNsYXNzPSJjYXJkIGZvbGxvdy1jb2x1bW4gdG9kYXkiPgogICAgICAgICAgICAgIDxkaXYgY2xhc3M9InNlY3Rpb24taGVhZCI+CiAgICAgICAgICAgICAgICA8ZGl2PjxoMz7mnKzml6Xlr77lv5w8L2gzPjxwIGNsYXNzPSJzdWIiPuacrOaXpeS4reOBruWAi+WIpeahiOWGheWAmeijnOOBp+OBmeOAgjwvcD48L2Rpdj4KICAgICAgICAgICAgICAgIDxzcGFuIGNsYXNzPSJzZWN0aW9uLWNvdW50IGFtYmVyIiBpZD0iZm9sbG93VG9kYXlCb2FyZENvdW50Ij4wPC9zcGFuPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxkaXYgY2xhc3M9Imxpc3QiIGlkPSJmb2xsb3dUb2RheUxpc3QiPjwvZGl2PgogICAgICAgICAgICA8L3NlY3Rpb24+CgogICAgICAgICAgICA8c2VjdGlvbiBjbGFzcz0iY2FyZCBmb2xsb3ctY29sdW1uIGZ1dHVyZSI+CiAgICAgICAgICAgICAgPGRpdiBjbGFzcz0ic2VjdGlvbi1oZWFkIj4KICAgICAgICAgICAgICAgIDxkaXY+PGgzPuS7iuW+jOOBruWAmeijnDwvaDM+PHAgY2xhc3M9InN1YiI+5YaN5p2l5bqX44KE57aZ57aa55u46KuH44Gu5YCZ6KOc44Gn44GZ44CCPC9wPjwvZGl2PgogICAgICAgICAgICAgICAgPHNwYW4gY2xhc3M9InNlY3Rpb24tY291bnQgZ3JlZW4iIGlkPSJmb2xsb3dGdXR1cmVCb2FyZENvdW50Ij4wPC9zcGFuPgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDxkaXYgY2xhc3M9Imxpc3QiIGlkPSJmb2xsb3dGdXR1cmVMaXN0Ij48L2Rpdj4KICAgICAgICAgICAgPC9zZWN0aW9uPgogICAgICAgICAgPC9kaXY+CiAgICAgICAgPC9zZWN0aW9uPgoKJycnCmh0bWwgPSBpbnNlcnRfYmVmb3JlX29uY2UoCiAgICBodG1sLAogICAgJyAgICAgICAgPHNlY3Rpb24gY2xhc3M9InZpZXciIGlkPSJ2aWV3LWlucXVpcmllcyI+JywKICAgIGZvbGxvd192aWV3LAogICAgImZvbGxvdy11cCB2aWV3IiwKKQoKaHRtbCA9IHJlcGxhY2Vfb25jZSgKICAgIGh0bWwsCiAgICAic2VsZWN0ZWRUcmlhbDpudWxsLHNlbGVjdGVkUGxhbjpudWxsfTsiLAogICAgInNlbGVjdGVkVHJpYWw6bnVsbCxzZWxlY3RlZFBsYW46bnVsbCxmb2xsb3dVcHM6bnVsbCxzZWxlY3RlZEZvbGxvd1VwOm51bGx9OyIsCiAgICAiZm9sbG93LXVwIHN0YXRlIiwKKQoKaHRtbCA9IHJlcGxhY2Vfb25jZSgKICAgIGh0bWwsCiAgICAiZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2Jvb2tpbmdEYXRlJykudmFsdWU9dG9kYXk7cmVuZGVyV2Vla2RheXMoKTsiLAogICAgImRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdib29raW5nRGF0ZScpLnZhbHVlPXRvZGF5O2RvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdmb2xsb3dVcERhdGUnKS52YWx1ZT10b2RheTtyZW5kZXJXZWVrZGF5cygpOyIsCiAgICAiZm9sbG93LXVwIGluaXRpYWwgZGF0ZSIsCikKCm9sZF9zaG93X3ZpZXcgPSAnJydmdW5jdGlvbiBzaG93Vmlldyh2aWV3KXtzdGF0ZS52aWV3PXZpZXc7ZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgnLnZpZXcnKS5mb3JFYWNoKHY9PnYuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJyx2LmlkPT09YHZpZXctJHt2aWV3fWApKTtkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcubmF2LWJ0bicpLmZvckVhY2godj0+di5jbGFzc0xpc3QudG9nZ2xlKCdhY3RpdmUnLHYuZGF0YXNldC52aWV3PT09dmlldykpO2lmKHZpZXc9PT0ncmVzZXJ2YXRpb25zJylsb2FkUmVzZXJ2YXRpb25zKCk7aWYodmlldz09PSdjdXN0b21lcnMnKWxvYWRDdXN0b21lcnMoKTtpZih2aWV3PT09J3RyaWFscycpbG9hZFRyaWFsUGlwZWxpbmUoKTtpZih2aWV3PT09J2lucXVpcmllcycpbG9hZElucXVpcmllcygpO2lmKHZpZXc9PT0nc2V0dGluZ3MnKWxvYWRTZXR0aW5ncygpO2lmKHZpZXc9PT0naGlzdG9yeScpbG9hZEFjdGl2aXR5TG9ncygpO30nJycKbmV3X3Nob3dfdmlldyA9ICcnJ2Z1bmN0aW9uIHNob3dWaWV3KHZpZXcpe3N0YXRlLnZpZXc9dmlldztkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcudmlldycpLmZvckVhY2godj0+di5jbGFzc0xpc3QudG9nZ2xlKCdhY3RpdmUnLHYuaWQ9PT1gdmlldy0ke3ZpZXd9YCkpO2RvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJy5uYXYtYnRuJykuZm9yRWFjaCh2PT52LmNsYXNzTGlzdC50b2dnbGUoJ2FjdGl2ZScsdi5kYXRhc2V0LnZpZXc9PT12aWV3KSk7aWYodmlldz09PSdyZXNlcnZhdGlvbnMnKWxvYWRSZXNlcnZhdGlvbnMoKTtpZih2aWV3PT09J2N1c3RvbWVycycpbG9hZEN1c3RvbWVycygpO2lmKHZpZXc9PT0ndHJpYWxzJylsb2FkVHJpYWxQaXBlbGluZSgpO2lmKHZpZXc9PT0nZm9sbG93dXBzJylsb2FkRm9sbG93VXBzKCk7aWYodmlldz09PSdpbnF1aXJpZXMnKWxvYWRJbnF1aXJpZXMoKTtpZih2aWV3PT09J3NldHRpbmdzJylsb2FkU2V0dGluZ3MoKTtpZih2aWV3PT09J2hpc3RvcnknKWxvYWRBY3Rpdml0eUxvZ3MoKTt9JycnCmh0bWwgPSByZXBsYWNlX29uY2UoCiAgICBodG1sLAogICAgb2xkX3Nob3dfdmlldywKICAgIG5ld19zaG93X3ZpZXcsCiAgICAiZm9sbG93LXVwIHNob3dWaWV3IiwKKQoKaHRtbCA9IHJlcGxhY2Vfb25jZSgKICAgIGh0bWwsCiAgICAic2V0VGV4dCgnbmF2SW5xdWlyaWVzJyxjLm9wZW5faW5xdWlyaWVzKTsiLAogICAgInNldFRleHQoJ25hdklucXVpcmllcycsYy5vcGVuX2lucXVpcmllcyk7c2V0VGV4dCgnbmF2Rm9sbG93VXBzJyxOdW1iZXIoYy5mb2xsb3dfZHVlfHwwKStOdW1iZXIoYy5sb3dfdGlja2V0c3x8MCkpOyIsCiAgICAiZGFzaGJvYXJkIGZvbGxvdyBjb3VudCIsCikKCm9sZF90YXNrID0gJycncmV0dXJuIGA8ZGl2IGNsYXNzPSJpdGVtIj48ZGl2IGNsYXNzPSJpdGVtLXRvcCI+PGRpdj48ZGl2IGNsYXNzPSJpdGVtLW5hbWUiPiR7ZXNjKGMuZnVsbF9uYW1lfHwn44GK5a6i5qeYJyl9PC9kaXY+PGRpdiBjbGFzcz0iaXRlbS1tZXRhIj4ke3QudHlwZT09PSdsb3dfdGlja2V0cyc/YOaui+OCiiR7TnVtYmVyKGMudGlja2V0X3JlbWFpbmluZ3x8MCl95Zue772c57aZ57aa5o+Q5qGIYDon44OV44Kp44Ot44O85pyf6ZmQJ308L2Rpdj48L2Rpdj48c3BhbiBjbGFzcz0iYmFkZ2UgYW1iZXIiPuimgeWvvuW/nDwvc3Bhbj48L2Rpdj48ZGl2IGNsYXNzPSJpdGVtLWFjdGlvbnMiPjxidXR0b24gY2xhc3M9ImJ0biBidG4tYmx1ZSIgb25jbGljaz0ib3BlbkN1c3RvbWVyQnlJZCgnJHthdHRyKGMuaWQpfScpIj7kvJrlk6Hmg4XloLE8L2J1dHRvbj48L2Rpdj48L2Rpdj5gO30nJycKbmV3X3Rhc2sgPSAnJydyZXR1cm4gYDxkaXYgY2xhc3M9Iml0ZW0iPjxkaXYgY2xhc3M9Iml0ZW0tdG9wIj48ZGl2PjxkaXYgY2xhc3M9Iml0ZW0tbmFtZSI+JHtlc2MoYy5mdWxsX25hbWV8fCfjgYrlrqLmp5gnKX08L2Rpdj48ZGl2IGNsYXNzPSJpdGVtLW1ldGEiPiR7dC50eXBlPT09J2xvd190aWNrZXRzJz9g5q6L44KKJHtOdW1iZXIoYy50aWNrZXRfcmVtYWluaW5nfHwwKX3lm57vvZzntpnntprmj5DmoYhgOifjg5Xjgqnjg63jg7zmnJ/pmZAnfTwvZGl2PjwvZGl2PjxzcGFuIGNsYXNzPSJiYWRnZSBhbWJlciI+6KaB5a++5b+cPC9zcGFuPjwvZGl2PjxkaXYgY2xhc3M9Iml0ZW0tYWN0aW9ucyI+PGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1ibHVlIiBvbmNsaWNrPSJzaG93VmlldygnZm9sbG93dXBzJykiPue2mee2muODleOCqeODreODvOOBuDwvYnV0dG9uPjxidXR0b24gY2xhc3M9ImJ0biBidG4tc29mdCIgb25jbGljaz0ib3BlbkN1c3RvbWVyQnlJZCgnJHthdHRyKGMuaWQpfScpIj7kvJrlk6Hmg4XloLE8L2J1dHRvbj48L2Rpdj48L2Rpdj5gO30nJycKaHRtbCA9IHJlcGxhY2Vfb25jZSgKICAgIGh0bWwsCiAgICBvbGRfdGFzaywKICAgIG5ld190YXNrLAogICAgInRvZGF5IGZvbGxvdy11cCB0YXNrIGFjdGlvbiIsCikKCmZvbGxvd19mdW5jdGlvbnMgPSByJycnCiAgICBhc3luYyBmdW5jdGlvbiBsb2FkRm9sbG93VXBzKCl7CiAgICAgIGNvbnN0IGxpc3RJZHM9Wydmb2xsb3dVcmdlbnRMaXN0JywnZm9sbG93VG9kYXlMaXN0JywnZm9sbG93RnV0dXJlTGlzdCddOwogICAgICBsaXN0SWRzLmZvckVhY2goaWQ9PmRvY3VtZW50LmdldEVsZW1lbnRCeUlkKGlkKS5pbm5lckhUTUw9bG9hZGluZygpKTsKICAgICAgY29uc3QgcXVlcnk9dmFsKCdmb2xsb3dVcFF1ZXJ5JykscmVhc29uPXZhbCgnZm9sbG93VXBSZWFzb24nKSxwcmlvcml0eT12YWwoJ2ZvbGxvd1VwUHJpb3JpdHknKSxkYXRlPXZhbCgnZm9sbG93VXBEYXRlJyl8fHRvZGF5WW1kKCk7CiAgICAgIGNvbnN0IHBhcmFtcz1uZXcgVVJMU2VhcmNoUGFyYW1zKHtmYWNpbGl0eV9jb2RlOkZBQ0lMSVRZLGRhdGV9KTsKICAgICAgaWYocXVlcnkpcGFyYW1zLnNldCgncScscXVlcnkpOwogICAgICBpZihyZWFzb24pcGFyYW1zLnNldCgncmVhc29uJyxyZWFzb24pOwogICAgICBpZihwcmlvcml0eSlwYXJhbXMuc2V0KCdwcmlvcml0eScscHJpb3JpdHkpOwogICAgICB0cnl7CiAgICAgICAgY29uc3QgZGF0YT1hd2FpdCBhcGkoYC9hcGkvYWRtaW4vZm9sbG93LXVwcz8ke3BhcmFtc31gKTsKICAgICAgICBpZihkYXRhLmF1dG9tYXRpY19saW5lX3NlbmQhPT1mYWxzZXx8ZGF0YS5tZXNzYWdlX2RlbGl2ZXJ5IT09J2NvcHlfb25seScpewogICAgICAgICAgdGhyb3cgbmV3IEVycm9yKCdMSU5F6YCB5L+h44Gu5a6J5YWo6Kit5a6a44KS56K66KqN44Gn44GN44G+44Gb44KT44CCJyk7CiAgICAgICAgfQogICAgICAgIHN0YXRlLmZvbGxvd1Vwcz1kYXRhOwogICAgICAgIHJlbmRlckZvbGxvd1VwcyhkYXRhKTsKICAgICAgfWNhdGNoKGUpewogICAgICAgIGxpc3RJZHMuZm9yRWFjaChpZD0+ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoaWQpLmlubmVySFRNTD1lbXB0eShlLm1lc3NhZ2UpKTsKICAgICAgICB0b2FzdChlLm1lc3NhZ2UsdHJ1ZSk7CiAgICAgIH0KICAgIH0KCiAgICBmdW5jdGlvbiByZW5kZXJGb2xsb3dVcHMoZGF0YSl7CiAgICAgIGNvbnN0IHJvd3M9ZGF0YS5mb2xsb3dfdXBzfHxbXTsKICAgICAgY29uc3QgZ3JvdXBzPXsKICAgICAgICB1cmdlbnQ6cm93cy5maWx0ZXIocm93PT5yb3cucHJpb3JpdHk9PT0ndXJnZW50JyksCiAgICAgICAgdG9kYXk6cm93cy5maWx0ZXIocm93PT5yb3cucHJpb3JpdHk9PT0ndG9kYXknKSwKICAgICAgICBmb2xsb3c6cm93cy5maWx0ZXIocm93PT5yb3cucHJpb3JpdHk9PT0nZm9sbG93JykKICAgICAgfTsKICAgICAgc2V0VGV4dCgnZm9sbG93Q291bnRVcmdlbnQnLGdyb3Vwcy51cmdlbnQubGVuZ3RoKTsKICAgICAgc2V0VGV4dCgnZm9sbG93Q291bnRUb2RheScsZ3JvdXBzLnRvZGF5Lmxlbmd0aCk7CiAgICAgIHNldFRleHQoJ2ZvbGxvd0NvdW50RnV0dXJlJyxncm91cHMuZm9sbG93Lmxlbmd0aCk7CiAgICAgIHNldFRleHQoJ2ZvbGxvd0NvdW50VG90YWwnLHJvd3MubGVuZ3RoKTsKICAgICAgc2V0VGV4dCgnZm9sbG93VXJnZW50Qm9hcmRDb3VudCcsZ3JvdXBzLnVyZ2VudC5sZW5ndGgpOwogICAgICBzZXRUZXh0KCdmb2xsb3dUb2RheUJvYXJkQ291bnQnLGdyb3Vwcy50b2RheS5sZW5ndGgpOwogICAgICBzZXRUZXh0KCdmb2xsb3dGdXR1cmVCb2FyZENvdW50Jyxncm91cHMuZm9sbG93Lmxlbmd0aCk7CiAgICAgIHNldFRleHQoJ25hdkZvbGxvd1Vwcycscm93cy5sZW5ndGgpOwogICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnZm9sbG93VXJnZW50TGlzdCcpLmlubmVySFRNTD1ncm91cHMudXJnZW50Lmxlbmd0aD9ncm91cHMudXJnZW50Lm1hcChmb2xsb3dVcENhcmQpLmpvaW4oJycpOmVtcHR5KCfnt4rmgKXjga7lgJnoo5zjga/jgYLjgorjgb7jgZvjgpPjgIInKTsKICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ2ZvbGxvd1RvZGF5TGlzdCcpLmlubmVySFRNTD1ncm91cHMudG9kYXkubGVuZ3RoP2dyb3Vwcy50b2RheS5tYXAoZm9sbG93VXBDYXJkKS5qb2luKCcnKTplbXB0eSgn5pys5pel5a++5b+c44Gu5YCZ6KOc44Gv44GC44KK44G+44Gb44KT44CCJyk7CiAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdmb2xsb3dGdXR1cmVMaXN0JykuaW5uZXJIVE1MPWdyb3Vwcy5mb2xsb3cubGVuZ3RoP2dyb3Vwcy5mb2xsb3cubWFwKGZvbGxvd1VwQ2FyZCkuam9pbignJyk6ZW1wdHkoJ+S7iuW+jOOBruWAmeijnOOBr+OBguOCiuOBvuOBm+OCk+OAgicpOwogICAgfQoKICAgIGZ1bmN0aW9uIGZvbGxvd1VwQ2FyZChyb3cpewogICAgICBjb25zdCBjPXJvdy5jdXN0b21lcnx8e30scHJpb3JpdHk9cm93LnByaW9yaXR5fHwnZm9sbG93JzsKICAgICAgY29uc3QgbGF0ZXN0PXJvdy5sYXRlc3RfaW50ZXJhY3Rpb247CiAgICAgIGNvbnN0IHJlYXNvbkh0bWw9KHJvdy5yZWFzb25zfHxbXSkubWFwKHJlYXNvbj0+YDxzcGFuIGNsYXNzPSJyZWFzb24tY2hpcCI+JHtlc2MoZm9sbG93UmVhc29uTGFiZWwocmVhc29uKSl9PC9zcGFuPmApLmpvaW4oJycpOwogICAgICBjb25zdCBwcmV2aWV3PVN0cmluZyhyb3cucmVjb21tZW5kZWRfbWVzc2FnZXx8JycpLnNwbGl0KCdcbicpLmZpbHRlcihCb29sZWFuKS5zbGljZSgwLDIpLmpvaW4oJyAnKTsKICAgICAgY29uc3QgZHVlVGV4dD1yb3cuZHVlX29uP2Zvcm1hdERhdGUocm93LmR1ZV9vbik6J+acn+mZkOacquioreWumic7CiAgICAgIGNvbnN0IGV4cGlyeT1jLnRpY2tldF9leHBpcmVzX29uP2Zvcm1hdERhdGUoYy50aWNrZXRfZXhwaXJlc19vbik6J+acquioreWumic7CiAgICAgIGNvbnN0IGxhc3RWaXNpdD1jLmxhc3RfdmlzaXRfb24/Zm9ybWF0RGF0ZShjLmxhc3RfdmlzaXRfb24pOifmnaXlupfoqJjpjLLjgarjgZcnOwogICAgICByZXR1cm4gYDxhcnRpY2xlIGNsYXNzPSJmb2xsb3ctY2FyZCAke2F0dHIocHJpb3JpdHkpfSI+PGRpdiBjbGFzcz0iaXRlbS10b3AiPjxkaXY+PGRpdiBjbGFzcz0iaXRlbS1uYW1lIj4ke2VzYyhjLmZ1bGxfbmFtZXx8J+awj+WQjeacqueZu+mMsicpfTwvZGl2PjxkaXYgY2xhc3M9Iml0ZW0tbWV0YSI+JHtlc2MoYy5jdXN0b21lcl9ub3x8JycpfeOAgCR7ZXNjKGMucGhvbmV8fCfpm7voqbHmnKrnmbvpjLInKX08YnI+JHtlc2MoYy5wbGFuX25hbWV8fCfjg5fjg6njg7PmnKroqK3lrponKX0gLyDmrovjgooke051bWJlcihjLnRpY2tldF9yZW1haW5pbmd8fDApfeWbnjwvZGl2PjwvZGl2PjxzcGFuIGNsYXNzPSJiYWRnZSAke2ZvbGxvd1ByaW9yaXR5Q29sb3IocHJpb3JpdHkpfSI+JHtlc2MoZm9sbG93UHJpb3JpdHlMYWJlbChwcmlvcml0eSkpfTwvc3Bhbj48L2Rpdj48ZGl2IGNsYXNzPSJmb2xsb3ctcmVhc29ucyI+JHtyZWFzb25IdG1sfTwvZGl2PjxkaXYgY2xhc3M9ImZvbGxvdy1kZXRhaWwiPjxkaXY+PHNwYW4+5a++5b+c5pyf6ZmQPC9zcGFuPjxzdHJvbmc+JHtlc2MoZHVlVGV4dCl9PC9zdHJvbmc+PC9kaXY+PGRpdj48c3Bhbj7lm57mlbDliLjmnJ/pmZA8L3NwYW4+PHN0cm9uZz4ke2VzYyhleHBpcnkpfTwvc3Ryb25nPjwvZGl2PjxkaXY+PHNwYW4+5pyA57WC5p2l5bqXPC9zcGFuPjxzdHJvbmc+JHtlc2MobGFzdFZpc2l0KX08L3N0cm9uZz48L2Rpdj48ZGl2PjxzcGFuPuebtOi/keOBruWvvuW/nDwvc3Bhbj48c3Ryb25nPiR7ZXNjKGxhdGVzdD9mb3JtYXREYXRlVGltZShsYXRlc3QuY3JlYXRlZF9hdCk6J+iomOmMsuOBquOBlycpfTwvc3Ryb25nPjwvZGl2PjwvZGl2PiR7cHJldmlldz9gPGRpdiBjbGFzcz0iZm9sbG93LW1lc3NhZ2UtcHJldmlldyI+JHtlc2MocHJldmlldyl9PC9kaXY+YDonJ308ZGl2IGNsYXNzPSJpdGVtLWFjdGlvbnMiPjxidXR0b24gY2xhc3M9ImJ0biBidG4tYmx1ZSIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJvcGVuRm9sbG93TWVzc2FnZSgnJHthdHRyKGMuaWQpfScpIj5MSU5F5paH6Z2iPC9idXR0b24+PGJ1dHRvbiBjbGFzcz0iYnRuIGJ0bi1hbWJlciIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJmb2xsb3dVcEFjdGlvbignJHthdHRyKGMuaWQpfScsJ3Nub296ZV8zJykiPjPml6Xlvow8L2J1dHRvbj48YnV0dG9uIGNsYXNzPSJidG4gYnRuLXB1cnBsZSIgdHlwZT0iYnV0dG9uIiBvbmNsaWNrPSJmb2xsb3dVcEFjdGlvbignJHthdHRyKGMuaWQpfScsJ3Nub296ZV83JykiPjfml6Xlvow8L2J1dHRvbj48YnV0dG9uIGNsYXNzPSJidG4gYnRuLWdyZWVuIiB0eXBlPSJidXR0b24iIG9uY2xpY2s9ImZvbGxvd1VwQWN0aW9uKCcke2F0dHIoYy5pZCl9JywnZG9uZScpIj7lr77lv5zmuIjjgb88L2J1dHRvbj48YnV0dG9uIGNsYXNzPSJidG4gYnRuLXNvZnQiIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0ib3BlbkN1c3RvbWVyQnlJZCgnJHthdHRyKGMuaWQpfScpIj7kvJrlk6Hmg4XloLE8L2J1dHRvbj48L2Rpdj48L2FydGljbGU+YDsKICAgIH0KCiAgICBmdW5jdGlvbiBmaW5kRm9sbG93VXAoY3VzdG9tZXJJZCl7CiAgICAgIHJldHVybiAoc3RhdGUuZm9sbG93VXBzPy5mb2xsb3dfdXBzfHxbXSkuZmluZChyb3c9PnJvdy5jdXN0b21lcj8uaWQ9PT1jdXN0b21lcklkKXx8bnVsbDsKICAgIH0KCiAgICBmdW5jdGlvbiBvcGVuRm9sbG93TWVzc2FnZShjdXN0b21lcklkKXsKICAgICAgY29uc3Qgcm93PWZpbmRGb2xsb3dVcChjdXN0b21lcklkKTsKICAgICAgaWYoIXJvdylyZXR1cm4gdG9hc3QoJ+ODleOCqeODreODvOWAmeijnOOBjOimi+OBpOOBi+OCiuOBvuOBm+OCk+OAgicsdHJ1ZSk7CiAgICAgIHN0YXRlLnNlbGVjdGVkRm9sbG93VXA9cm93OwogICAgICBzZXRUZXh0KCdtZXNzYWdlVGl0bGUnLGAke3Jvdy5jdXN0b21lcj8uZnVsbF9uYW1lfHwn44GK5a6i5qeYJ33mp5jjgbjjga7ntpnntprjg5Xjgqnjg63jg7zmlofpnaJgKTsKICAgICAgdmFsU2V0KCdtZXNzYWdlVGV4dCcscm93LnJlY29tbWVuZGVkX21lc3NhZ2V8fCcnKTsKICAgICAgZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ21lc3NhZ2VNb2RhbCcpLmNsYXNzTGlzdC5yZW1vdmUoJ2hpZGRlbicpOwogICAgfQoKICAgIGFzeW5jIGZ1bmN0aW9uIGZvbGxvd1VwQWN0aW9uKGN1c3RvbWVySWQsYWN0aW9uKXsKICAgICAgY29uc3Qgcm93PWZpbmRGb2xsb3dVcChjdXN0b21lcklkKTsKICAgICAgaWYoIXJvdylyZXR1cm4gdG9hc3QoJ+ODleOCqeODreODvOWAmeijnOOBjOimi+OBpOOBi+OCiuOBvuOBm+OCk+OAgicsdHJ1ZSk7CiAgICAgIGlmKGFjdGlvbj09PSdkb25lJyYmIWNvbmZpcm0oJ0xJTkXpgIHkv6Hjgb7jgZ/jga/pm7voqbHlr77lv5zjgYzlrozkuobjgZfjgZ/loLTlkIjjgaDjgZHjgIzlr77lv5zmuIjjgb/jgI3jgavjgZfjgb7jgZnjgILjgojjgo3jgZfjgYTjgafjgZnjgYvvvJ8nKSlyZXR1cm47CiAgICAgIGNvbnN0IGxhYmVscz17c25vb3plXzM6JzPml6Xlvozjgavlho3ooajnpLrjgZfjgb7jgZnjgIInLHNub296ZV83Oic35pel5b6M44Gr5YaN6KGo56S644GX44G+44GZ44CCJyxkb25lOiflr77lv5zmuIjjgb/jgajjgZfjgaboqJjpjLLjgZfjgb7jgZfjgZ/jgIInfTsKICAgICAgdHJ5ewogICAgICAgIGNvbnN0IGRhdGE9YXdhaXQgYXBpKCcvYXBpL2FkbWluL2ZvbGxvdy11cHMvYWN0aW9uJyx7bWV0aG9kOidQT1NUJyxib2R5OntmYWNpbGl0eV9jb2RlOkZBQ0lMSVRZLGN1c3RvbWVyX2lkOmN1c3RvbWVySWQsYWN0aW9uLG1lc3NhZ2VfYm9keTpyb3cucmVjb21tZW5kZWRfbWVzc2FnZXx8Jycsb3duZXJfbm90ZTonUEPnrqHnkIbnlLvpnaLjga7ntpnntprjg5Xjgqnjg63jg7zjgYvjgonmk43kvZwnLGNyZWF0ZWRfYnk6J293bmVyX3BjJ319KTsKICAgICAgICBpZihkYXRhLmF1dG9tYXRpY19saW5lX3NlbmQhPT1mYWxzZSl0aHJvdyBuZXcgRXJyb3IoJ+iHquWLlUxJTkXpgIHkv6Hjga7lronlhajoqK3lrprjgpLnorroqo3jgafjgY3jgb7jgZvjgpPjgIInKTsKICAgICAgICB0b2FzdChsYWJlbHNbYWN0aW9uXXx8J+ODleOCqeODreODvOS6iOWumuOCkuabtOaWsOOBl+OBvuOBl+OBn+OAgicpOwogICAgICAgIGF3YWl0IGxvYWRGb2xsb3dVcHMoKTsKICAgICAgICBhd2FpdCBsb2FkRGFzaGJvYXJkKCk7CiAgICAgIH1jYXRjaChlKXsKICAgICAgICB0b2FzdChlLm1lc3NhZ2UsdHJ1ZSk7CiAgICAgIH0KICAgIH0KCiAgICBmdW5jdGlvbiBmb2xsb3dSZWFzb25MYWJlbChyZWFzb24pewogICAgICByZXR1cm4gKHtmb2xsb3dfZHVlOifmnJ/pmZDliLDmnaUnLGxvd190aWNrZXRzOifmrovjgoox5Zue5Lul5LiLJyxleHBpcmluZ19zb29uOifmnInlirnmnJ/pmZAxNOaXpeS7peWGhScsbm9fbmV4dF9ib29raW5nOifmrKHlm57kuojntITjgarjgZcnLGNvbnRpbnVhdGlvbjon57aZ57aa55u46KuH5LitJ30pW3JlYXNvbl18fHJlYXNvbnx8Jy0nOwogICAgfQoKICAgIGZ1bmN0aW9uIGZvbGxvd1ByaW9yaXR5TGFiZWwocHJpb3JpdHkpewogICAgICByZXR1cm4gKHt1cmdlbnQ6J+e3iuaApScsdG9kYXk6J+acrOaXpScsZm9sbG93Oifku4rlvownfSlbcHJpb3JpdHldfHxwcmlvcml0eXx8Jy0nOwogICAgfQoKICAgIGZ1bmN0aW9uIGZvbGxvd1ByaW9yaXR5Q29sb3IocHJpb3JpdHkpewogICAgICByZXR1cm4gKHt1cmdlbnQ6J3JlZCcsdG9kYXk6J2FtYmVyJyxmb2xsb3c6J2dyZWVuJ30pW3ByaW9yaXR5XXx8Jyc7CiAgICB9CgonJycKaHRtbCA9IGluc2VydF9iZWZvcmVfb25jZSgKICAgIGh0bWwsCiAgICAiICAgIGFzeW5jIGZ1bmN0aW9uIGxvYWRJbnF1aXJpZXMoKXsiLAogICAgZm9sbG93X2Z1bmN0aW9ucywKICAgICJmb2xsb3ctdXAgSmF2YVNjcmlwdCIsCikKCmh0bWwgPSByZXBsYWNlX29uY2UoCiAgICBodG1sLAogICAgImFkbWluX3NldHRpbmdzX3VwZGF0ZWQ6J+aWveioreioreWumuabtOaWsCcsZGVtb19wcmVwYXJlX2NvbXBsZXRlZDon5Za25qWt5YmNREVNT+a6luWCmSciLAogICAgImFkbWluX3NldHRpbmdzX3VwZGF0ZWQ6J+aWveioreioreWumuabtOaWsCcsYWRtaW5fZm9sbG93X3VwX2FjdGlvbjon57aZ57aa44OV44Kp44Ot44O85pu05pawJyxkZW1vX3ByZXBhcmVfY29tcGxldGVkOifllrbmpa3liY1ERU1P5rqW5YKZJyIsCiAgICAiZm9sbG93LXVwIGFjdGl2aXR5IGxhYmVsIiwKKQoKcGF0aC53cml0ZV90ZXh0KGh0bWwsIGVuY29kaW5nPSJ1dGYtOCIsIG5ld2xpbmU9IlxuIikKcHJpbnQoIkdZTS1ORVhULTggZGFzaGJvYXJkIGZvbGxvdy11cCBVSSBhcHBsaWVkIikK"
+
+jobs:
+  verify-and-complete:
+    name: Verify R2 Worker and publish follow-up board
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout main with complete history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Configure Git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO NEXT Actions"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Confirm R2 prepared state and safe upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "${LEDGER_FILE}"
+          test -f "${WORKFLOW_FILE}"
+
+          CURRENT_STEP="$(
+            sed -n 's/^current_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          NEXT_STEP_IN_LEDGER="$(
+            sed -n 's/^next_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          RESULT="$(
+            sed -n 's/^result:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          REVISION="$(
+            sed -n 's/^workflow_revision:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+
+          [[ "${CURRENT_STEP}" == "${CURRENT_STEP_REQUIRED}" ]] || {
+            echo "::error::Expected ${CURRENT_STEP_REQUIRED}, got ${CURRENT_STEP}"
+            exit 1
+          }
+          [[ "${NEXT_STEP_IN_LEDGER}" == "${STEP_NAME}" ]] || {
+            echo "::error::Expected next_step ${STEP_NAME}, got ${NEXT_STEP_IN_LEDGER}"
+            exit 1
+          }
+          [[ "${RESULT}" == "PREPARED" ]] || {
+            echo "::error::Expected PREPARED, got ${RESULT}"
+            exit 1
+          }
+          [[ "${REVISION}" == "R2" ]] || {
+            echo "::error::Expected Worker preparation revision R2."
+            exit 1
+          }
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            UPLOAD_PARENT="$(git rev-parse "${GITHUB_SHA}^")"
+            UNEXPECTED="$(
+              git diff --name-only "${UPLOAD_PARENT}" "${GITHUB_SHA}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            [[ -z "${UNEXPECTED}" ]] || {
+              echo "::error::Upload commit must contain only ${WORKFLOW_FILE}"
+              echo "${UNEXPECTED}"
+              exit 1
+            }
+          else
+            UPLOAD_PARENT="$(git rev-parse HEAD)"
+          fi
+
+          STEP_BASE_SHA="${UPLOAD_PARENT}"
+          while git rev-parse "${STEP_BASE_SHA}^" >/dev/null 2>&1; do
+            if ! git cat-file -e "${STEP_BASE_SHA}:${WORKFLOW_FILE}" 2>/dev/null; then
+              break
+            fi
+            CHANGED="$(
+              git diff --name-only "${STEP_BASE_SHA}^" "${STEP_BASE_SHA}" |
+                sed '/^$/d' || true
+            )"
+            OTHER="$(
+              printf '%s\n' "${CHANGED}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            if printf '%s\n' "${CHANGED}" |
+                 grep -F -x -q "${WORKFLOW_FILE}" &&
+               [[ -z "${OTHER}" ]]; then
+              STEP_BASE_SHA="$(git rev-parse "${STEP_BASE_SHA}^")"
+              continue
+            fi
+            break
+          done
+
+          echo "STEP_BASE_SHA=${STEP_BASE_SHA}" >> "$GITHUB_ENV"
+          echo "RUN_URL=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Protect pre-VERIFY version
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
+            EXISTING="$(git rev-list -n 1 "${BACKUP_TAG}")"
+            [[ "${EXISTING}" == "${STEP_BASE_SHA}" ]] || {
+              echo "::error::Backup tag points to another commit."
+              exit 1
+            }
+          else
+            git tag -a "${BACKUP_TAG}" "${STEP_BASE_SHA}"               -m "DPRO パーソナルジム before GYM-NEXT-8-VERIFY"
+            git push origin "refs/tags/${BACKUP_TAG}"
+          fi
+
+      - name: Verify inspected runtime and package baselines
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_blob() {
+            local file="$1"
+            local expected="$2"
+            local actual
+            test -f "${file}"
+            actual="$(git hash-object "${file}")"
+            [[ "${actual}" == "${expected}" ]] || {
+              echo "::error::${file} differs from inspected baseline."
+              echo "Expected: ${expected}"
+              echo "Actual:   ${actual}"
+              exit 1
+            }
+          }
+
+          check_blob config.js 68028432d9177a907e1e91e81c316b47b8845147
+          check_blob index.html 6ea48136d70e328366a8584ebecaa55562372d20
+          check_blob member.html ed7e59d0a1101adfd328e24e1eb09a8f62a41aca
+          check_blob dashboard.html 538199c142e44d4ee03953d29359c1b341c4ca28
+          check_blob owner-ipad.html 3b94e5221ec26ec74d8e1fe4e4e41285ee27c792
+          check_blob staff.html 59e66cb480aa5795c646ab99a1ff71070013ad26
+          check_blob dpro-next/gym/deploy/GYM-NEXT-8/worker.js f0a0d7c0645bfc79fcf2756f24f224322ad2000d
+
+      - name: Verify deployed R2 Worker and follow-up API
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-8-verify
+
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             --output /tmp/gym-next-8-verify/health.json             "${WORKER_BASE}/api/health?verify=${GITHUB_RUN_ID}"
+
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             -H "X-Admin-Key: 1234"             --output /tmp/gym-next-8-verify/follow-ups.json             "${WORKER_BASE}/api/admin/follow-ups?facility_code=dpro_gym_demo&date=$(TZ=Asia/Tokyo date +%F)&verify=${GITHUB_RUN_ID}"
+
+          INVALID_STATUS="$(
+            curl --location --silent --show-error               --max-time 30               --output /tmp/gym-next-8-verify/invalid-action.json               --write-out '%{http_code}'               -H "Content-Type: application/json"               -H "X-Admin-Key: 1234"               --data '{"facility_code":"dpro_gym_demo"}'               "${WORKER_BASE}/api/admin/follow-ups/action"
+          )"
+          [[ "${INVALID_STATUS}" == "400" ]] || {
+            echo "::error::Invalid follow-up action returned ${INVALID_STATUS}, expected 400."
+            exit 1
+          }
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("/tmp/gym-next-8-verify")
+          health = json.loads((root / "health.json").read_text(encoding="utf-8"))
+          assert health.get("ok") is True, health
+          assert health.get("version") == "GYM-NEXT-8-WORKER-R2-20260725", health
+          assert health.get("next4", {}).get("ok") is True, health
+          assert health.get("next5", {}).get("ok") is True, health
+          next8 = health.get("next8", {})
+          assert next8.get("ok") is True, health
+          assert next8.get("snooze_guard") is True, health
+          assert next8.get("recent_done_guard") is True, health
+          features = health.get("features", {})
+          assert features.get("follow_up_board") is True, health
+          assert features.get("follow_up_prioritization") is True, health
+          assert features.get("follow_up_action_log") is True, health
+          assert features.get("follow_up_message_copy_only") is True, health
+          assert features.get("follow_up_snooze_guard") is True, health
+          assert features.get("follow_up_recent_done_guard") is True, health
+          assert features.get("automatic_line_broadcast") is False, health
+          assert features.get("member_session_history") is True, health
+          assert features.get("role_separation") is True, health
+
+          follow = json.loads(
+              (root / "follow-ups.json").read_text(encoding="utf-8")
+          )
+          assert follow.get("ok") is True, follow
+          assert isinstance(follow.get("follow_ups"), list), follow
+          assert isinstance(follow.get("counts"), dict), follow
+          assert follow.get("automatic_line_send") is False, follow
+          assert follow.get("message_delivery") == "copy_only", follow
+
+          for row in follow.get("follow_ups", []):
+              assert row.get("priority") in {"urgent", "today", "follow"}, row
+              assert isinstance(row.get("reasons"), list), row
+              assert row.get("message_delivery") == "copy_only", row
+          PY
+
+      - name: Apply NEXT-8 follow-up board UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-8-verify
+          printf '%s' "${PATCH_SCRIPT_B64}" |
+            base64 --decode > /tmp/gym-next-8-verify/apply_patch.py
+          python3 -m py_compile /tmp/gym-next-8-verify/apply_patch.py
+          python3 /tmp/gym-next-8-verify/apply_patch.py
+
+      - name: Validate dashboard HTML JavaScript and safety rules
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-8-verify/scripts
+
+          python3 <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import json
+          import re
+
+          class Parser(HTMLParser):
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.ids = []
+
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key == "id" and value:
+                          self.ids.append(value)
+
+              def handle_startendtag(self, tag, attrs):
+                  self.handle_starttag(tag, attrs)
+
+          text = Path("dashboard.html").read_text(encoding="utf-8")
+          parser = Parser()
+          parser.feed(text)
+          duplicates = sorted({
+              value for value in parser.ids
+              if parser.ids.count(value) > 1
+          })
+          if duplicates:
+              raise SystemExit(f"Duplicate IDs: {duplicates}")
+
+          scripts = re.findall(
+              r"<script(?:\s[^>]*)?>(.*?)</script>",
+              text,
+              flags=re.I | re.S,
+          )
+          inline = [script for script in scripts if script.strip()]
+          for index, script in enumerate(inline, 1):
+              Path(
+                  f"/tmp/gym-next-8-verify/scripts/dashboard-{index}.js"
+              ).write_text(script, encoding="utf-8")
+
+          Path("/tmp/gym-next-8-verify/html-report.json").write_text(
+              json.dumps({
+                  "id_count": len(parser.ids),
+                  "duplicate_ids": duplicates,
+                  "inline_script_count": len(inline),
+              }, ensure_ascii=False, indent=2),
+              encoding="utf-8",
+          )
+          PY
+
+          find /tmp/gym-next-8-verify/scripts             -type f -name '*.js' -print0 |
+            while IFS= read -r -d '' script; do
+              node --check "${script}"
+            done
+
+          require_text() {
+            local marker="$1"
+            local label="$2"
+            if ! grep -Fq -- "${marker}" dashboard.html; then
+              echo "::error file=dashboard.html::Missing ${label}: ${marker}"
+              exit 1
+            fi
+          }
+
+          forbid_text() {
+            local marker="$1"
+            local label="$2"
+            if grep -Fq -- "${marker}" dashboard.html; then
+              echo "::error file=dashboard.html::Forbidden ${label}: ${marker}"
+              exit 1
+            fi
+          }
+
+          require_text 'data-dpro-next-step="GYM-NEXT-8"'             "NEXT-8 body marker"
+          require_text 'data-view="followups"'             "follow-up navigation"
+          require_text 'id="view-followups"'             "follow-up view"
+          require_text 'id="followUpQuery"'             "follow-up search"
+          require_text 'id="followUpReason"'             "reason filter"
+          require_text 'id="followUpPriority"'             "priority filter"
+          require_text 'function loadFollowUps'             "follow-up loader"
+          require_text 'function followUpCard'             "follow-up card renderer"
+          require_text 'function openFollowMessage'             "copy-only LINE message"
+          require_text 'function followUpAction'             "follow-up action recorder"
+          require_text '/api/admin/follow-ups?'             "follow-up list API"
+          require_text '/api/admin/follow-ups/action'             "follow-up action API"
+          require_text "action==='done'"             "completed confirmation"
+          require_text "'snooze_3'"             "three-day snooze"
+          require_text "'snooze_7'"             "seven-day snooze"
+          require_text "data.automatic_line_send!==false"             "automatic send safety check"
+          require_text 'copyMessageText()'             "existing copy function"
+
+          forbid_text '/api/admin/line/broadcast'             "LINE broadcast endpoint"
+          forbid_text '/api/admin/line/push'             "LINE push endpoint"
+          forbid_text 'sendLineBroadcast('             "LINE broadcast function"
+          forbid_text 'sendLinePush('             "LINE push function"
+
+          for marker in             '/api/admin/dashboard'             '/api/admin/reservations'             '/api/admin/customers'             '/api/admin/trial-pipeline'             '/api/admin/customers/admit'             '/api/admin/sessions/complete'             '/api/admin/settings'             '/api/admin/activity-logs'
+          do
+            require_text "${marker}" "existing owner API"
+          done
+
+      - name: Confirm only dashboard changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t CHANGED < <(
+            git diff --name-only |
+              sed '/^$/d' |
+              sort
+          )
+
+          [[ "$(printf '%s\n' "${CHANGED[@]}")" == "dashboard.html" ]] || {
+            echo "::error::Unexpected application files changed."
+            printf 'Changed:\n%s\n' "${CHANGED[*]}"
+            exit 1
+          }
+
+          for file in             config.js index.html member.html owner-ipad.html             staff.html system-check.html
+          do
+            git diff --quiet -- "${file}" || {
+              echo "::error::Unexpected runtime change: ${file}"
+              exit 1
+            }
+          done
+          git diff --check
+
+      - name: Commit NEXT-8 follow-up board
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add dashboard.html
+          git commit -m "Complete GYM-NEXT-8 retention follow-up board"
+
+          APPLICATION_COMMIT_SHA="$(git rev-parse HEAD)"
+          DASHBOARD_BLOB="$(git hash-object dashboard.html)"
+
+          echo "APPLICATION_COMMIT_SHA=${APPLICATION_COMMIT_SHA}" >> "$GITHUB_ENV"
+          echo "DASHBOARD_BLOB=${DASHBOARD_BLOB}" >> "$GITHUB_ENV"
+          git push origin HEAD:main
+
+      - name: Wait for GitHub Pages and verify published board
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-8-verify/public
+          FILE=/tmp/gym-next-8-verify/public/dashboard.html
+
+          for attempt in $(seq 1 24); do
+            curl --fail --location --silent --show-error               --max-time 30               --output "${FILE}"               "${PUBLIC_BASE}/dashboard.html?verify=${GITHUB_RUN_ID}-${attempt}" || true
+
+            if [[ -s "${FILE}" ]] &&
+               grep -Fq 'data-dpro-next-step="GYM-NEXT-8"' "${FILE}" &&
+               grep -Fq 'id="view-followups"' "${FILE}" &&
+               grep -Fq '/api/admin/follow-ups/action' "${FILE}"; then
+              break
+            fi
+
+            if [[ "${attempt}" == "24" ]]; then
+              echo "::error::Published dashboard did not reach NEXT-8."
+              exit 1
+            fi
+            sleep 10
+          done
+
+          if grep -Fq '/api/admin/line/broadcast' "${FILE}" ||
+             grep -Fq '/api/admin/line/push' "${FILE}"; then
+            echo "::error::Published dashboard contains automatic LINE API."
+            exit 1
+          fi
+
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             -H "X-Admin-Key: 1234"             --output /tmp/gym-next-8-verify/public/follow-ups.json             "${WORKER_BASE}/api/admin/follow-ups?facility_code=dpro_gym_demo&date=$(TZ=Asia/Tokyo date +%F)&public_verify=${GITHUB_RUN_ID}"
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path("/tmp/gym-next-8-verify/public/follow-ups.json")
+              .read_text(encoding="utf-8")
+          )
+          assert data.get("ok") is True, data
+          assert data.get("automatic_line_send") is False, data
+          assert data.get("message_delivery") == "copy_only", data
+          PY
+
+      - name: Record GYM-NEXT-8 completion and self-delete
+        shell: bash
+        run: |
+          set -euo pipefail
+          COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
+
+          cat > "${STEP_DIR}/GYM-NEXT-8-COMPLETE.md" <<EOF
+          # DPRO パーソナルジム LINE｜GYM-NEXT-8 COMPLETE
+
+          - 結果: OK
+          - Worker: ${EXPECTED_WORKER_VERSION}
+          - Worker修正版: R2
+          - Supabase変更: なし
+          - 継続フォロー専用画面: OK
+          - 緊急・本日・今後の優先表示: OK
+          - 理由・優先度・会員検索: OK
+          - 個別LINE文面コピー: OK
+          - 3日後・7日後の延期: OK
+          - 対応済み履歴: OK
+          - 延期中の再表示防止: OK
+          - 対応済み後7日間の再表示防止: OK
+          - LINE自動送信・一斉送信: なし
+          - バックアップタグ: ${BACKUP_TAG}
+          - アプリケーションコミット: ${APPLICATION_COMMIT_SHA}
+          - 完了日時: ${COMPLETED_AT}
+          - Actions: ${RUN_URL}
+          EOF
+
+          cat > "${LEDGER_FILE}" <<EOF
+          system_name: "DPRO パーソナルジム LINE"
+          repository: "${GITHUB_REPOSITORY}"
+          branch: "main"
+          current_step: "GYM-NEXT-8-COMPLETE"
+          workflow_revision: "R2"
+          next_step: "${NEXT_STEP}"
+          result: "OK"
+          facility_code: "dpro_gym_demo"
+          slot_minutes: 30
+          step_backup_tag: "${BACKUP_TAG}"
+          step_backup_sha: "${STEP_BASE_SHA}"
+          application_commit_sha: "${APPLICATION_COMMIT_SHA}"
+          dashboard_blob: "${DASHBOARD_BLOB}"
+          config_blob: "68028432d9177a907e1e91e81c316b47b8845147"
+          index_blob: "6ea48136d70e328366a8584ebecaa55562372d20"
+          member_blob: "ed7e59d0a1101adfd328e24e1eb09a8f62a41aca"
+          owner_ipad_blob: "3b94e5221ec26ec74d8e1fe4e4e41285ee27c792"
+          staff_blob: "59e66cb480aa5795c646ab99a1ff71070013ad26"
+          completed_at: "${COMPLETED_AT}"
+          workflow_run_url: "${RUN_URL}"
+          worker_name: "dpro-gym-line-api"
+          worker_url: "${WORKER_BASE}"
+          worker_version: "${EXPECTED_WORKER_VERSION}"
+          worker_deployed: true
+          supabase_changed: false
+          runtime_files_changed: true
+          worker_changed: true
+          api_changed: true
+          changed_files:
+            - "dashboard.html"
+          completed_features:
+            follow_up_board: true
+            follow_up_prioritization: true
+            follow_up_action_log: true
+            follow_up_message_copy_only: true
+            follow_up_snooze_guard: true
+            follow_up_recent_done_guard: true
+            automatic_line_broadcast: false
+          checks:
+            previous_step: "OK"
+            backup_tag: "OK"
+            worker_health: "OK"
+            follow_up_api: "OK"
+            invalid_action_guard: "OK"
+            next4_preserved: "OK"
+            next5_preserved: "OK"
+            member_history_preserved: "OK"
+            role_separation_preserved: "OK"
+            html_structure: "OK"
+            javascript_syntax: "OK"
+            duplicate_html_ids: "OK"
+            existing_owner_api: "OK"
+            automatic_line_send_absent: "OK"
+            public_dashboard: "OK"
+          EOF
+
+          ruby -e "require 'yaml'; YAML.load_file('${LEDGER_FILE}', aliases: true)"
+          git add "${LEDGER_FILE}" "${STEP_DIR}"
+          git rm "${WORKFLOW_FILE}"
+          git commit -m "Record GYM-NEXT-8 completion"
+          git push origin HEAD:main
+
+      - name: Upload NEXT-8 verification artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GYM-NEXT-8-completion
+          path: |
+            dpro-next/gym/next-ledger.yml
+            dpro-next/gym/steps/GYM-NEXT-8-COMPLETE.md
+            /tmp/gym-next-8-verify/health.json
+            /tmp/gym-next-8-verify/follow-ups.json
+            /tmp/gym-next-8-verify/html-report.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: STEP completion summary
+        shell: bash
+        run: |
+          {
+            echo "## GYM-NEXT-8 COMPLETE"
+            echo ""
+            echo "- Worker: \`${EXPECTED_WORKER_VERSION}\`"
+            echo "- Retention follow-up board: \`OK\`"
+            echo "- Snooze and recent-done guards: \`OK\`"
+            echo "- LINE delivery: \`copy_only\`"
+            echo "- Automatic/bulk LINE send: \`false\`"
+            echo "- Supabase change: \`false\`"
+            echo "- Next STEP: \`${NEXT_STEP}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
