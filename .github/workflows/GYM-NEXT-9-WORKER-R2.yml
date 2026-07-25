@@ -1,0 +1,599 @@
+name: STEP GYM-NEXT-9-WORKER-R2 - Fix Integrated System Check Query
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/GYM-NEXT-9-WORKER-R2.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gym-next-9-worker-r2-main
+  cancel-in-progress: false
+
+env:
+  WORKFLOW_FILE: .github/workflows/GYM-NEXT-9-WORKER-R2.yml
+  STALE_VERIFY_FILE: .github/workflows/GYM-NEXT-9-VERIFY.yml
+  LEDGER_FILE: dpro-next/gym/next-ledger.yml
+  PACKAGE_DIR: dpro-next/gym/deploy/GYM-NEXT-9
+  PACKAGE_WORKER: dpro-next/gym/deploy/GYM-NEXT-9/worker.js
+  STEP_DIR: dpro-next/gym/steps
+  BACKUP_TAG: backup-gym-before-next-9-worker-r2-20260725
+  WORKER_BASE: https://dpro-gym-line-api.dpromstk2000.workers.dev
+  CURRENT_VERSION: GYM-NEXT-9-WORKER-20260725
+  EXPECTED_VERSION: GYM-NEXT-9-WORKER-R2-20260725
+  EXPECTED_SHA256: 9405f4c300f2d73cdf77606dcb33dfa8b5c9afb7e5ca247a445e0b25d4d2439f
+
+jobs:
+  correct:
+    name: Correct activity log query and isolate optional probes
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout main with complete history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Configure Git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO NEXT Actions"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Confirm failed VERIFY state and safe upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "${LEDGER_FILE}"
+          test -f "${PACKAGE_WORKER}"
+          test -f "${WORKFLOW_FILE}"
+
+          CURRENT_STEP="$(
+            sed -n 's/^current_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          NEXT_STEP="$(
+            sed -n 's/^next_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          RESULT="$(
+            sed -n 's/^result:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          PREPARED_VERSION="$(
+            sed -n 's/^expected_worker_version:[[:space:]]*//p'               "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+
+          [[ "${CURRENT_STEP}" == "GYM-NEXT-9-PREPARED" ]] || {
+            echo "::error::Expected GYM-NEXT-9-PREPARED, got ${CURRENT_STEP}"
+            exit 1
+          }
+          [[ "${NEXT_STEP}" == "GYM-NEXT-9-VERIFY" ]] || {
+            echo "::error::Expected GYM-NEXT-9-VERIFY, got ${NEXT_STEP}"
+            exit 1
+          }
+          [[ "${RESULT}" == "PREPARED" ]] || {
+            echo "::error::Expected PREPARED, got ${RESULT}"
+            exit 1
+          }
+          [[ "${PREPARED_VERSION}" == "${CURRENT_VERSION}" ]] || {
+            echo "::error::Prepared Worker version is not R1."
+            exit 1
+          }
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            UPLOAD_PARENT="$(git rev-parse "${GITHUB_SHA}^")"
+            UNEXPECTED="$(
+              git diff --name-only "${UPLOAD_PARENT}" "${GITHUB_SHA}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            [[ -z "${UNEXPECTED}" ]] || {
+              echo "::error::Upload commit must contain only ${WORKFLOW_FILE}"
+              echo "${UNEXPECTED}"
+              exit 1
+            }
+          else
+            UPLOAD_PARENT="$(git rev-parse HEAD)"
+          fi
+
+          echo "STEP_BASE_SHA=${UPLOAD_PARENT}" >> "$GITHUB_ENV"
+          echo "RUN_URL=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Protect current prepared state
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
+            EXISTING="$(git rev-list -n 1 "${BACKUP_TAG}")"
+            [[ "${EXISTING}" == "${STEP_BASE_SHA}" ]] || {
+              echo "::error::Backup tag points to another commit."
+              exit 1
+            }
+          else
+            git tag -a "${BACKUP_TAG}" "${STEP_BASE_SHA}"               -m "DPRO パーソナルジム before NEXT-9 Worker R2"
+            git push origin "refs/tags/${BACKUP_TAG}"
+          fi
+
+      - name: Reproduce the deployed R1 system-check defect
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-9-r2
+
+          curl --fail --location --silent --show-error             --retry 3 --retry-delay 2 --max-time 30             -H "X-Admin-Key: 1234"             -o /tmp/gym-next-9-r2/r1-next9.json             "${WORKER_BASE}/api/admin/next-9-system-check?facility_code=dpro_gym_demo&r2=${GITHUB_RUN_ID}"
+
+          python3 <<'PY'
+          import json
+          from pathlib import Path
+
+          data = json.loads(
+              Path("/tmp/gym-next-9-r2/r1-next9.json")
+              .read_text(encoding="utf-8")
+          )
+          assert data.get("version") == "GYM-NEXT-9-WORKER-20260725", data
+          assert data.get("ok") is False, data
+
+          database_check = next(
+              (
+                  item for item in data.get("checks", [])
+                  if item.get("id") == "next9_database_parallel"
+              ),
+              None,
+          )
+          assert database_check, data
+          assert database_check.get("ok") is False, data
+          assert "gym_activity_logs.action_type" in str(
+              database_check.get("detail", "")
+          ), data
+          PY
+
+      - name: Apply NEXT-9 Worker R2 patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-9-r2
+
+          [[ "$(git hash-object "${PACKAGE_WORKER}")" ==              "328624a9bfc3d85d9d8d962eb9d59aa9f156afcd" ]] || {
+            echo "::error::Stored NEXT-9 Worker differs from inspected R1."
+            exit 1
+          }
+
+          cat > /tmp/gym-next-9-r2/worker.patch <<'PATCH'
+          --- a/worker.js
+          +++ b/worker.js
+          @@ -2,7 +2,7 @@
+             STEP GYM-NEXT-9
+             DPRO パーソナルジム LINE API
+             Worker name: dpro-gym-line-api
+          -  Worker version: GYM-NEXT-9-WORKER-20260725
+          +  Worker version: GYM-NEXT-9-WORKER-R2-20260725
+ 
+             Cloudflare Secrets:
+               SUPABASE_URL
+          @@ -17,7 +17,7 @@
+               ALLOW_DEMO_ADMIN_FALLBACK   false（通常は設定不要）
+           ============================================================ */
+ 
+          -const VERSION = 'GYM-NEXT-9-WORKER-20260725';
+          +const VERSION = 'GYM-NEXT-9-WORKER-R2-20260725';
+           const SERVICE = 'DPRO Personal Gym LINE API';
+           const DEFAULT_FACILITY_CODE = 'dpro_gym_demo';
+           const DEMO_CONFIRM_TEXT = 'DEMOパーソナルジムだけ実行';
+          @@ -350,7 +350,8 @@
+               query_auth_disabled: false,
+               request_body_limit: false,
+               compact_json: false,
+          -    integrated_system_check: false
+          +    integrated_system_check: false,
+          +    resilient_optional_probes: false
+             };
+ 
+             try {
+          @@ -442,6 +443,7 @@
+               request_body_limit: true,
+               compact_json: true,
+               integrated_system_check: true,
+          +    resilient_optional_probes: true,
+               max_json_body_bytes: MAX_JSON_BODY_BYTES,
+               system_check_budget_ms: SYSTEM_CHECK_BUDGET_MS
+             };
+          @@ -504,6 +506,9 @@
+                 request_body_limit: Boolean(next9?.request_body_limit),
+                 compact_json_payload: Boolean(next9?.compact_json),
+                 integrated_system_check: Boolean(next9?.integrated_system_check),
+          +      resilient_optional_system_probes: Boolean(
+          +        next9?.resilient_optional_probes
+          +      ),
+                 system_check: true,
+                 demo_prepare: true
+               }
+          @@ -2728,6 +2733,10 @@
+             let next5 = null;
+             let followProbe = [];
+             let activityProbe = [];
+          +  let followProbeOk = false;
+          +  let activityProbeOk = false;
+          +  let followProbeError = '';
+          +  let activityProbeError = '';
+ 
+             try {
+               const dbStarted = Date.now();
+          @@ -2737,9 +2746,7 @@
+                 services,
+                 trainers,
+                 next4,
+          -      next5,
+          -      followProbe,
+          -      activityProbe
+          +      next5
+               ] = await Promise.all([
+                 measure('facility_ms', () => getFacility(env, facilityCode)),
+                 measure('settings_ms', () => getSettings(env, facilityCode)),
+          @@ -2754,8 +2761,28 @@
+                   env,
+                   'gym_next_5_system_check',
+                   { p_facility_code: facilityCode }
+          -      )),
+          -      measure('follow_probe_ms', () => selectRows(
+          +      ))
+          +    ]);
+          +    timings.parallel_database_ms = Date.now() - dbStarted;
+          +    checks.push(check(
+          +      'next9_database_parallel',
+          +      true,
+          +      `重要6系統を並列確認 / ${timings.parallel_database_ms}ms`
+          +    ));
+          +  } catch (error) {
+          +    checks.push(check(
+          +      'next9_database_parallel',
+          +      false,
+          +      safeErrorMessage(error)
+          +    ));
+          +  }
+          +
+          +  // STEP GYM-NEXT-9 R2:
+          +  // 補助ログ検査は個別に実行し、失敗しても重要検査を巻き込まない。
+          +  try {
+          +    followProbe = await measure(
+          +      'follow_probe_ms',
+          +      () => selectRows(
+                   env,
+                   TABLES.interactionLogs,
+                   {
+          @@ -2765,30 +2792,30 @@
+                     order: 'created_at.desc',
+                     limit: '5'
+                   }
+          -      )),
+          -      measure('activity_probe_ms', () => selectRows(
+          +      )
+          +    );
+          +    followProbeOk = true;
+          +  } catch (error) {
+          +    followProbeError = safeErrorMessage(error);
+          +  }
+          +
+          +  try {
+          +    activityProbe = await measure(
+          +      'activity_probe_ms',
+          +      () => selectRows(
+                   env,
+                   TABLES.activityLogs,
+                   {
+          -          select: 'id,action_type,created_at',
+          +          select: 'id,action,created_at',
+                     facility_code: `eq.${facilityCode}`,
+                     order: 'created_at.desc',
+                     limit: '5'
+                   }
+          -      ))
+          -    ]);
+          -    timings.parallel_database_ms = Date.now() - dbStarted;
+          -    checks.push(check(
+          -      'next9_database_parallel',
+          -      true,
+          -      `8系統を並列確認 / ${timings.parallel_database_ms}ms`
+          -    ));
+          +      )
+          +    );
+          +    activityProbeOk = true;
+             } catch (error) {
+          -    checks.push(check(
+          -      'next9_database_parallel',
+          -      false,
+          -      safeErrorMessage(error)
+          -    ));
+          +    activityProbeError = safeErrorMessage(error);
+             }
+ 
+             checks.push(check(
+          @@ -2866,13 +2893,17 @@
+             ));
+             checks.push(check(
+               'next9_follow_log',
+          -    Array.isArray(followProbe),
+          -    `直近確認 ${followProbe.length}件`
+          +    followProbeOk,
+          +    followProbeOk
+          +      ? `直近確認 ${followProbe.length}件`
+          +      : followProbeError || '継続フォロー履歴を確認できません。'
+             ));
+             checks.push(check(
+               'next9_activity_log',
+          -    Array.isArray(activityProbe),
+          -    `直近確認 ${activityProbe.length}件`
+          +    activityProbeOk,
+          +    activityProbeOk
+          +      ? `直近確認 ${activityProbe.length}件`
+          +      : activityProbeError || '操作履歴を確認できません。'
+             ));
+             checks.push(check(
+               'next9_automatic_line_disabled',
+          PATCH
+
+          (
+            cd "${PACKAGE_DIR}"
+            patch -p1 --forward --batch               -i /tmp/gym-next-9-r2/worker.patch
+          )
+
+          cp "${PACKAGE_WORKER}" /tmp/gym-next-9-r2/worker.mjs
+          node --check /tmp/gym-next-9-r2/worker.mjs
+
+          require_marker() {
+            local marker="$1"
+            grep -Fq -- "${marker}" "${PACKAGE_WORKER}" || {
+              echo "::error::Missing R2 marker: ${marker}"
+              exit 1
+            }
+          }
+
+          require_marker "const VERSION = '${EXPECTED_VERSION}';"
+          require_marker "select: 'id,action,created_at'"
+          require_marker "let activityProbeOk = false;"
+          require_marker "補助ログ検査は個別に実行"
+          require_marker "重要6系統を並列確認"
+          require_marker "resilient_optional_system_probes"
+
+          if grep -Fq "select: 'id,action_type,created_at'"                "${PACKAGE_WORKER}"; then
+            echo "::error::Invalid activity_type query remains."
+            exit 1
+          fi
+
+          for existing in             "/api/public/reservations"             "/api/member/home"             "/api/staff/today"             "/api/admin/dashboard"             "/api/admin/follow-ups"             "/api/admin/next-9-system-check"             "/api/admin/system-check"             "/api/admin/demo-prepare"             "query_string_auth_disabled"             "REQUEST_BODY_TOO_LARGE"
+          do
+            require_marker "${existing}"
+          done
+
+          ACTUAL_SHA="$(
+            sha256sum "${PACKAGE_WORKER}" | awk '{print $1}'
+          )"
+          [[ "${ACTUAL_SHA}" == "${EXPECTED_SHA256}" ]] || {
+            echo "::error::Corrected Worker SHA-256 mismatch."
+            echo "Expected: ${EXPECTED_SHA256}"
+            echo "Actual:   ${ACTUAL_SHA}"
+            exit 1
+          }
+
+          (
+            cd "${PACKAGE_DIR}"
+            rm -f GYM-NEXT-9-WORKER.zip
+            zip -q GYM-NEXT-9-WORKER.zip worker.js
+          )
+          sha256sum "${PACKAGE_WORKER}"             > "${PACKAGE_DIR}/SHA256SUMS.txt"
+
+          python3 <<'PY'
+          from pathlib import Path
+
+          path = Path(
+              "dpro-next/gym/deploy/GYM-NEXT-9/manifest.yml"
+          )
+          text = path.read_text(encoding="utf-8")
+          text = text.replace(
+              'package_version: "GYM-NEXT-9-PREP-20260725"',
+              'package_version: "GYM-NEXT-9-PREP-R2-20260725"',
+              1,
+          )
+          text = text.replace(
+              'worker_expected_version: "GYM-NEXT-9-WORKER-20260725"',
+              'worker_expected_version: "GYM-NEXT-9-WORKER-R2-20260725"',
+              1,
+          )
+          text = text.replace(
+              'next_action: "Deploy Worker, then run GYM-NEXT-9-VERIFY"',
+              'next_action: "Deploy R2 Worker, then run GYM-NEXT-9-VERIFY-R2"',
+              1,
+          )
+          if "r2_correction:" not in text:
+              text += (
+                  "\nr2_correction:\n"
+                  '  activity_log_column: "action"\n'
+                  '  optional_probes_isolated: true\n'
+                  '  failed_verify_workflow_removed: true\n'
+              )
+          path.write_text(text, encoding="utf-8", newline="\n")
+          PY
+
+          ruby -e "require 'yaml'; YAML.load_file('${PACKAGE_DIR}/manifest.yml', aliases: true)"
+
+      - name: Confirm only deployment package changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t CHANGED < <(
+            git status --porcelain=v1 --untracked-files=all |
+              sed -E 's/^.. //' |
+              sed 's/^"//;s/"$//' |
+              grep -v -F -x "${WORKFLOW_FILE}" |
+              grep -v -F -x "${STALE_VERIFY_FILE}" |
+              sed '/^$/d' |
+              sort
+          )
+
+          EXPECTED="$(
+            printf '%s\n'               "${PACKAGE_DIR}/GYM-NEXT-9-WORKER.zip"               "${PACKAGE_DIR}/SHA256SUMS.txt"               "${PACKAGE_DIR}/manifest.yml"               "${PACKAGE_WORKER}" |
+              sort
+          )"
+
+          [[ "$(printf '%s\n' "${CHANGED[@]}")" == "${EXPECTED}" ]] || {
+            echo "::error::Unexpected files changed."
+            printf 'Changed:\n%s\n' "${CHANGED[*]}"
+            exit 1
+          }
+
+          for file in             config.js index.html member.html dashboard.html             owner-ipad.html staff.html system-check.html
+          do
+            git diff --quiet -- "${file}" || {
+              echo "::error::Runtime file changed: ${file}"
+              exit 1
+            }
+          done
+          git diff --check
+
+      - name: Commit corrected Worker package
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add "${PACKAGE_DIR}"
+          git commit -m "Correct GYM-NEXT-9 integrated system-check R2"
+          PACKAGE_COMMIT_SHA="$(git rev-parse HEAD)"
+          echo "PACKAGE_COMMIT_SHA=${PACKAGE_COMMIT_SHA}" >> "$GITHUB_ENV"
+          git push origin HEAD:main
+
+      - name: Update R2 prepared state and remove failed VERIFY
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CORRECTED_AT="$(
+            TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z'
+          )"
+
+          cat > "${STEP_DIR}/GYM-NEXT-9-WORKER-R2.md" <<EOF
+          # DPRO パーソナルジム LINE｜GYM-NEXT-9 Worker R2
+
+          - 結果: PREPARED
+          - 原因: gym_activity_logsに存在しないaction_type列を参照
+          - 修正列: action
+          - 補助ログ検査の分離: OK
+          - 重要検査への連鎖防止: OK
+          - Supabase変更: なし
+          - 公開画面変更: なし
+          - 修正後Worker: ${EXPECTED_VERSION}
+          - Worker SHA-256: ${EXPECTED_SHA256}
+          - 修正日時: ${CORRECTED_AT}
+          - Actions: ${RUN_URL}
+          EOF
+
+          python3 <<'PY'
+          from pathlib import Path
+          import os
+
+          path = Path("dpro-next/gym/next-ledger.yml")
+          text = path.read_text(encoding="utf-8")
+
+          text = text.replace(
+              'workflow_revision: "R1"',
+              'workflow_revision: "R2"',
+              1,
+          )
+          text = text.replace(
+              'next_step: "GYM-NEXT-9-VERIFY"',
+              'next_step: "GYM-NEXT-9-VERIFY-R2"',
+              1,
+          )
+          text = text.replace(
+              'next_action: "DEPLOY_WORKER_THEN_VERIFY"',
+              'next_action: "DEPLOY_WORKER_R2_THEN_VERIFY"',
+              1,
+          )
+          text = text.replace(
+              'expected_worker_version: "GYM-NEXT-9-WORKER-20260725"',
+              'expected_worker_version: "GYM-NEXT-9-WORKER-R2-20260725"',
+              1,
+          )
+          text = text.replace(
+              'worker_sha256: "d1f62c3d88b67df0488848ad8d29ba5cc3a0493669993cc386e7ad5d49832dbb"',
+              'worker_sha256: "9405f4c300f2d73cdf77606dcb33dfa8b5c9afb7e5ca247a445e0b25d4d2439f"',
+              1,
+          )
+
+          lines = []
+          for line in text.splitlines():
+              if line.startswith("package_commit_sha:"):
+                  lines.append(
+                      f'package_commit_sha: "'
+                      f'{os.environ["PACKAGE_COMMIT_SHA"]}"'
+                  )
+              else:
+                  lines.append(line)
+          text = "\n".join(lines) + "\n"
+
+          if "worker_r2_correction:" not in text:
+              text += (
+                  "\nworker_r2_correction:\n"
+                  '  invalid_column_removed: "action_type"\n'
+                  '  valid_column_used: "action"\n'
+                  '  optional_probes_isolated: true\n'
+                  '  failed_verify_run_url: '
+                  '"https://github.com/dpromstk2000-lab/'
+                  'liff-gym-demo/actions/runs/30159660911"\n'
+                  f'  corrected_at: "{os.environ["CORRECTED_AT"]}"\n'
+                  f'  workflow_run_url: "{os.environ["RUN_URL"]}"\n'
+              )
+
+          path.write_text(text, encoding="utf-8", newline="\n")
+          PY
+
+          ruby -e "require 'yaml'; YAML.load_file('${LEDGER_FILE}', aliases: true)"
+          git add "${LEDGER_FILE}" "${STEP_DIR}"
+
+          if [[ -f "${STALE_VERIFY_FILE}" ]]; then
+            git rm "${STALE_VERIFY_FILE}"
+          fi
+          git rm "${WORKFLOW_FILE}"
+
+          git commit -m "Record GYM-NEXT-9 Worker R2 correction"
+          git push origin HEAD:main
+
+      - name: Upload R2 deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GYM-NEXT-9-worker-r2-package
+          path: |
+            dpro-next/gym/deploy/GYM-NEXT-9/
+            dpro-next/gym/next-ledger.yml
+            dpro-next/gym/steps/GYM-NEXT-9-WORKER-R2.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Correction summary
+        shell: bash
+        run: |
+          {
+            echo "## GYM-NEXT-9 Worker R2 prepared"
+            echo ""
+            echo "- Invalid column action_type: removed"
+            echo "- Valid activity log column action: applied"
+            echo "- Optional probes isolated: OK"
+            echo "- Runtime UI changed: false"
+            echo "- Supabase changed: false"
+            echo "- Failed VERIFY workflow removed: OK"
+            echo "- Next: deploy ${EXPECTED_VERSION}"
+          } >> "$GITHUB_STEP_SUMMARY"
