@@ -1,0 +1,26 @@
+package_version: "GYM-NEXT-5-PREP-20260725"
+system_name: "DPRO パーソナルジム LINE"
+phase: "PREPARED"
+worker_name: "dpro-gym-line-api"
+worker_expected_version: "GYM-NEXT-5-WORKER-20260725"
+runtime_changed: false
+changes:
+  supabase:
+    - "gym_plans"
+    - "gym_memberships"
+    - "gym_trial_decisions"
+    - "gym_ticket_ledger.membership_id"
+    - "gym_admit_customer_next"
+    - "gym_record_trial_decision_next"
+    - "gym_next_5_system_check"
+  worker:
+    - "plan APIs"
+    - "trial pipeline API"
+    - "atomic admission API"
+    - "membership history API"
+safety:
+  - "existing customer fields preserved"
+  - "existing ticket ledger preserved"
+  - "membership grant idempotency"
+  - "rollback preserves data"
+next_action: "Run SQL, deploy dpro-gym-line-api, then request STEP GYM-NEXT-5-VERIFY"
