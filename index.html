@@ -86,6 +86,11 @@
     .summary-row span { display: block; color: var(--muted); font-size: .75rem; font-weight: 800; }
     .summary-row strong { display: block; margin-top: 2px; }
     .notice { border-radius: 14px; padding: 11px 13px; margin-top: 14px; background: #fff5d9; color: #765200; font-size: .83rem; }
+
+    .repeat-notice { display:none; border:2px solid #a8c5f6; border-radius:17px; padding:13px 14px; margin-bottom:15px; color:#174dac; background:#edf4ff; }
+    .repeat-notice.show { display:block; }
+    .repeat-notice strong { display:block; }
+    .repeat-notice span { display:block; margin-top:3px; color:#516581; font-size:.82rem; }
     .error { display: none; margin-top: 12px; border-radius: 14px; padding: 11px 13px; background: #fff0f1; color: var(--red); font-weight: 800; }
     .error.show { display: block; }
     .actions { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 10px; margin-top: 18px; }
@@ -109,7 +114,7 @@
     }
   </style>
 </head>
-<body>
+<body data-dpro-next-step="GYM-NEXT-7">
   <header class="top">
     <div class="top-inner">
       <p class="brand">DPRO PERSONAL GYM LINE</p>
@@ -126,6 +131,11 @@
       <div class="progress-item" data-progress="3"><span>3</span>お客様情報</div>
       <div class="progress-item" data-progress="4"><span>4</span>確認</div>
     </nav>
+
+    <div class="repeat-notice" id="repeatNotice">
+      <strong>前回と同じ内容を選択しました</strong>
+      <span id="repeatNoticeText">メニューと担当者を引き継ぎ、日時だけ選び直せます。</span>
+    </div>
 
     <section class="card step active" data-step="1">
       <p class="eyebrow">STEP 1</p>
@@ -217,8 +227,11 @@
       liffAccessToken: '',
       demo: params.get('demo') === '1',
       customer: null,
-      memberToken: localStorage.getItem('dpro_gym_member_token') || '',
-      purpose: ''
+      memberToken: params.get('member_token') || localStorage.getItem('dpro_gym_member_token') || '',
+      purpose: '',
+      repeat: params.get('repeat') === '1',
+      prefillServiceCode: params.get('service_code') || '',
+      prefillTrainerCode: params.get('trainer_code') || ''
     };
 
     document.addEventListener('DOMContentLoaded', init);
@@ -234,10 +247,12 @@
         state.services = facility.services || [];
         state.trainers = facility.trainers || [];
         document.getElementById('pageTitle').textContent = `${state.facility.facility_name}｜予約`;
+        await tryLoadMember();
+        applyRepeatPrefill();
         renderServices();
         renderTrainers();
         buildDates();
-        await tryLoadMember();
+        renderRepeatNotice();
       } catch (error) {
         showError('step1Error', error.message);
       }
@@ -258,6 +273,32 @@
       }
       if (state.demo && !state.lineUserId) state.lineUserId = 'demo_gym_line_001';
       updateMemberLinks();
+    }
+
+
+    function applyRepeatPrefill() {
+      if (!state.repeat) return;
+      if (state.prefillServiceCode &&
+          state.services.some(item => item.service_code === state.prefillServiceCode)) {
+        state.serviceCode = state.prefillServiceCode;
+      }
+      if (state.prefillTrainerCode &&
+          state.trainers.some(item => item.trainer_code === state.prefillTrainerCode)) {
+        state.trainerCode = state.prefillTrainerCode;
+      }
+    }
+
+    function renderRepeatNotice() {
+      const notice = document.getElementById('repeatNotice');
+      const validRepeat = state.repeat &&
+        state.prefillServiceCode &&
+        state.serviceCode === state.prefillServiceCode;
+      notice.classList.toggle('show', Boolean(validRepeat));
+      if (!validRepeat) return;
+      const service = state.services.find(item => item.service_code === state.serviceCode);
+      const trainer = state.trainers.find(item => item.trainer_code === state.trainerCode);
+      document.getElementById('repeatNoticeText').textContent =
+        `${service?.service_name || state.serviceCode} / ${trainer?.trainer_name || 'おまかせ'}を引き継ぎました。日時だけ選び直してください。`;
     }
 
     async function tryLoadMember() {
@@ -318,6 +359,7 @@
       state.serviceCode = code;
       state.slot = null;
       renderServices();
+      renderRepeatNotice();
       if (state.date) loadSlots();
     }
 
@@ -325,6 +367,7 @@
       state.trainerCode = code;
       state.slot = null;
       renderTrainers();
+      renderRepeatNotice();
       if (state.date) loadSlots();
     }
 
