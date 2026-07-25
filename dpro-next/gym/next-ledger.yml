@@ -1,54 +1,47 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-8-COMPLETE"
-workflow_revision: "R2"
-next_step: "GYM-NEXT-9"
-result: "OK"
+current_step: "GYM-NEXT-9-PREPARED"
+workflow_revision: "R1"
+next_step: "GYM-NEXT-9-VERIFY"
+next_action: "DEPLOY_WORKER_THEN_VERIFY"
+result: "PREPARED"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-8-verify-20260725"
-step_backup_sha: "c773b170ab53eec01a255a2dcdf0a396012e99e3"
-application_commit_sha: "55306cb8d0025a28b312dbb43994172f9d138cb7"
-dashboard_blob: "cbb1f028442946c0ba2fd69eedc90de844eae68c"
-config_blob: "68028432d9177a907e1e91e81c316b47b8845147"
-index_blob: "6ea48136d70e328366a8584ebecaa55562372d20"
-member_blob: "ed7e59d0a1101adfd328e24e1eb09a8f62a41aca"
-owner_ipad_blob: "3b94e5221ec26ec74d8e1fe4e4e41285ee27c792"
-staff_blob: "59e66cb480aa5795c646ab99a1ff71070013ad26"
-completed_at: "2026-07-25T20:20:26+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30156043997"
+step_backup_tag: "backup-gym-before-next-9-20260725"
+step_backup_sha: "5c300b51a5c122229f5c28b249e5204cfcf33f0f"
+package_commit_sha: "6fe2c201f07536e255a7f90caa0442dbef61f3de"
+prepared_at: "2026-07-25T22:07:20+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30159133559"
 worker_name: "dpro-gym-line-api"
-worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
-worker_version: "GYM-NEXT-8-WORKER-R2-20260725"
-worker_deployed: true
+current_worker_version: "GYM-NEXT-8-WORKER-R2-20260725"
+expected_worker_version: "GYM-NEXT-9-WORKER-20260725"
+worker_sha256: "d1f62c3d88b67df0488848ad8d29ba5cc3a0493669993cc386e7ad5d49832dbb"
 supabase_changed: false
-runtime_files_changed: true
-worker_changed: true
-api_changed: true
-changed_files:
-  - "dashboard.html"
-completed_features:
-  follow_up_board: true
-  follow_up_prioritization: true
-  follow_up_action_log: true
-  follow_up_message_copy_only: true
-  follow_up_snooze_guard: true
-  follow_up_recent_done_guard: true
-  automatic_line_broadcast: false
+runtime_files_changed: false
+worker_deployed: false
+planned_runtime_files:
+  - "system-check.html"
+planned_features:
+  security_headers: true
+  query_string_auth_disabled: true
+  request_body_limit: true
+  json_content_type_required: true
+  compact_json_payload: true
+  integrated_system_check: true
+  performance_budget_check: true
+  public_payload_budget_check: true
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  worker_health: "OK"
-  follow_up_api: "OK"
-  invalid_action_guard: "OK"
+  current_worker_health: "OK"
   next4_preserved: "OK"
   next5_preserved: "OK"
+  next8_preserved: "OK"
+  staff_role_preserved: "OK"
   member_history_preserved: "OK"
-  role_separation_preserved: "OK"
-  html_structure: "OK"
-  javascript_syntax: "OK"
-  duplicate_html_ids: "OK"
-  existing_owner_api: "OK"
-  automatic_line_send_absent: "OK"
-  public_dashboard: "OK"
+  source_worker_blob: "OK"
+  worker_diff_patch: "OK"
+  worker_javascript_syntax: "OK"
+  existing_api_contract: "OK"
+  runtime_unchanged: "OK"
