@@ -1,55 +1,76 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-9-PREPARED"
-workflow_revision: "R2"
-next_step: "GYM-NEXT-9-VERIFY-R2"
-next_action: "DEPLOY_WORKER_R2_THEN_VERIFY"
-result: "PREPARED"
+current_step: "GYM-NEXT-9-COMPLETE"
+workflow_revision: "R3"
+worker_revision: "R2"
+next_step: "GYM-NEXT-10"
+result: "OK"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-9-20260725"
-step_backup_sha: "5c300b51a5c122229f5c28b249e5204cfcf33f0f"
-package_commit_sha: "e556ee307caa47ac15b1dfbb2c932fb20c35d0ff"
-prepared_at: "2026-07-25T22:07:20+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30159133559"
+step_backup_tag: "backup-gym-before-next-9-verify-r3-20260725"
+step_backup_sha: "b67ef7743d843b50d14c67a9c3e031746564099e"
+application_commit_sha: "b67ef7743d843b50d14c67a9c3e031746564099e"
+system_check_blob: "8d37b43caec090e42593d8ebc088bd9aff06131a"
+config_blob: "68028432d9177a907e1e91e81c316b47b8845147"
+index_blob: "6ea48136d70e328366a8584ebecaa55562372d20"
+member_blob: "ed7e59d0a1101adfd328e24e1eb09a8f62a41aca"
+dashboard_blob: "cbb1f028442946c0ba2fd69eedc90de844eae68c"
+owner_ipad_blob: "3b94e5221ec26ec74d8e1fe4e4e41285ee27c792"
+staff_blob: "59e66cb480aa5795c646ab99a1ff71070013ad26"
+completed_at: "2026-07-25T23:58:46+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30162695681"
 worker_name: "dpro-gym-line-api"
-current_worker_version: "GYM-NEXT-8-WORKER-R2-20260725"
-expected_worker_version: "GYM-NEXT-9-WORKER-R2-20260725"
+worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
+worker_version: "GYM-NEXT-9-WORKER-R2-20260725"
 worker_sha256: "9405f4c300f2d73cdf77606dcb33dfa8b5c9afb7e5ca247a445e0b25d4d2439f"
+worker_deployed: true
 supabase_changed: false
-runtime_files_changed: false
-worker_deployed: false
-planned_runtime_files:
+runtime_files_changed: true
+worker_changed: true
+api_changed: true
+changed_files:
   - "system-check.html"
-planned_features:
+completed_features:
   security_headers: true
   query_string_auth_disabled: true
   request_body_limit: true
   json_content_type_required: true
   compact_json_payload: true
   integrated_system_check: true
+  resilient_optional_system_probes: true
   performance_budget_check: true
   public_payload_budget_check: true
+  automatic_line_broadcast: false
+recovery:
+  failed_verify_revision: "R2"
+  failed_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30162210349"
+  failure_reason: "owner-ipad.htmlを旧管理API文字列で確認していた"
+  corrected_owner_ipad_marker: "/api/staff/today"
+  runtime_rewrite_required: false
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  current_worker_health: "OK"
+  worker_health: "OK"
+  integrated_system_check: "OK"
+  activity_log_action_column: "OK"
+  optional_probes_isolated: "OK"
+  admin_header_auth: "OK"
+  staff_header_auth: "OK"
+  admin_query_auth_rejected: "OK"
+  staff_query_auth_rejected: "OK"
+  non_json_rejected: "OK"
+  oversized_json_rejected: "OK"
+  security_headers: "OK"
+  compact_json: "OK"
   next4_preserved: "OK"
   next5_preserved: "OK"
   next8_preserved: "OK"
-  staff_role_preserved: "OK"
+  role_separation_preserved: "OK"
+  owner_ipad_staff_api: "OK"
   member_history_preserved: "OK"
-  source_worker_blob: "OK"
-  worker_diff_patch: "OK"
-  worker_javascript_syntax: "OK"
-  existing_api_contract: "OK"
-  runtime_unchanged: "OK"
-
-worker_r2_correction:
-  invalid_column_removed: "action_type"
-  valid_column_used: "action"
-  optional_probes_isolated: true
-  failed_verify_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30159660911"
-  corrected_at: "2026-07-25T23:26:33+0900"
-  workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30161633400"
+  html_structure: "OK"
+  javascript_syntax: "OK"
+  duplicate_html_ids: "OK"
+  public_file_budgets: "OK"
+  public_system_check: "OK"

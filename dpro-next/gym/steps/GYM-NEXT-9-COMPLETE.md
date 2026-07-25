@@ -1,0 +1,26 @@
+# DPRO パーソナルジム LINE｜GYM-NEXT-9 COMPLETE
+
+- 結果: OK
+- VERIFY修正版: R3
+- Worker修正版: R2
+- Worker: GYM-NEXT-9-WORKER-R2-20260725
+- system-check.html公開: OK
+- iPad受付の正しい公開確認: /api/staff/today
+- 誤った管理API確認条件: 削除
+- 操作履歴列action: OK
+- 補助ログ検査の分離: OK
+- 管理・スタッフ認証: HTTPヘッダー限定
+- URL認証: 401で拒否
+- JSON以外: 415で拒否
+- 64KB超過: 413で拒否
+- セキュリティヘッダー: OK
+- compact JSON: OK
+- 統合system-check: OK
+- 公開ファイル容量: OK
+- NEXT-4・5・8維持: OK
+- LINE自動・一斉送信: なし
+- Supabase変更: なし
+- バックアップタグ: backup-gym-before-next-9-verify-r3-20260725
+- アプリケーションコミット: b67ef7743d843b50d14c67a9c3e031746564099e
+- 完了日時: 2026-07-25T23:58:46+0900
+- Actions: https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30162695681
