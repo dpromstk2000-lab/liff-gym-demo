@@ -1,42 +1,38 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-4-COMPLETE"
+current_step: "GYM-NEXT-5-PREPARED"
 workflow_revision: "R1"
-next_step: "GYM-NEXT-5"
-result: "OK"
+next_step: "GYM-NEXT-5-VERIFY"
+next_action: "RUN_SQL_AND_DEPLOY_WORKER"
+result: "PREPARED"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-4-verify-20260725"
-step_backup_sha: "b004b65f61526e25667fd8c48360f144ea6417f8"
-application_commit_sha: "fbc6510a7f2ec83d66e273890c14b068adb4a36a"
-dashboard_blob: "2f69ca0e207c244d9bb671bcd2c6d36b747a14de"
-owner_ipad_blob: "04b119e1f32a5156f94a64079c6d751253d7dfff"
-completed_at: "2026-07-25T12:55:22+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30143074199"
+step_backup_tag: "backup-gym-before-next-5-20260725"
+step_backup_sha: "f3aa2a023e6581fe5ef1ae9240c27c172a431b84"
+package_commit_sha: "aaadc4627ceaec61884f05f5725a33cedc9f31ad"
+prepared_at: "2026-07-25T13:09:25+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30143518256"
 worker_name: "dpro-gym-line-api"
-worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
-worker_version: "GYM-NEXT-4-WORKER-20260725"
-worker_deployed: true
-supabase_executed: true
-runtime_files_changed: true
-worker_changed: true
-supabase_changed: true
-api_changed: true
-changed_files:
-  - "dashboard.html"
-  - "owner-ipad.html"
+current_worker_version: "GYM-NEXT-4-WORKER-20260725"
+expected_worker_version: "GYM-NEXT-5-WORKER-20260725"
+worker_deployed: false
+supabase_executed: false
+runtime_files_changed: false
+worker_changed: false
+supabase_changed: false
+api_changed: false
+prepared_features:
+  plan_master: true
+  trial_pipeline: true
+  atomic_admission: true
+  membership_grant_guard: true
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  worker_health: "OK"
-  supabase_next4: "OK"
-  duplicate_completion_count: 0
-  config_worker_url: "OK"
-  html_structure: "OK"
-  javascript_syntax: "OK"
-  duplicate_html_ids: "OK"
-  existing_api_references: "OK"
-  pc_session_ui: "OK"
-  ipad_session_ui: "OK"
-  public_pages: "OK"
+  current_worker_health: "OK"
+  current_public_pages: "OK"
+  worker_javascript_syntax: "OK"
+  migration_static_safety: "OK"
+  rollback_present: "OK"
+  runtime_unchanged: "OK"
