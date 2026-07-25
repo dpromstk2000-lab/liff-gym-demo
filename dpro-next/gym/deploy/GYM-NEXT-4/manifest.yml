@@ -1,0 +1,36 @@
+package_version: "GYM-NEXT-4-PREP-20260725"
+system_name: "DPRO パーソナルジム LINE"
+phase: "PREPARED"
+runtime_changed: false
+existing_worker_changed: false
+existing_supabase_tables_deleted: false
+new_worker_name: "dpro-gym-line-api-next"
+legacy_worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
+new_worker_expected_url: "https://dpro-gym-line-api-next.dpromstk2000.workers.dev"
+files:
+  - "worker.js"
+  - "GYM-NEXT-4.sql"
+  - "GYM-NEXT-4.txt"
+  - "GYM-NEXT-4-ROLLBACK.sql"
+  - "GYM-NEXT-4-ROLLBACK.txt"
+  - "DEPLOY.md"
+changes:
+  supabase:
+    - "gym_session_records"
+    - "gym_ticket_ledger_completion_once_idx"
+    - "gym_update_reservation_status_next"
+    - "gym_upsert_session_record"
+    - "gym_complete_session_next"
+    - "gym_next_4_system_check"
+  worker:
+    - "NEXT gateway"
+    - "legacy API proxy"
+    - "session completion API"
+    - "session record API"
+    - "ticket ledger read API"
+safety:
+  - "existing Worker remains available"
+  - "existing ticket ledger is preserved"
+  - "existing atomic reservation status RPC is preserved"
+  - "public runtime remains unchanged during preparation"
+next_action: "Run SQL and deploy new Worker, then request STEP GYM-NEXT-4-VERIFY"
