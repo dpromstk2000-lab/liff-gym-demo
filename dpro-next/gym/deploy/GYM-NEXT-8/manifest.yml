@@ -1,0 +1,32 @@
+package_version: "GYM-NEXT-8-PREP-20260725"
+system_name: "DPRO パーソナルジム LINE"
+phase: "PREPARED"
+worker_name: "dpro-gym-line-api"
+worker_expected_version: "GYM-NEXT-8-WORKER-20260725"
+supabase_changed: false
+runtime_changed: false
+follow_up_sources:
+  - "明示されたフォロー期限"
+  - "回数券が残り1回以下"
+  - "有効期限が14日以内"
+  - "最終来店から14日以上かつ次回予約なし"
+  - "継続相談中"
+actions:
+  - "個別LINE文面を作成・コピー"
+  - "3日後に再連絡"
+  - "7日後に再連絡"
+  - "手動対応後に完了"
+  - "会員情報を開く"
+safety:
+  automatic_line_send: false
+  bulk_line_send: false
+  message_delivery: "copy_only"
+  interaction_log: true
+  existing_tables_only: true
+planned_ui:
+  dashboard.html:
+    - "継続フォロー専用メニュー"
+    - "理由・優先順位・期限フィルター"
+    - "案内文コピー"
+    - "対応済み・再連絡記録"
+next_action: "Deploy Worker, then run GYM-NEXT-8-VERIFY"
