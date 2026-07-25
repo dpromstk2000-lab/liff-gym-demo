@@ -1,56 +1,54 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-8-PREPARED"
+current_step: "GYM-NEXT-8-COMPLETE"
 workflow_revision: "R2"
-next_step: "GYM-NEXT-8-VERIFY"
-next_action: "DEPLOY_WORKER_THEN_VERIFY"
-result: "PREPARED"
+next_step: "GYM-NEXT-9"
+result: "OK"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-8-20260725"
-step_backup_sha: "14ae66990140909361ec84943ea097c1efadc78f"
-package_commit_sha: "dba30452b7f60838334b12db4d91e995871a654f"
-prepared_at: "2026-07-25T17:53:10+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30151876859"
+step_backup_tag: "backup-gym-before-next-8-verify-20260725"
+step_backup_sha: "c773b170ab53eec01a255a2dcdf0a396012e99e3"
+application_commit_sha: "55306cb8d0025a28b312dbb43994172f9d138cb7"
+dashboard_blob: "cbb1f028442946c0ba2fd69eedc90de844eae68c"
+config_blob: "68028432d9177a907e1e91e81c316b47b8845147"
+index_blob: "6ea48136d70e328366a8584ebecaa55562372d20"
+member_blob: "ed7e59d0a1101adfd328e24e1eb09a8f62a41aca"
+owner_ipad_blob: "3b94e5221ec26ec74d8e1fe4e4e41285ee27c792"
+staff_blob: "59e66cb480aa5795c646ab99a1ff71070013ad26"
+completed_at: "2026-07-25T20:20:26+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30156043997"
 worker_name: "dpro-gym-line-api"
-current_worker_version: "GYM-NEXT-7-WORKER-20260725"
-expected_worker_version: "GYM-NEXT-8-WORKER-R2-20260725"
-worker_sha256: "4555776fa0dc64f9d32ebe784a49000e8068743a72921c5f2d76735c77918ec8"
+worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
+worker_version: "GYM-NEXT-8-WORKER-R2-20260725"
+worker_deployed: true
 supabase_changed: false
-runtime_files_changed: false
-worker_deployed: false
-planned_runtime_files:
+runtime_files_changed: true
+worker_changed: true
+api_changed: true
+changed_files:
   - "dashboard.html"
-planned_features:
+completed_features:
   follow_up_board: true
   follow_up_prioritization: true
   follow_up_action_log: true
   follow_up_message_copy_only: true
+  follow_up_snooze_guard: true
+  follow_up_recent_done_guard: true
   automatic_line_broadcast: false
-candidate_rules:
-  - "follow_due"
-  - "low_tickets"
-  - "expiring_soon"
-  - "no_next_booking"
-  - "continuation"
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  current_worker_health: "OK"
+  worker_health: "OK"
+  follow_up_api: "OK"
+  invalid_action_guard: "OK"
   next4_preserved: "OK"
   next5_preserved: "OK"
-  staff_role_preserved: "OK"
   member_history_preserved: "OK"
-  source_worker_blob: "OK"
-  worker_diff_patch: "OK"
-  worker_javascript_syntax: "OK"
-  existing_api_contract: "OK"
+  role_separation_preserved: "OK"
+  html_structure: "OK"
+  javascript_syntax: "OK"
+  duplicate_html_ids: "OK"
+  existing_owner_api: "OK"
   automatic_line_send_absent: "OK"
-  runtime_unchanged: "OK"
-
-worker_r2_correction:
-  follow_up_snooze_guard: true
-  follow_up_recent_done_guard: true
-  corrected_at: "2026-07-25T19:58:45+0900"
-  workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30155414774"
+  public_dashboard: "OK"
