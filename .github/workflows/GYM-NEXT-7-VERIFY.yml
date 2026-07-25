@@ -1,4 +1,4 @@
-name: STEP GYM-NEXT-7-VERIFY - LINE History and Repeat Booking UI
+name: STEP GYM-NEXT-7-VERIFY-R2 - LINE History and Repeat Booking UI
 
 on:
   push:
@@ -198,47 +198,158 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/gym-next-7-verify/scripts
+
           python3 <<'PY'
           from html.parser import HTMLParser
           from pathlib import Path
-          import json,re
+          import json
+          import re
+
           class Parser(HTMLParser):
-              def __init__(self): super().__init__(convert_charrefs=True); self.ids=[]
-              def handle_starttag(self,tag,attrs):
-                  for k,v in attrs:
-                      if k=="id" and v: self.ids.append(v)
-              def handle_startendtag(self,tag,attrs): self.handle_starttag(tag,attrs)
-          report={}
-          for filename in ("index.html","member.html"):
-              text=Path(filename).read_text()
-              p=Parser(); p.feed(text)
-              dup=sorted({v for v in p.ids if p.ids.count(v)>1})
-              if dup: raise SystemExit(f"Duplicate IDs in {filename}: {dup}")
-              scripts=[s for s in re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>",text,re.I|re.S) if s.strip()]
-              for i,s in enumerate(scripts,1):
-                  Path(f"/tmp/gym-next-7-verify/scripts/{Path(filename).stem}-{i}.js").write_text(s)
-              report[filename]={"id_count":len(p.ids),"duplicate_ids":dup,"inline_script_count":len(scripts)}
-          Path("/tmp/gym-next-7-verify/html-report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2))
+              def __init__(self):
+                  super().__init__(convert_charrefs=True)
+                  self.ids = []
+
+              def handle_starttag(self, tag, attrs):
+                  for key, value in attrs:
+                      if key == "id" and value:
+                          self.ids.append(value)
+
+              def handle_startendtag(self, tag, attrs):
+                  self.handle_starttag(tag, attrs)
+
+          report = {}
+          for filename in ("index.html", "member.html"):
+              text = Path(filename).read_text(encoding="utf-8")
+              parser = Parser()
+              parser.feed(text)
+
+              duplicates = sorted({
+                  value for value in parser.ids
+                  if parser.ids.count(value) > 1
+              })
+              if duplicates:
+                  raise SystemExit(
+                      f"Duplicate IDs in {filename}: {duplicates}"
+                  )
+
+              scripts = re.findall(
+                  r"<script(?:\s[^>]*)?>(.*?)</script>",
+                  text,
+                  flags=re.I | re.S,
+              )
+              inline = [script for script in scripts if script.strip()]
+              for index, script in enumerate(inline, 1):
+                  Path(
+                      f"/tmp/gym-next-7-verify/scripts/"
+                      f"{Path(filename).stem}-{index}.js"
+                  ).write_text(script, encoding="utf-8")
+
+              report[filename] = {
+                  "id_count": len(parser.ids),
+                  "duplicate_ids": duplicates,
+                  "inline_script_count": len(inline),
+              }
+
+          Path("/tmp/gym-next-7-verify/html-report.json").write_text(
+              json.dumps(report, ensure_ascii=False, indent=2),
+              encoding="utf-8",
+          )
           PY
-          find /tmp/gym-next-7-verify/scripts -type f -name '*.js' -print0 | while IFS= read -r -d '' script; do node --check "${script}"; done
 
-          grep -Fq 'data-dpro-next-step="GYM-NEXT-7"' index.html
-          grep -Fq 'data-dpro-next-step="GYM-NEXT-7"' member.html
-          grep -Fq 'id="repeatNotice"' index.html
-          grep -Fq "params.get('service_code')" index.html
-          grep -Fq "params.get('trainer_code')" index.html
-          grep -Fq 'function applyRepeatPrefill' index.html
-          grep -Fq 'id="repeatReserveLink"' member.html
-          grep -Fq 'id="sessionHistoryList"' member.html
-          grep -Fq 'function renderSessionHistory' member.html
-          grep -Fq 'row.training_summary' member.html
-          grep -Fq 'row.next_focus' member.html
-          grep -Fq 'row.member_visible_comment' member.html
-          ! grep -Fq 'row.trainer_note' member.html
-          ! grep -Fq 'row.condition_note' member.html
+          find /tmp/gym-next-7-verify/scripts \
+            -type f -name '*.js' -print0 |
+            while IFS= read -r -d '' script; do
+              echo "Checking JavaScript: ${script}"
+              node --check "${script}"
+            done
 
-          for marker in '/api/public/facility' '/api/public/availability' '/api/public/reservations' '予約開始時刻は30分単位' 'isValidPhone' 'state.slot'; do grep -Fq "${marker}" index.html; done
-          for marker in '/api/member/home' '/api/member/reservations/cancel-request' '/api/member/reservations/change-request' '/api/member/inquiries' 'X-LIFF-Access-Token'; do grep -Fq "${marker}" member.html; done
+          require_text() {
+            local file="$1"
+            local marker="$2"
+            local label="$3"
+            if ! grep -Fq -- "${marker}" "${file}"; then
+              echo "::error file=${file}::Missing ${label}: ${marker}"
+              exit 1
+            fi
+          }
+
+          forbid_text() {
+            local file="$1"
+            local marker="$2"
+            local label="$3"
+            if grep -Fq -- "${marker}" "${file}"; then
+              echo "::error file=${file}::Forbidden ${label}: ${marker}"
+              exit 1
+            fi
+          }
+
+          require_text index.html \
+            'data-dpro-next-step="GYM-NEXT-7"' \
+            "NEXT-7 body marker"
+          require_text member.html \
+            'data-dpro-next-step="GYM-NEXT-7"' \
+            "NEXT-7 body marker"
+
+          require_text index.html 'id="repeatNotice"' \
+            "repeat booking notice"
+          require_text index.html "params.get('service_code')" \
+            "service prefill parameter"
+          require_text index.html "params.get('trainer_code')" \
+            "trainer prefill parameter"
+          require_text index.html 'function applyRepeatPrefill' \
+            "repeat prefill function"
+
+          require_text member.html 'id="repeatReserveLink"' \
+            "repeat booking link"
+          require_text member.html 'id="sessionHistoryList"' \
+            "session history container"
+          require_text member.html 'function renderSessionHistory' \
+            "session history renderer"
+          require_text member.html 'row.training_summary' \
+            "member training summary"
+          require_text member.html 'row.next_focus' \
+            "member next focus"
+          require_text member.html 'row.member_visible_comment' \
+            "member-visible comment"
+
+          forbid_text member.html 'row.trainer_note' \
+            "trainer private note exposure"
+          forbid_text member.html 'row.condition_note' \
+            "condition private note exposure"
+
+          for marker in \
+            '/api/public/facility' \
+            '/api/public/availability' \
+            '/api/public/reservations' \
+            '予約開始時刻は30分単位' \
+            'isValidPhone' \
+            'state.slot'
+          do
+            require_text index.html "${marker}" \
+              "existing booking contract"
+          done
+
+          require_text member.html '/api/member/home' \
+            "member home API"
+          require_text member.html '/api/member/inquiries' \
+            "member inquiry API"
+          require_text member.html 'X-LIFF-Access-Token' \
+            "LIFF authentication header"
+
+          # R2 FIX:
+          # The page intentionally builds the request endpoint dynamically:
+          # const endpoint = cancel-request or change-request;
+          # /api/member/reservations/${endpoint}
+          require_text member.html \
+            '/api/member/reservations/${endpoint}' \
+            "dynamic reservation request endpoint"
+          require_text member.html 'cancel-request' \
+            "cancel request action"
+          require_text member.html 'change-request' \
+            "change request action"
+
+          echo "NEXT-7 R2 HTML, JavaScript and API contract checks passed."
 
       - name: Confirm only index and member changed
         shell: bash
@@ -291,8 +402,10 @@ jobs:
           set -euo pipefail
           COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
           cat > "${STEP_DIR}/GYM-NEXT-7-COMPLETE.md" <<EOF
-          # DPRO パーソナルジム LINE｜GYM-NEXT-7 COMPLETE
+          # DPRO パーソナルジム LINE｜GYM-NEXT-7 COMPLETE（R2）
           - 結果: OK
+          - Workflow修正版: R2
+          - R2修正: 動的な予約依頼APIの検査条件を修正
           - Worker: ${EXPECTED_WORKER_VERSION}
           - Supabase変更: なし
           - 前回と同じ内容で予約: OK
@@ -313,7 +426,7 @@ jobs:
           repository: "${GITHUB_REPOSITORY}"
           branch: "main"
           current_step: "GYM-NEXT-7-COMPLETE"
-          workflow_revision: "R1"
+          workflow_revision: "R2"
           next_step: "${NEXT_STEP}"
           result: "OK"
           facility_code: "dpro_gym_demo"
@@ -387,7 +500,7 @@ jobs:
         shell: bash
         run: |
           {
-            echo "## GYM-NEXT-7 COMPLETE"
+            echo "## GYM-NEXT-7 COMPLETE (R2)"
             echo "- Worker: \`${EXPECTED_WORKER_VERSION}\`"
             echo "- Member-safe session history: \`OK\`"
             echo "- Repeat booking prefill: \`OK\`"
