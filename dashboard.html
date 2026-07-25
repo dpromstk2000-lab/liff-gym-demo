@@ -8,7 +8,7 @@
   <style>
     :root { --navy:#13213c; --navy2:#1d3259; --blue:#2563eb; --blue2:#184db6; --green:#087a55; --red:#c93444; --amber:#a56500; --purple:#7247b8; --text:#182235; --muted:#617086; --line:#d6dfeb; --bg:#eef2f7; --card:#fff; }
     * { box-sizing:border-box; }
-    html { font-size:17px; }
+    html { font-size:18px; }
     body { margin:0; color:var(--text); background:var(--bg); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.6; }
     button,input,textarea,select { font:inherit; }
     button { cursor:pointer; }
@@ -55,6 +55,30 @@
     .stat strong { display:block; margin-top:3px; font-size:1.8rem; line-height:1.25; }
     .stat.blue { border-color:#a9c5fb; background:#f2f7ff; }.stat.red { border-color:#f0b3ba; background:#fff4f5; }.stat.green { border-color:#9fd6c2; background:#f0faf6; }
     .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .quick-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+    .quick-action { min-width:0; min-height:78px; border:1px solid var(--line); border-radius:17px; padding:13px 15px; text-align:left; color:var(--navy); background:#fff; box-shadow:0 6px 18px rgba(20,38,70,.04); }
+    .quick-action.primary { border-color:#98b9f8; color:#fff; background:linear-gradient(135deg,var(--blue),var(--blue2)); }
+    .quick-action span { display:block; font-size:1rem; font-weight:950; }
+    .quick-action small { display:block; margin-top:3px; color:var(--muted); font-size:.76rem; font-weight:750; }
+    .quick-action.primary small { color:#e5edff; }
+    .priority-card { border:2px solid #f0b4bb; background:#fff7f8; }
+    .section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+    .section-count { display:inline-grid; place-items:center; min-width:34px; height:34px; border-radius:999px; padding:0 10px; color:#fff; background:var(--red); font-size:.8rem; font-weight:950; }
+    .section-count.amber { background:var(--amber); }
+    .section-count.green { background:var(--green); }
+    .today-board { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(320px,.65fr); gap:14px; align-items:start; }
+    .support-column { display:grid; gap:14px; }
+    .support-column .card { margin-bottom:0; }
+    .settings-shell { display:grid; grid-template-columns:210px minmax(0,1fr); gap:16px; align-items:start; }
+    .settings-menu { position:sticky; top:93px; display:grid; gap:7px; }
+    .settings-menu-btn { width:100%; min-height:48px; border:0; border-radius:13px; padding:9px 12px; text-align:left; color:#4c5a70; background:#eef2f7; font-weight:900; }
+    .settings-menu-btn.active { color:#fff; background:var(--blue); }
+    .settings-content { min-width:0; }
+    .settings-panel { display:none; }
+    .settings-panel.active { display:block; }
+    .settings-panel h3 { margin-bottom:4px; }
+    .settings-save { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-top:18px; padding-top:16px; border-top:1px solid var(--line); }
+    .settings-save .sub { margin:0; }
     .list { display:grid; gap:9px; margin-top:13px; }
     .item { border:1px solid var(--line); border-radius:15px; padding:13px; background:#fafbfd; }
     .item-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
@@ -86,11 +110,11 @@
     .notice { border-radius:13px; padding:10px 12px; margin-top:10px; color:#775200; background:#fff4d5; font-size:.8rem; }
     .message-text { min-height:260px; }
     .toast { position:fixed; right:18px; bottom:18px; z-index:120; max-width:420px; border-radius:14px; padding:12px 16px; color:#fff; background:var(--green); box-shadow:0 12px 40px rgba(0,0,0,.23); font-weight:900; }
-    @media (max-width:1080px) { .layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow-x:auto;gap:6px}.nav-btn{flex:0 0 auto;width:auto;margin:0}.stats{grid-template-columns:repeat(3,1fr)} }
-    @media (max-width:760px) { html{font-size:16px}.header-inner{align-items:flex-start}.header-actions{max-width:52%}.stats{grid-template-columns:1fr 1fr}.grid-2,.settings-grid,.form-grid{grid-template-columns:1fr}.span-2{grid-column:auto}.filters{grid-template-columns:1fr 1fr}.filters .btn{grid-column:1/-1}.page-head{display:block}.page-actions{justify-content:flex-start;margin-top:10px}.layout{padding:11px}.card{padding:14px} }
+    @media (max-width:1080px) { .layout{grid-template-columns:1fr}.side{position:static;display:flex;overflow-x:auto;gap:6px}.nav-btn{flex:0 0 auto;width:auto;margin:0}.stats{grid-template-columns:repeat(3,1fr)}.today-board{grid-template-columns:1fr}.settings-menu{position:static} }
+    @media (max-width:760px) { html{font-size:17px}.header-inner{display:block;padding:12px}.header-actions{max-width:none;justify-content:flex-start;margin-top:10px}.header-actions .btn{flex:1 1 145px}.stats{grid-template-columns:1fr 1fr}.quick-actions{grid-template-columns:1fr}.today-board,.settings-shell,.grid-2,.settings-grid,.form-grid{grid-template-columns:1fr}.settings-menu{display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.settings-menu-btn{flex:0 0 auto;width:auto;white-space:nowrap}.span-2{grid-column:auto}.filters{grid-template-columns:1fr 1fr}.filters .btn{grid-column:1/-1}.page-head{display:block}.page-actions{justify-content:flex-start;margin-top:10px}.page-actions input{min-width:0}.layout{padding:11px}.card{padding:14px}.section-head{align-items:center}.item-top{display:block}.item-top .badge{margin-top:7px} }
   </style>
 </head>
-<body>
+<body data-dpro-next-step="GYM-NEXT-2">
   <div class="gate" id="loginGate">
     <div class="gate-card">
       <p class="brand">DPRO PERSONAL GYM LINE</p><h1>PC管理画面</h1><p class="sub">管理コードを入力してください。営業デモURLでは1234を自動設定します。</p>
@@ -114,11 +138,23 @@
 
       <main class="content">
         <section class="view active" id="view-today">
-          <div class="page-head"><div><h2>今日やること</h2><p class="sub" id="todayLabel">予約と優先対応を確認します。</p></div><div class="page-actions"><input id="dashboardDate" type="date"><button class="btn btn-blue" type="button" onclick="loadDashboard()">日付を表示</button><button class="btn btn-dark" type="button" onclick="prepareDemo()">営業前DEMO準備</button></div></div>
+          <div class="page-head"><div><p class="brand">DPRO NEXT</p><h2>今日やること</h2><p class="sub" id="todayLabel">今すぐ必要な操作から順番に表示します。</p></div><div class="page-actions"><input id="dashboardDate" type="date" aria-label="表示日"><button class="btn btn-blue" type="button" onclick="loadDashboard()">日付を表示</button><button class="btn btn-dark" type="button" onclick="prepareDemo()">営業前DEMO準備</button></div></div>
+          <div class="quick-actions" aria-label="主要操作">
+            <button class="quick-action primary" type="button" onclick="openPhoneBooking()"><span>電話・店頭予約</span><small>予約受付をすぐに登録</small></button>
+            <button class="quick-action" type="button" onclick="showView('reservations')"><span>予約を確認</span><small>期間・状態から予約を検索</small></button>
+            <button class="quick-action" type="button" onclick="showView('customers')"><span>会員を確認</span><small>履歴・回数券・注意事項を確認</small></button>
+          </div>
           <div class="stats">
             <div class="stat blue"><span>予約</span><strong id="countReservations">-</strong></div><div class="stat red"><span>承認待ち</span><strong id="countPending">-</strong></div><div class="stat"><span>相談・連絡</span><strong id="countInquiries">-</strong></div><div class="stat"><span>フォロー期限</span><strong id="countFollow">-</strong></div><div class="stat green"><span>残り1回以下</span><strong id="countLowTickets">-</strong></div>
           </div>
-          <div class="grid-2"><div class="card"><h3>本日の予約</h3><p class="sub">来店から完了まで順番に更新します。</p><div class="list" id="todayReservations"></div></div><div class="card"><h3>優先対応</h3><p class="sub">承認待ち・相談・継続フォローを上から確認します。</p><div class="list" id="priorityTasks"></div></div></div>
+          <section class="card priority-card"><div class="section-head"><div><h3>今すぐ対応</h3><p class="sub">承認待ち・変更希望・キャンセル希望・未対応相談です。</p></div><span class="section-count" id="urgentTaskCount">0</span></div><div class="list" id="urgentTasks" aria-live="polite"></div></section>
+          <div class="today-board">
+            <section class="card"><div class="section-head"><div><h3>本日の予約</h3><p class="sub">来店から完了まで、表示されたボタンを順番に押します。</p></div><span class="section-count green" id="todayReservationCount">0</span></div><div class="list" id="todayReservations"></div></section>
+            <div class="support-column">
+              <section class="card"><div class="section-head"><div><h3>今日中の対応</h3><p class="sub">期限が来ているフォローを確認します。</p></div><span class="section-count amber" id="todayTaskCount">0</span></div><div class="list" id="todayTasks"></div></section>
+              <section class="card"><div class="section-head"><div><h3>次回案内候補</h3><p class="sub">回数券が少ない会員へ個別に案内します。</p></div><span class="section-count green" id="followTaskCount">0</span></div><div class="list" id="followTasks"></div></section>
+            </div>
+          </div>
         </section>
 
         <section class="view" id="view-reservations">
@@ -138,8 +174,22 @@
         </section>
 
         <section class="view" id="view-settings">
-          <div class="page-head"><div><h2>施設設定</h2><p class="sub">営業時間・休み・予約受付条件を設定します。予約枠は30分固定です。</p></div></div>
-          <div class="card"><div class="settings-grid"><div><label for="settingOpen">営業開始</label><input id="settingOpen" type="time" step="1800"></div><div><label for="settingClose">営業終了</label><input id="settingClose" type="time" step="1800"></div><div><label for="settingMaxDays">予約可能日数</label><input id="settingMaxDays" type="number" min="1" max="365"></div><div><label for="settingLead">予約までの最低時間</label><input id="settingLead" type="number" min="0" max="168"></div><div><label for="settingCancel">キャンセル期限（時間前）</label><input id="settingCancel" type="number" min="0" max="336"></div><div><label for="settingParallel">同時セッション上限</label><input id="settingParallel" type="number" min="1" max="20"></div><div class="span-2"><label>定休日</label><div class="checkbox-row" id="weekdayChecks"></div></div><div class="span-2"><label for="settingClosedDates">臨時休業日（1行に1日・YYYY-MM-DD）</label><textarea id="settingClosedDates"></textarea></div><div class="span-2"><label for="settingNotice">予約画面のお知らせ</label><textarea id="settingNotice"></textarea></div></div><div class="modal-actions"><button class="btn btn-blue" type="button" onclick="saveSettings()">設定を保存</button></div></div>
+          <div class="page-head"><div><p class="brand">OWNER SETTINGS</p><h2>施設設定</h2><p class="sub">左の項目を選び、必要な設定だけを表示します。予約枠は30分固定です。</p></div></div>
+          <div class="card settings-shell">
+            <nav class="settings-menu" aria-label="施設設定メニュー">
+              <button class="settings-menu-btn active" data-settings-tab="basic" type="button" onclick="showSettingPanel('basic')">基本・営業時間</button>
+              <button class="settings-menu-btn" data-settings-tab="booking" type="button" onclick="showSettingPanel('booking')">予約ルール</button>
+              <button class="settings-menu-btn" data-settings-tab="closed" type="button" onclick="showSettingPanel('closed')">定休日・臨時休業</button>
+              <button class="settings-menu-btn" data-settings-tab="notice" type="button" onclick="showSettingPanel('notice')">予約画面のお知らせ</button>
+            </nav>
+            <div class="settings-content">
+              <section class="settings-panel active" data-settings-panel="basic"><h3>基本・営業時間</h3><p class="sub">通常営業の開始・終了と、同時に受け付けるセッション数です。</p><div class="settings-grid"><div><label for="settingOpen">営業開始</label><input id="settingOpen" type="time" step="1800"></div><div><label for="settingClose">営業終了</label><input id="settingClose" type="time" step="1800"></div><div><label for="settingParallel">同時セッション上限</label><input id="settingParallel" type="number" min="1" max="20"></div></div></section>
+              <section class="settings-panel" data-settings-panel="booking"><h3>予約ルール</h3><p class="sub">何日先まで、何時間前まで予約できるかを設定します。</p><div class="settings-grid"><div><label for="settingMaxDays">予約可能日数</label><input id="settingMaxDays" type="number" min="1" max="365"></div><div><label for="settingLead">予約までの最低時間</label><input id="settingLead" type="number" min="0" max="168"></div><div><label for="settingCancel">キャンセル期限（時間前）</label><input id="settingCancel" type="number" min="0" max="336"></div></div></section>
+              <section class="settings-panel" data-settings-panel="closed"><h3>定休日・臨時休業</h3><p class="sub">毎週の休みと、日付指定の休業日を設定します。</p><div class="settings-grid"><div class="span-2"><label>定休日</label><div class="checkbox-row" id="weekdayChecks"></div></div><div class="span-2"><label for="settingClosedDates">臨時休業日（1行に1日・YYYY-MM-DD）</label><textarea id="settingClosedDates"></textarea></div></div></section>
+              <section class="settings-panel" data-settings-panel="notice"><h3>予約画面のお知らせ</h3><p class="sub">お客様の予約画面に表示する案内です。管理情報は入力しないでください。</p><div class="settings-grid"><div class="span-2"><label for="settingNotice">表示するお知らせ</label><textarea id="settingNotice"></textarea></div></div></section>
+              <div class="settings-save"><p class="sub">変更した項目をまとめて保存します。</p><button class="btn btn-blue" type="button" onclick="saveSettings()">設定を保存</button></div>
+            </div>
+          </div>
         </section>
 
         <section class="view" id="view-history">
@@ -166,7 +216,8 @@
     function showView(view){state.view=view;document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));document.querySelectorAll('.nav-btn').forEach(v=>v.classList.toggle('active',v.dataset.view===view));if(view==='reservations')loadReservations();if(view==='customers')loadCustomers();if(view==='inquiries')loadInquiries();if(view==='settings')loadSettings();if(view==='history')loadActivityLogs();}
     function reloadCurrent(){if(state.view==='today')loadDashboard();else showView(state.view);}
     async function loadDashboard(){const date=document.getElementById('dashboardDate').value||todayYmd();try{const data=await api(`/api/admin/dashboard?facility_code=${FACILITY}&date=${date}`);state.dashboard=data;renderDashboard(data);}catch(e){toast(e.message,true);}}
-    function renderDashboard(d){document.getElementById('todayLabel').textContent=`${formatDate(d.date)}の予約と優先対応`;const c=d.counts||{};setText('countReservations',c.reservations);setText('countPending',c.pending);setText('countInquiries',c.open_inquiries);setText('countFollow',c.follow_due);setText('countLowTickets',c.low_tickets);setText('navToday',(c.pending||0)+(c.open_inquiries||0)+(c.follow_due||0));setText('navReservations',c.reservations);setText('navInquiries',c.open_inquiries);document.getElementById('todayReservations').innerHTML=d.reservations?.length?d.reservations.map(reservationCard).join(''):empty('この日の予約はありません。');document.getElementById('priorityTasks').innerHTML=d.priority_tasks?.length?d.priority_tasks.map(taskCard).join(''):empty('優先対応はありません。');}
+    function renderDashboard(d){document.getElementById('todayLabel').textContent=`${formatDate(d.date)}｜今すぐ必要な操作から表示`;const c=d.counts||{},groups=buildTodayGroups(d),reservations=d.reservations||[];setText('countReservations',c.reservations);setText('countPending',c.pending);setText('countInquiries',c.open_inquiries);setText('countFollow',c.follow_due);setText('countLowTickets',c.low_tickets);setText('urgentTaskCount',groups.urgent.length);setText('todayReservationCount',reservations.length);setText('todayTaskCount',groups.today.length);setText('followTaskCount',groups.follow.length);setText('navToday',groups.urgent.length+groups.today.length+groups.follow.length);setText('navReservations',c.reservations);setText('navInquiries',c.open_inquiries);document.getElementById('urgentTasks').innerHTML=groups.urgent.length?groups.urgent.map(taskCard).join(''):empty('今すぐ対応が必要な項目はありません。');document.getElementById('todayReservations').innerHTML=reservations.length?reservations.map(reservationCard).join(''):empty('この日の予約はありません。');document.getElementById('todayTasks').innerHTML=groups.today.length?groups.today.map(taskCard).join(''):empty('今日中の対応はありません。');document.getElementById('followTasks').innerHTML=groups.follow.length?groups.follow.map(taskCard).join(''):empty('次回案内候補はありません。');}
+    function buildTodayGroups(d){const groups={urgent:[],today:[],follow:[]},seenReservations=new Set();(d.priority_tasks||[]).forEach(task=>{if(task.type==='reservation_pending'){if(task.reservation?.id)seenReservations.add(task.reservation.id);groups.urgent.push(task);}else if(task.type==='inquiry'){groups.urgent.push(task);}else if(task.type==='low_tickets'){groups.follow.push(task);}else{groups.today.push(task);}});(d.reservations||[]).forEach(reservation=>{if(['requested','cancel_requested','change_requested'].includes(reservation.status)&&!seenReservations.has(reservation.id)){groups.urgent.push({type:'reservation_pending',reservation});}});return groups;}
     function reservationCard(r){const s=statusInfo(r.status),c=r.customer||{};return `<div class="item"><div class="item-top"><div><div class="item-name">${esc(formatTime(r.start_at))}　${esc(c.full_name||'会員未取得')}</div><div class="item-meta">${esc(serviceName(r.service_code))} / ${esc(trainerName(r.trainer_code))}<br>${esc(c.customer_no||'')}　${esc(c.phone||'')}</div></div><span class="badge ${s.color}">${esc(s.label)}</span></div><div class="item-actions">${statusButtons(r)}<button class="btn btn-soft" onclick="openCustomerById('${attr(r.customer_id)}')">会員</button><button class="btn btn-soft" onclick="openLineMessage('${attr(r.id)}')">LINE文面</button></div></div>`;}
     function statusButtons(r){if(r.status==='requested')return `<button class="btn btn-green" onclick="changeReservationStatus('${attr(r.id)}','confirmed')">予約確定</button><button class="btn btn-red" onclick="changeReservationStatus('${attr(r.id)}','cancelled')">取消</button>`;if(r.status==='confirmed')return `<button class="btn btn-blue" onclick="changeReservationStatus('${attr(r.id)}','arrived')">来店</button><button class="btn btn-red" onclick="changeReservationStatus('${attr(r.id)}','no_show')">未来店</button>`;if(r.status==='arrived')return `<button class="btn btn-purple" onclick="changeReservationStatus('${attr(r.id)}','in_session')">開始</button>`;if(r.status==='in_session')return `<button class="btn btn-green" onclick="changeReservationStatus('${attr(r.id)}','completed')">完了・回数減算</button>`;if(['cancel_requested','change_requested'].includes(r.status))return `<button class="btn btn-green" onclick="changeReservationStatus('${attr(r.id)}','confirmed')">確定に戻す</button><button class="btn btn-red" onclick="changeReservationStatus('${attr(r.id)}','cancelled')">キャンセル確定</button>`;return '';}
     function taskCard(t){if(t.type==='reservation_pending')return reservationCard(t.reservation);const c=t.customer||{};if(t.type==='inquiry')return `<div class="item"><div class="item-top"><div><div class="item-name">${esc(c.full_name||'お客様')}｜相談</div><div class="item-meta">${esc(t.inquiry.message||'')}</div></div><span class="badge red">要対応</span></div><div class="item-actions"><button class="btn btn-blue" onclick="showView('inquiries')">相談一覧へ</button></div></div>`;return `<div class="item"><div class="item-top"><div><div class="item-name">${esc(c.full_name||'お客様')}</div><div class="item-meta">${t.type==='low_tickets'?`残り${Number(c.ticket_remaining||0)}回｜継続提案`:'フォロー期限'}</div></div><span class="badge amber">要対応</span></div><div class="item-actions"><button class="btn btn-blue" onclick="openCustomerById('${attr(c.id)}')">会員情報</button></div></div>`;}
@@ -184,6 +235,7 @@
     async function loadSettings(){try{const d=await api(`/api/admin/settings?facility_code=${FACILITY}`);state.settingsData=d;valSet('settingOpen',trimTime(d.settings.open_time));valSet('settingClose',trimTime(d.settings.close_time));valSet('settingMaxDays',d.settings.max_booking_days);valSet('settingLead',d.settings.min_lead_hours);valSet('settingCancel',d.settings.cancellation_deadline_hours);valSet('settingParallel',d.settings.max_parallel_sessions);document.querySelectorAll('#weekdayChecks input').forEach(x=>x.checked=(d.settings.weekly_closed_days||[]).map(Number).includes(Number(x.value)));valSet('settingClosedDates',(d.settings.special_closed_dates||[]).join('\n'));valSet('settingNotice',d.settings.booking_notice||'');}catch(e){toast(e.message,true);}}
     async function saveSettings(){const dates=val('settingClosedDates').split(/[\s,]+/).map(x=>x.trim()).filter(Boolean);const days=[...document.querySelectorAll('#weekdayChecks input:checked')].map(x=>Number(x.value));const body={facility_code:FACILITY,open_time:val('settingOpen'),close_time:val('settingClose'),default_slot_minutes:30,max_booking_days:Number(val('settingMaxDays')),min_lead_hours:Number(val('settingLead')),cancellation_deadline_hours:Number(val('settingCancel')),max_parallel_sessions:Number(val('settingParallel')),weekly_closed_days:days,special_closed_dates:dates,booking_notice:val('settingNotice')};try{await api('/api/admin/settings',{method:'PATCH',body});toast('施設設定を保存しました。');loadSettings();}catch(e){toast(e.message,true);}}
     function renderWeekdays(){document.getElementById('weekdayChecks').innerHTML=['日','月','火','水','木','金','土'].map((n,i)=>`<label class="check-label"><input type="checkbox" value="${i}">${n}</label>`).join('');}
+    function showSettingPanel(panel){document.querySelectorAll('.settings-panel').forEach(item=>item.classList.toggle('active',item.dataset.settingsPanel===panel));document.querySelectorAll('.settings-menu-btn').forEach(item=>item.classList.toggle('active',item.dataset.settingsTab===panel));}
     async function loadActivityLogs(){const list=document.getElementById('activityList');list.innerHTML=loading();try{const d=await api(`/api/admin/activity-logs?facility_code=${FACILITY}&limit=100`);list.innerHTML=d.activity_logs?.length?d.activity_logs.map(x=>`<div class="item"><div class="item-name">${esc(activityLabel(x.action))}</div><div class="item-meta">${esc(formatDateTime(x.created_at))} / ${esc(x.created_by||'system')}<br>${esc(JSON.stringify(x.detail||{}))}</div></div>`).join(''):empty('操作履歴はありません。');}catch(e){list.innerHTML=empty(e.message);}}
     async function prepareDemo(){if(!confirm('DPRO パーソナルジムのデモデータだけを今日基準で作り直します。実行しますか？'))return;try{const d=await api('/api/admin/demo-prepare',{method:'POST',headers:{'X-Demo-Confirm':'DEMOパーソナルジムだけ実行'},body:{facility_code:FACILITY,confirm_text:'DEMOパーソナルジムだけ実行'}});toast(`DEMO準備完了：会員${d.demo_data.customers}件・予約${d.demo_data.reservations}件`);loadDashboard();}catch(e){toast(e.message,true);}}
     async function openPhoneBooking(keep=false){if(!keep){state.bookingCustomer=null;['bookingCustomerSearch','bookingName','bookingPhone','bookingMemo'].forEach(id=>valSet(id,''));setText('bookingSelectedText','既存会員を選ぶか、新規のお客様情報を入力してください。');document.getElementById('bookingCustomerResults').innerHTML='';}document.getElementById('bookingModal').classList.remove('hidden');try{if(!state.facilityData)state.facilityData=await publicApi(`/api/public/facility?facility_code=${FACILITY}`);document.getElementById('bookingService').innerHTML=state.facilityData.services.map(x=>`<option value="${attr(x.service_code)}">${esc(x.service_name)}（${Number(x.duration_minutes)}分）</option>`).join('');document.getElementById('bookingTrainer').innerHTML=`<option value="">おまかせ</option>${state.facilityData.trainers.map(x=>`<option value="${attr(x.trainer_code)}">${esc(x.trainer_name)}</option>`).join('')}`;if(state.bookingCustomer)selectCustomerForBooking(state.bookingCustomer.id);loadBookingSlots();}catch(e){toast(e.message,true);}}
