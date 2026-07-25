@@ -1,49 +1,32 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-3-COMPLETE"
-next_step: "GYM-NEXT-4"
-result: "OK"
+current_step: "GYM-NEXT-4-PREPARED"
+workflow_revision: "R2"
+next_step: "GYM-NEXT-4-VERIFY"
+next_action: "RUN_SQL_AND_DEPLOY_WORKER"
+result: "PREPARED"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-3-20260725"
-step_backup_sha: "8433438e79833bf4c03dced25c2d6fcaaa6f2842"
-data_commit_sha: "e8b4c8db08a38050fc24673fc42717d9dc4cff16"
-completed_at: "2026-07-25T10:19:46+0900"
-public_verified_at: "2026-07-25T10:19:46+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30138256400"
+step_backup_tag: "backup-gym-before-next-4-20260725"
+step_backup_sha: "609f1070d0e1e150603d7a5b1df44a66fe04a8b1"
+package_commit_sha: "12047cbfb7f1f0a84be7a8703be8bc14f8625aaf"
+prepared_at: "2026-07-25T10:53:36+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30139380131"
 runtime_files_changed: false
-worker_changed: false
-supabase_changed: false
-api_changed: false
-next_4_worker_change_required: true
-next_4_supabase_change_required: true
-next_4_reason:
-  - "persistent session records"
-  - "auditable ticket ledger"
-  - "atomic and idempotent completion processing"
-changed_files:
-  - "dpro-next/gym/data-contract.yml"
-  - "dpro-next/gym/data-audit.json"
-  - "dpro-next/gym/next-4-change-decision.yml"
+existing_worker_changed: false
+supabase_executed: false
+new_worker_deployed: false
+new_worker_name: "dpro-gym-line-api-next"
+new_worker_expected_url: "https://dpro-gym-line-api-next.dpromstk2000.workers.dev"
+existing_ticket_ledger_preserved: true
+existing_atomic_status_rpc_preserved: true
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  runtime_blob_baselines: "OK"
-  workflow_yaml_syntax: "OK"
-  generated_yaml_syntax: "OK"
-  html_structure: "OK"
-  javascript_syntax: "OK"
-  duplicate_html_ids: "OK"
-  worker_health: "OK"
-  public_facility_api: "OK"
-  admin_dashboard_api: "OK"
-  public_pages: "OK"
-  required_api_references: "OK"
-  reservation_status_contract: "OK"
-  core_data_fields: "OK"
-  slot_minutes_30: "OK"
-  phone_normalization_check: "OK"
-  duplicate_reservation_check: "OK"
-  existing_features: "OK"
+  current_worker_health: "OK"
+  current_public_pages: "OK"
+  worker_javascript_syntax: "OK"
+  migration_static_safety: "OK"
+  rollback_present: "OK"
   runtime_unchanged: "OK"
