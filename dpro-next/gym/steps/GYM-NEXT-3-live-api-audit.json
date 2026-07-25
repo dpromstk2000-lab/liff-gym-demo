@@ -1,0 +1,39 @@
+{
+  "health": {
+    "ok": true,
+    "keys": [
+      "admin_token_configured",
+      "database",
+      "features",
+      "jst_date",
+      "ok",
+      "service",
+      "time",
+      "version"
+    ]
+  },
+  "facility": {
+    "ok": true,
+    "keys": [
+      "facility",
+      "ok",
+      "services",
+      "settings",
+      "trainers",
+      "version"
+    ]
+  },
+  "dashboard": {
+    "ok": true,
+    "keys": [
+      "counts",
+      "date",
+      "facility",
+      "ok",
+      "priority_tasks",
+      "reservations",
+      "settings",
+      "version"
+    ]
+  }
+}
