@@ -1,0 +1,61 @@
+decision_version: "GYM-NEXT-3"
+next_step: "GYM-NEXT-4"
+decision: "Worker・Supabase変更が必要"
+confidence: "high for persistent session records and auditable ticket ledger"
+current_runtime_changed: false
+worker_changed_in_next_3: false
+supabase_changed_in_next_3: false
+api_changed_in_next_3: false
+
+reasons:
+  - "現在の画面契約では予約完了と回数券残数は扱えるが、1回ごとのトレーニング内容を永続保存するAPI参照がない"
+  - "現在残数だけでは、回数券の増減理由・操作者・対象予約・二重減算防止を履歴単位で監査できない"
+  - "予約完了、回数券減算、セッション記録を安全に一体処理するにはサーバー側の原子性が必要"
+
+proposed_supabase:
+  tables:
+    gym_session_records:
+      purpose: "1予約1セッションの実施記録"
+      unique_guard:
+        - "facility_code + reservation_id"
+    gym_ticket_ledger:
+      purpose: "回数券増減履歴"
+      unique_guard:
+        - "facility_code + reservation_id + transaction_type for completion deduction"
+  migration_requirements:
+    - "既存予約・顧客テーブルを削除しない"
+    - "既存ticket_remainingを維持する"
+    - "新テーブル追加方式"
+    - "RLSと管理API経由アクセス"
+    - "ロールバックSQLを用意"
+
+proposed_worker:
+  new_or_extended_routes:
+    - "GET /api/admin/customers/{customer_id}/session-records"
+    - "POST /api/admin/session-records/upsert"
+    - "GET /api/admin/customers/{customer_id}/ticket-ledger"
+    - "既存POST /api/admin/reservations/status のcompleted処理を原子的に強化"
+    - "GET /api/member/session-history は会員公開項目だけ返す"
+  safety_guards:
+    - "completed再実行の冪等性"
+    - "予約と顧客と施設コードの一致"
+    - "回数券対象メニューだけ減算"
+    - "残数を0未満にしない"
+    - "owner_noteとtrainer_noteを会員APIへ返さない"
+    - "activity_logを維持"
+
+before_implementation_checks:
+  - "Cloudflare Worker現行ソースを取得して既存隠しAPI・既存テーブルの有無を再確認"
+  - "Supabase現行スキーマをSQLで確認"
+  - "既存completed処理のトランザクションと二重実行ガードを確認"
+  - "既存デモデータを壊さない移行SQLを作成"
+
+deliverables_required_in_next_4:
+  - "Worker差し替えファイル"
+  - "Worker用ZIP"
+  - "SQL通常版"
+  - "SQL TEXT版"
+  - "ロールバックSQL"
+  - "自動検査"
+  - "Worker Deploy手順"
+  - "Supabase SQL実行手順"

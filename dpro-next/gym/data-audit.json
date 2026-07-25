@@ -1,0 +1,192 @@
+{
+  "system_name": "DPRO パーソナルジム LINE",
+  "step": "GYM-NEXT-3",
+  "facility_code": "dpro_gym_demo",
+  "runtime_files_changed": false,
+  "endpoints_by_file": {
+    "config.js": [],
+    "index.html": [
+      "/api/member/home?${query.toString",
+      "/api/public/availability?${query.toString",
+      "/api/public/facility?facility_code=${encodeURIComponent",
+      "/api/public/reservations"
+    ],
+    "member.html": [
+      "/api/member/home?${query.toString",
+      "/api/member/inquiries",
+      "/api/member/reservations/${endpoint}",
+      "/api/public/facility?facility_code=${encodeURIComponent"
+    ],
+    "dashboard.html": [
+      "/api/admin/activity-logs?facility_code=${FACILITY}&limit=100",
+      "/api/admin/customers/tickets",
+      "/api/admin/customers/upsert",
+      "/api/admin/customers?facility_code=${FACILITY}",
+      "/api/admin/customers?facility_code=${FACILITY}&q=${encodeURIComponent",
+      "/api/admin/dashboard?facility_code=${FACILITY}&date=${date}",
+      "/api/admin/dashboard?facility_code=${FACILITY}&date=${todayYmd",
+      "/api/admin/demo-prepare",
+      "/api/admin/inquiries/status",
+      "/api/admin/inquiries?facility_code=${FACILITY}",
+      "/api/admin/reservations",
+      "/api/admin/reservations/status",
+      "/api/admin/reservations?${q}",
+      "/api/admin/settings",
+      "/api/admin/settings?facility_code=${FACILITY}",
+      "/api/public/availability?${q}",
+      "/api/public/facility?facility_code=${FACILITY}"
+    ],
+    "owner-ipad.html": [
+      "/api/admin/customers/tickets",
+      "/api/admin/customers?facility_code=${FACILITY}&q=${encodeURIComponent",
+      "/api/admin/dashboard?facility_code=${FACILITY}&date=${date}",
+      "/api/admin/dashboard?facility_code=${FACILITY}&date=${todayYmd",
+      "/api/admin/demo-prepare",
+      "/api/admin/inquiries/status",
+      "/api/admin/inquiries?facility_code=${FACILITY}",
+      "/api/admin/reservations/status",
+      "/api/admin/reservations?${query}",
+      "/api/public/facility?facility_code=${FACILITY}"
+    ],
+    "system-check.html": [
+      "/api/admin/demo-prepare",
+      "/api/admin/phone-normalize-check",
+      "/api/admin/system-check?facility_code=${encodeURIComponent",
+      "/api/health",
+      "/api/public/facility?facility_code=${encodeURIComponent"
+    ]
+  },
+  "required_endpoints": [
+    "/api/admin/activity-logs",
+    "/api/admin/customers",
+    "/api/admin/customers/tickets",
+    "/api/admin/customers/upsert",
+    "/api/admin/dashboard",
+    "/api/admin/demo-prepare",
+    "/api/admin/inquiries",
+    "/api/admin/inquiries/status",
+    "/api/admin/reservations",
+    "/api/admin/reservations/status",
+    "/api/admin/settings",
+    "/api/admin/system-check",
+    "/api/member/home",
+    "/api/member/inquiries",
+    "/api/public/availability",
+    "/api/public/facility",
+    "/api/public/reservations"
+  ],
+  "missing_required_endpoints": [],
+  "reservation_status_presence": {
+    "requested": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    },
+    "confirmed": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": true
+    },
+    "arrived": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    },
+    "in_session": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    },
+    "completed": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    },
+    "change_requested": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    },
+    "cancel_requested": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    },
+    "cancelled": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    },
+    "no_show": {
+      "config.js": false,
+      "index.html": false,
+      "member.html": true,
+      "dashboard.html": true,
+      "owner-ipad.html": true,
+      "system-check.html": false
+    }
+  },
+  "missing_required_statuses": [],
+  "field_markers": {
+    "customer": [
+      "customer_no",
+      "full_name",
+      "phone",
+      "status",
+      "plan_name",
+      "ticket_remaining",
+      "ticket_expires_on",
+      "visit_count",
+      "last_visit_on",
+      "goal",
+      "concern",
+      "precautions",
+      "follow_status",
+      "next_follow_on"
+    ],
+    "reservation": [
+      "reservation_no",
+      "customer_id",
+      "service_code",
+      "trainer_code",
+      "start_at",
+      "status"
+    ],
+    "inquiry": [
+      "inquiry_type",
+      "message",
+      "status",
+      "created_at"
+    ]
+  },
+  "missing_field_markers": {},
+  "current_session_record_api_references": [],
+  "current_ticket_ledger_api_references": [],
+  "worker_changed": false,
+  "supabase_changed": false,
+  "api_changed": false
+}

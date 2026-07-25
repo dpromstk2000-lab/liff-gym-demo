@@ -1,0 +1,265 @@
+contract_version: "GYM-NEXT-3"
+system_name: "DPRO パーソナルジム LINE"
+facility_code: "dpro_gym_demo"
+timezone: "Asia/Tokyo"
+slot_minutes: 30
+purpose: "予約・会員・回数券・相談・将来のセッション記録を同じ業務単位で扱うためのDPRO NEXTデータ契約"
+runtime_change_in_this_step: false
+
+data_ownership:
+  customer:
+    master: "customer"
+    key: "customer.id"
+    public_identifier: "customer.customer_no"
+    personal_data:
+      - "full_name"
+      - "full_name_kana"
+      - "phone"
+    owner_only_data:
+      - "owner_note"
+      - "precautions"
+    member_visible_data:
+      - "full_name"
+      - "customer_no"
+      - "status"
+      - "plan_name"
+      - "ticket_remaining"
+      - "ticket_expires_on"
+      - "visit_count"
+      - "last_visit_on"
+      - "goal"
+      - "concern"
+
+  reservation:
+    master: "reservation"
+    key: "reservation.id"
+    links:
+      customer: "reservation.customer_id -> customer.id"
+      service: "reservation.service_code"
+      trainer: "reservation.trainer_code"
+    time_fields:
+      start_at: "ISO-8601 / Asia-Tokyo表示"
+      slot_rule: "開始時刻30分単位"
+    current_fields:
+      - "reservation_no"
+      - "customer_id"
+      - "service_code"
+      - "trainer_code"
+      - "start_at"
+      - "status"
+      - "memo"
+    status_flow:
+      requested:
+        label: "承認待ち"
+        next:
+          - "confirmed"
+          - "cancelled"
+      confirmed:
+        label: "予約確定"
+        next:
+          - "arrived"
+          - "no_show"
+          - "change_requested"
+          - "cancel_requested"
+      arrived:
+        label: "来店済み"
+        next:
+          - "in_session"
+      in_session:
+        label: "トレーニング中"
+        next:
+          - "completed"
+      completed:
+        label: "完了"
+        terminal: true
+      change_requested:
+        label: "変更希望"
+        next:
+          - "confirmed"
+          - "cancelled"
+      cancel_requested:
+        label: "キャンセル希望"
+        next:
+          - "confirmed"
+          - "cancelled"
+      cancelled:
+        label: "キャンセル"
+        terminal: true
+      no_show:
+        label: "未来店"
+        terminal: true
+
+  inquiry:
+    master: "inquiry"
+    key: "inquiry.id"
+    links:
+      customer: "inquiry.customer_id -> customer.id"
+    types:
+      - "general"
+      - "reservation"
+      - "health"
+      - "continuation"
+      - "other"
+    statuses:
+      - "open"
+      - "in_progress"
+      - "closed"
+
+  ticket_balance:
+    current_master: "customer.ticket_remaining"
+    expiry: "customer.ticket_expires_on"
+    current_update_api: "/api/admin/customers/tickets"
+    completion_link: "予約をcompletedへ更新した時、回数券対象メニューは1回減算"
+    next_required_master: "ticket_ledger"
+    reason: "現在残数だけでは増減理由・操作者・対象予約・二重減算を完全監査できない"
+
+  session_record:
+    current_state: "予約status=completedと来店回数・最終来店日で完了実績を表現"
+    next_required_master: "gym_session_records"
+    required_fields:
+      - "id"
+      - "facility_code"
+      - "reservation_id"
+      - "customer_id"
+      - "trainer_code"
+      - "performed_at"
+      - "condition_note"
+      - "training_summary"
+      - "trainer_note"
+      - "next_focus"
+      - "member_visible_comment"
+      - "created_by"
+      - "created_at"
+      - "updated_at"
+    visibility:
+      owner:
+        - "all fields"
+      staff:
+        - "担当予約と安全上必要な項目"
+      member:
+        - "member_visible_comment"
+        - "performed_at"
+        - "training_summary"
+
+screen_roles:
+  index.html:
+    role: "お客様予約受付"
+    reads:
+      - "facility"
+      - "service"
+      - "trainer"
+      - "availability"
+      - "existing member"
+    writes:
+      - "reservation"
+      - "new or linked customer"
+
+  dashboard.html:
+    role: "オーナーPC"
+    reads:
+      - "dashboard"
+      - "reservation"
+      - "customer"
+      - "inquiry"
+      - "settings"
+      - "activity_log"
+    writes:
+      - "reservation status"
+      - "customer"
+      - "ticket balance"
+      - "inquiry status"
+      - "settings"
+
+  owner-ipad.html:
+    role: "当日受付・現場進行"
+    reads:
+      - "today reservation"
+      - "customer summary"
+      - "inquiry"
+    writes:
+      - "reservation status"
+      - "ticket balance current adjustment"
+      - "inquiry status"
+
+  member.html:
+    role: "LINE会員マイページ"
+    reads:
+      - "customer member-visible fields"
+      - "next reservation"
+      - "upcoming reservations"
+      - "reservation history"
+    writes:
+      - "change request"
+      - "cancel request"
+      - "inquiry"
+
+classification:
+  required_now:
+    - "customer master"
+    - "reservation master and status flow"
+    - "inquiry master"
+    - "ticket current balance"
+    - "activity log"
+    - "30-minute slot guard"
+    - "phone normalization"
+    - "duplicate reservation guard"
+
+  required_next_step:
+    - "persistent session record"
+    - "ticket ledger"
+    - "atomic completed reservation + ticket deduction + session record guard"
+
+  good_to_have_later:
+    - "plan change history"
+    - "member-visible trainer comment"
+    - "next recommended date"
+
+  unnecessary_now:
+    - "automatic training prescription"
+    - "detailed calorie management"
+    - "automatic bulk LINE delivery"
+    - "full accounting and payroll"
+
+  future:
+    - "progress photos"
+    - "body measurement trend"
+    - "electronic contract"
+    - "payment integration"
+    - "multi-location management"
+
+safety_rules:
+  - "管理用情報を会員画面へ表示しない"
+  - "電話番号は正規化して照合する"
+  - "過去日時の予約を禁止する"
+  - "同一枠・同一担当の重複予約を防ぐ"
+  - "completedの再実行で回数券を二重減算しない"
+  - "一括自動LINE配信は行わず個別確認する"
+  - "全履歴を初期表示で一括取得しない"
+
+current_api_contract:
+  public:
+    - "/api/health"
+    - "/api/public/facility"
+    - "/api/public/availability"
+    - "/api/public/member"
+    - "/api/public/reservations"
+  member:
+    - "/api/member/home"
+    - "/api/member/reservations/change-request"
+    - "/api/member/reservations/cancel-request"
+    - "/api/member/inquiries"
+  admin:
+    - "/api/admin/dashboard"
+    - "/api/admin/reservations"
+    - "/api/admin/reservations/status"
+    - "/api/admin/customers"
+    - "/api/admin/customers/upsert"
+    - "/api/admin/customers/tickets"
+    - "/api/admin/inquiries"
+    - "/api/admin/inquiries/status"
+    - "/api/admin/settings"
+    - "/api/admin/activity-logs"
+    - "/api/admin/system-check"
+    - "/api/admin/demo-prepare"
+
+next_step: "GYM-NEXT-4"
