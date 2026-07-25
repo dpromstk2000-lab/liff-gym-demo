@@ -1,0 +1,36 @@
+package_version: "GYM-NEXT-9-PREP-20260725"
+system_name: "DPRO パーソナルジム LINE"
+phase: "PREPARED"
+worker_name: "dpro-gym-line-api"
+worker_expected_version: "GYM-NEXT-9-WORKER-20260725"
+supabase_changed: false
+runtime_changed: false
+security:
+  admin_header_only: true
+  staff_header_only: true
+  query_string_auth_disabled: true
+  json_content_type_required: true
+  max_json_body_bytes: 65536
+  cache_control_no_store: true
+  x_content_type_options_nosniff: true
+  x_frame_options_deny: true
+  referrer_policy_no_referrer: true
+  strict_transport_security: true
+performance:
+  compact_json: true
+  critical_system_checks_parallel: true
+  system_check_budget_ms: 5000
+  public_payload_budget_bytes: 131072
+planned_runtime_files:
+  - "system-check.html"
+planned_checks:
+  - "NEXT-4・NEXT-5・NEXT-8維持"
+  - "管理・スタッフ認証分離"
+  - "URL認証拒否"
+  - "64KB超過拒否"
+  - "JSON以外拒否"
+  - "セキュリティヘッダー"
+  - "公開ページ容量"
+  - "API応答時間"
+  - "LINE自動送信なし"
+next_action: "Deploy Worker, then run GYM-NEXT-9-VERIFY"
