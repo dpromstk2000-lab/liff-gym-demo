@@ -10,7 +10,7 @@
     * { box-sizing:border-box; }
     html { font-size:18px; }
     body { margin:0; color:var(--text); background:var(--bg); font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.55; -webkit-tap-highlight-color:transparent; }
-    button,input,select { font:inherit; }
+    button,input,textarea,select { font:inherit; }
     button { cursor:pointer; touch-action:manipulation; }
     .hidden { display:none !important; }
     .gate { position:fixed; inset:0; z-index:100; display:grid; place-items:center; padding:24px; background:linear-gradient(135deg,var(--navy),var(--navy2)); }
@@ -20,8 +20,9 @@
     .gate h1 { margin:7px 0 0; font-size:1.8rem; }
     .sub { margin:6px 0 0; color:var(--muted); font-size:.88rem; }
     .auth-row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; margin-top:22px; }
-    input,select { width:100%; min-height:58px; border:2px solid var(--line); border-radius:15px; padding:11px 14px; color:var(--text); background:#fff; }
-    input:focus,select:focus { outline:4px solid rgba(37,99,235,.13); border-color:var(--blue); }
+    input,textarea,select { width:100%; min-height:58px; border:2px solid var(--line); border-radius:15px; padding:11px 14px; color:var(--text); background:#fff; }
+    input:focus,textarea:focus,select:focus { outline:4px solid rgba(37,99,235,.13); border-color:var(--blue); }
+    textarea { min-height:116px; resize:vertical; }
     .btn { min-height:56px; border:0; border-radius:15px; padding:10px 18px; font-weight:950; }
     .btn-full { width:100%; margin-top:12px; }
     .btn-blue { color:#fff; background:var(--blue); }.btn-dark { color:#fff; background:var(--navy); }.btn-soft { color:var(--navy); background:#e5ebf4; }.btn-green { color:#fff; background:var(--green); }.btn-red { color:#fff; background:var(--red); }.btn-purple { color:#fff; background:var(--purple); }
@@ -67,12 +68,24 @@
     .customer-card { border:1px solid var(--line); border-radius:18px; padding:16px; background:#fafbfd; }
     .ticket { display:inline-block; margin-top:7px; border-radius:11px; padding:4px 10px; color:#075f43; background:#e0f7ed; font-weight:950; }
     .empty,.loading { border:1px dashed #c6cfdb; border-radius:16px; padding:30px 12px; text-align:center; color:var(--muted); background:#fafbfd; }
+
+    .modal { position:fixed; inset:0; z-index:80; display:grid; place-items:center; padding:18px; background:rgba(6,16,34,.62); }
+    .modal-card { width:min(900px,100%); max-height:94vh; overflow:auto; border-radius:24px; padding:20px; background:#fff; box-shadow:0 30px 90px rgba(0,0,0,.3); }
+    .modal-head { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:14px; }
+    .modal-head h2 { margin:2px 0 0; }
+    .close { width:52px; height:52px; border:0; border-radius:15px; color:var(--navy); background:#e5ebf4; font-weight:950; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .span-2 { grid-column:1/-1; }
+    .modal-actions { display:grid; grid-template-columns:1fr 1fr 1.4fr; gap:10px; margin-top:16px; }
+    .session-summary { border-radius:14px; padding:12px 14px; margin-bottom:13px; color:#174dac; background:#eaf2ff; font-weight:900; }
+    .notice { border-radius:14px; padding:11px 13px; margin-top:12px; color:#775200; background:#fff4d5; font-size:.84rem; }
+    .required-label::after { content:" 必須"; color:var(--red); font-size:.7rem; }
     .toast { position:fixed; right:20px; bottom:20px; z-index:120; max-width:500px; border-radius:15px; padding:14px 18px; color:#fff; background:var(--green); box-shadow:0 14px 44px rgba(0,0,0,.25); font-weight:950; }
     @media (max-width:850px) { html{font-size:17px}.stats{grid-template-columns:1fr 1fr}.customer-grid{grid-template-columns:1fr}.page-head{align-items:flex-start}.actions{grid-template-columns:1fr 1fr}.header-actions .pc-link{display:none} }
     @media (max-width:620px) { .header-inner{padding:12px}.tabs{top:76px;padding:9px 10px;gap:5px}.tab{min-height:54px;padding:6px;font-size:.82rem}.tab-count{display:none}main{padding:6px 10px 24px}.page-head{display:block}.page-actions{margin-top:10px}.filters{grid-template-columns:1fr 1fr}.filters .btn{grid-column:1/-1}.date-field{width:100%}.actions{grid-template-columns:1fr}.panel{padding:14px} }
   </style>
 </head>
-<body>
+<body data-dpro-next-step="GYM-NEXT-4">
   <div class="gate" id="loginGate">
     <div class="gate-card">
       <p class="brand">DPRO PERSONAL GYM LINE</p>
@@ -118,12 +131,38 @@
     </main>
   </div>
 
+
+  <div class="modal hidden" id="sessionModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <p class="brand">SESSION RECORD</p>
+          <h2 id="sessionModalTitle">セッション記録</h2>
+        </div>
+        <button class="close" type="button" onclick="closeSessionModal()">×</button>
+      </div>
+      <div class="session-summary" id="sessionReservationMeta">予約を選択してください。</div>
+      <div class="form-grid">
+        <div class="span-2"><label for="sessionCondition">当日の体調・確認事項</label><textarea id="sessionCondition"></textarea></div>
+        <div class="span-2"><label class="required-label" for="sessionTrainingSummary">実施したトレーニング内容</label><textarea id="sessionTrainingSummary"></textarea></div>
+        <div class="span-2"><label for="sessionTrainerNote">トレーナー内部メモ</label><textarea id="sessionTrainerNote"></textarea></div>
+        <div><label for="sessionNextFocus">次回の重点</label><textarea id="sessionNextFocus"></textarea></div>
+        <div><label for="sessionMemberComment">会員へ共有できるコメント</label><textarea id="sessionMemberComment"></textarea></div>
+      </div>
+      <p class="notice" id="sessionRecordNotice">下書き保存後、実施内容を確認して完了してください。</p>
+      <div class="modal-actions">
+        <button class="btn btn-soft" type="button" onclick="closeSessionModal()">閉じる</button>
+        <button class="btn btn-blue" id="sessionSaveButton" type="button" onclick="saveSessionRecord()">下書き保存</button>
+        <button class="btn btn-green" id="sessionCompleteButton" type="button" onclick="completeSession()">記録して完了</button>
+      </div>
+    </div>
+  </div>
   <div class="toast hidden" id="toast"></div>
 
   <script src="config.js"></script>
   <script>
     const CONFIG=window.DPRO_GYM_CONFIG,API=String(CONFIG.workerBaseUrl||'').replace(/\/$/,''),FACILITY=CONFIG.facilityCode;
-    const params=new URLSearchParams(location.search);const state={adminKey:'',view:'today',dashboard:null,schedule:[],customers:[],inquiries:[],facilityData:null};
+    const params=new URLSearchParams(location.search);const state={adminKey:'',view:'today',dashboard:null,schedule:[],customers:[],inquiries:[],facilityData:null,selectedReservation:null};
     document.addEventListener('DOMContentLoaded',()=>{const today=todayYmd();valSet('dashboardDate',today);valSet('scheduleFrom',today);if(params.get('demo')==='1'){valSet('adminCode',CONFIG.demoAdminCode||'1234');login();}});
     async function login(){const key=val('adminCode');if(!key)return setText('loginMessage','管理コードを入力してください。');const button=document.getElementById('loginButton');button.disabled=true;button.textContent='確認中…';try{state.adminKey=key;const [dashboard,facility]=await Promise.all([api(`/api/admin/dashboard?facility_code=${FACILITY}&date=${todayYmd()}`),publicApi(`/api/public/facility?facility_code=${FACILITY}`)]);state.facilityData=facility;state.dashboard=dashboard;setText('facilityName',`${dashboard.facility.facility_name}｜iPad受付`);document.getElementById('loginGate').classList.add('hidden');document.getElementById('app').classList.remove('hidden');renderDashboard(dashboard);}catch(error){state.adminKey='';setText('loginMessage',error.message);}finally{button.disabled=false;button.textContent='受付画面を開く';}}
     function clearAdminCode(){valSet('adminCode','');document.getElementById('adminCode').focus();}function logout(){state.adminKey='';clearAdminCode();document.getElementById('app').classList.add('hidden');document.getElementById('loginGate').classList.remove('hidden');}
@@ -133,8 +172,15 @@
     function renderDashboard(data){const counts=data.counts||{};setText('todayLabel',`${formatDate(data.date)}の予約を表示中`);setText('statReservations',counts.reservations);setText('statPending',counts.pending);setText('statInquiries',counts.open_inquiries);setText('statLowTickets',counts.low_tickets);setText('todayCount',counts.reservations);setText('scheduleCount',counts.reservations);setText('inquiryCount',counts.open_inquiries);document.getElementById('todayReservations').innerHTML=data.reservations?.length?data.reservations.map(reservationCard).join(''):empty('この日の予約はありません。');}
     async function loadSchedule(){const from=val('scheduleFrom')||todayYmd(),status=val('scheduleStatus'),query=new URLSearchParams({facility_code:FACILITY,date_from:from,date_to:addDaysYmd(from,6)});if(status)query.set('status',status);const list=document.getElementById('scheduleList');list.innerHTML=loading();try{const data=await api(`/api/admin/reservations?${query}`);state.schedule=data.reservations||[];setText('scheduleCount',state.schedule.length);list.innerHTML=state.schedule.length?state.schedule.map(reservationCard).join(''):empty('条件に一致する予約はありません。');}catch(error){list.innerHTML=empty(error.message);}}
     function reservationCard(reservation){const customer=reservation.customer||{},status=statusInfo(reservation.status);return `<article class="item"><div class="item-top"><div><div class="item-name">${esc(formatDateTime(reservation.start_at))}　${esc(customer.full_name||'会員未取得')}</div><div class="item-meta">${esc(serviceName(reservation.service_code))} / ${esc(trainerName(reservation.trainer_code))}<br>${esc(customer.customer_no||'')}　${esc(customer.phone||'電話未登録')}　残り${Number(customer.ticket_remaining||0)}回</div></div><span class="badge ${status.color}">${esc(status.label)}</span></div><div class="actions">${statusButtons(reservation)}</div></article>`;}
-    function statusButtons(reservation){const id=attr(reservation.id);if(reservation.status==='requested')return `<button class="btn btn-green" type="button" onclick="changeReservationStatus('${id}','confirmed')">予約確定</button><button class="btn btn-red" type="button" onclick="changeReservationStatus('${id}','cancelled')">取消</button>`;if(reservation.status==='confirmed')return `<button class="btn btn-blue" type="button" onclick="changeReservationStatus('${id}','arrived')">来店</button><button class="btn btn-red" type="button" onclick="changeReservationStatus('${id}','no_show')">未来店</button>`;if(reservation.status==='arrived')return `<button class="btn btn-purple" type="button" onclick="changeReservationStatus('${id}','in_session')">トレーニング開始</button>`;if(reservation.status==='in_session')return `<button class="btn btn-green" type="button" onclick="changeReservationStatus('${id}','completed')">完了・回数減算</button>`;if(['cancel_requested','change_requested'].includes(reservation.status))return `<button class="btn btn-green" type="button" onclick="changeReservationStatus('${id}','confirmed')">確定に戻す</button><button class="btn btn-red" type="button" onclick="changeReservationStatus('${id}','cancelled')">キャンセル確定</button>`;return '<button class="btn btn-soft" type="button" disabled>更新済み</button>';}
-    async function changeReservationStatus(id,status){if(status==='completed'&&!confirm('セッションを完了し、回数券対象メニューは1回減算します。よろしいですか？'))return;try{await api('/api/admin/reservations/status',{method:'POST',body:{facility_code:FACILITY,reservation_id:id,status,created_by:'ipad'}});toast('予約状態を更新しました。');if(state.view==='today')await loadDashboard();else await loadSchedule();}catch(error){toast(error.message,true);}}
+    function statusButtons(reservation){const id=attr(reservation.id);if(reservation.status==='requested')return `<button class="btn btn-green" type="button" onclick="changeReservationStatus('${id}','confirmed')">予約確定</button><button class="btn btn-red" type="button" onclick="changeReservationStatus('${id}','cancelled')">取消</button>`;if(reservation.status==='confirmed')return `<button class="btn btn-blue" type="button" onclick="changeReservationStatus('${id}','arrived')">来店</button><button class="btn btn-red" type="button" onclick="changeReservationStatus('${id}','no_show')">未来店</button>`;if(reservation.status==='arrived')return `<button class="btn btn-purple" type="button" onclick="changeReservationStatus('${id}','in_session')">トレーニング開始</button>`;if(reservation.status==='in_session')return `<button class="btn btn-green" type="button" onclick="openSessionRecord('${id}')">記録して完了</button>`;if(reservation.status==='completed')return `<button class="btn btn-soft" type="button" onclick="openSessionRecord('${id}')">セッション記録</button>`;if(['cancel_requested','change_requested'].includes(reservation.status))return `<button class="btn btn-green" type="button" onclick="changeReservationStatus('${id}','confirmed')">確定に戻す</button><button class="btn btn-red" type="button" onclick="changeReservationStatus('${id}','cancelled')">キャンセル確定</button>`;return '<button class="btn btn-soft" type="button" disabled>更新済み</button>';}
+    async function changeReservationStatus(id,status){if(status==='completed')return openSessionRecord(id);try{await api('/api/admin/reservations/status',{method:'POST',body:{facility_code:FACILITY,reservation_id:id,status,created_by:'ipad'}});toast('予約状態を更新しました。');if(state.view==='today')await loadDashboard();else await loadSchedule();}catch(error){toast(error.message,true);}}
+
+    function findReservation(id){return state.dashboard?.reservations?.find(item=>item.id===id)||state.schedule.find(item=>item.id===id)||null;}
+    function closeSessionModal(){document.getElementById('sessionModal').classList.add('hidden');state.selectedReservation=null;}
+    async function openSessionRecord(id){let reservation=findReservation(id);if(!reservation){try{const from=val('scheduleFrom')||todayYmd(),data=await api(`/api/admin/reservations?facility_code=${FACILITY}&date_from=${from}&date_to=${addDaysYmd(from,6)}`);state.schedule=data.reservations||[];reservation=findReservation(id);}catch(error){return toast(error.message,true);}}if(!reservation)return toast('予約情報が見つかりません。',true);state.selectedReservation=reservation;['sessionCondition','sessionTrainingSummary','sessionTrainerNote','sessionNextFocus','sessionMemberComment'].forEach(field=>valSet(field,''));const customer=reservation.customer||{};setText('sessionModalTitle',`${customer.full_name||'会員'} 様｜セッション記録`);setText('sessionReservationMeta',`${formatDateTime(reservation.start_at)} / ${serviceName(reservation.service_code)} / ${trainerName(reservation.trainer_code)}`);document.getElementById('sessionCompleteButton').classList.toggle('hidden',reservation.status!=='in_session');setText('sessionSaveButton',reservation.status==='completed'?'記録を更新':'下書き保存');setText('sessionRecordNotice',reservation.status==='completed'?'完了済みセッションの記録を確認・更新できます。':'下書き保存後、実施内容を確認して完了してください。');document.getElementById('sessionModal').classList.remove('hidden');try{const data=await api(`/api/admin/session-records?facility_code=${FACILITY}&reservation_id=${encodeURIComponent(reservation.id)}&limit=1`),record=data.session_records?.[0];if(record){valSet('sessionCondition',record.condition_note||'');valSet('sessionTrainingSummary',record.training_summary||'');valSet('sessionTrainerNote',record.trainer_note||'');valSet('sessionNextFocus',record.next_focus||'');valSet('sessionMemberComment',record.member_visible_comment||'');}}catch(error){toast(error.message,true);}}
+    function sessionRecordBody(){const reservation=state.selectedReservation;return{facility_code:FACILITY,reservation_id:reservation?.id,record_status:reservation?.status==='completed'?'completed':'draft',condition_note:val('sessionCondition'),training_summary:val('sessionTrainingSummary'),trainer_note:val('sessionTrainerNote'),next_focus:val('sessionNextFocus'),member_visible_comment:val('sessionMemberComment'),created_by:'ipad'};}
+    async function saveSessionRecord(){if(!state.selectedReservation)return toast('予約を選択してください。',true);try{await api('/api/admin/session-records/upsert',{method:'POST',body:sessionRecordBody()});toast(state.selectedReservation.status==='completed'?'セッション記録を更新しました。':'下書きを保存しました。');}catch(error){toast(error.message,true);}}
+    async function completeSession(){const reservation=state.selectedReservation;if(!reservation)return toast('予約を選択してください。',true);if(!val('sessionTrainingSummary'))return toast('実施したトレーニング内容を入力してください。',true);if(!confirm('記録を保存してセッションを完了し、回数券対象メニューは1回減算します。よろしいですか？'))return;const body=sessionRecordBody();delete body.record_status;try{const data=await api('/api/admin/sessions/complete',{method:'POST',body});toast(data.idempotent?'完了済み予約の記録を更新しました。':'セッションを完了しました。');closeSessionModal();if(state.view==='today')await loadDashboard();else await loadSchedule();}catch(error){toast(error.message,true);}}
     async function loadCustomers(){const query=val('customerQuery'),list=document.getElementById('customerList');list.innerHTML=loading();try{const data=await api(`/api/admin/customers?facility_code=${FACILITY}&q=${encodeURIComponent(query)}`);state.customers=data.customers||[];list.innerHTML=state.customers.length?state.customers.map(customerCard).join(''):empty('会員が見つかりません。');}catch(error){list.innerHTML=empty(error.message);}}
     function customerCard(customer){return `<article class="customer-card"><div class="item-top"><div><div class="item-name">${esc(customer.full_name)}</div><div class="item-meta">${esc(customer.customer_no)}　${esc(customer.phone||'電話未登録')}<br>${esc(customer.plan_name||'プラン未設定')} / 最終来店 ${esc(customer.last_visit_on||'-')}</div></div><span class="badge ${customer.status==='member'?'green':'amber'}">${esc(customerStatus(customer.status))}</span></div><span class="ticket">回数券 残り${Number(customer.ticket_remaining||0)}回</span><div class="actions"><button class="btn btn-soft" type="button" onclick="changeTickets('${attr(customer.id)}',-1)">-1回</button><button class="btn btn-green" type="button" onclick="changeTickets('${attr(customer.id)}',1)">+1回</button></div></article>`;}
     async function changeTickets(customerId,amount){const customer=state.customers.find(item=>item.id===customerId);if(!customer)return;if(!confirm(`${customer.full_name} 様の回数券を ${amount>0?'+':''}${amount} 回変更します。よろしいですか？`))return;try{await api('/api/admin/customers/tickets',{method:'POST',body:{facility_code:FACILITY,customer_id:customerId,change_amount:amount,reason:'iPad受付で回数調整'}});toast('回数券を更新しました。');loadCustomers();}catch(error){toast(error.message,true);}}
