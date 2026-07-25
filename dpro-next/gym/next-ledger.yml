@@ -1,32 +1,42 @@
 system_name: "DPRO パーソナルジム LINE"
 repository: "dpromstk2000-lab/liff-gym-demo"
 branch: "main"
-current_step: "GYM-NEXT-4-PREPARED"
-workflow_revision: "R2"
-next_step: "GYM-NEXT-4-VERIFY"
-next_action: "RUN_SQL_AND_DEPLOY_WORKER"
-result: "PREPARED"
+current_step: "GYM-NEXT-4-COMPLETE"
+workflow_revision: "R1"
+next_step: "GYM-NEXT-5"
+result: "OK"
 facility_code: "dpro_gym_demo"
 slot_minutes: 30
-step_backup_tag: "backup-gym-before-next-4-20260725"
-step_backup_sha: "609f1070d0e1e150603d7a5b1df44a66fe04a8b1"
-package_commit_sha: "12047cbfb7f1f0a84be7a8703be8bc14f8625aaf"
-prepared_at: "2026-07-25T10:53:36+0900"
-workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30139380131"
-runtime_files_changed: false
-existing_worker_changed: false
-supabase_executed: false
-new_worker_deployed: false
-new_worker_name: "dpro-gym-line-api-next"
-new_worker_expected_url: "https://dpro-gym-line-api-next.dpromstk2000.workers.dev"
-existing_ticket_ledger_preserved: true
-existing_atomic_status_rpc_preserved: true
+step_backup_tag: "backup-gym-before-next-4-verify-20260725"
+step_backup_sha: "b004b65f61526e25667fd8c48360f144ea6417f8"
+application_commit_sha: "fbc6510a7f2ec83d66e273890c14b068adb4a36a"
+dashboard_blob: "2f69ca0e207c244d9bb671bcd2c6d36b747a14de"
+owner_ipad_blob: "04b119e1f32a5156f94a64079c6d751253d7dfff"
+completed_at: "2026-07-25T12:55:22+0900"
+workflow_run_url: "https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30143074199"
+worker_name: "dpro-gym-line-api"
+worker_url: "https://dpro-gym-line-api.dpromstk2000.workers.dev"
+worker_version: "GYM-NEXT-4-WORKER-20260725"
+worker_deployed: true
+supabase_executed: true
+runtime_files_changed: true
+worker_changed: true
+supabase_changed: true
+api_changed: true
+changed_files:
+  - "dashboard.html"
+  - "owner-ipad.html"
 checks:
   previous_step: "OK"
   backup_tag: "OK"
-  current_worker_health: "OK"
-  current_public_pages: "OK"
-  worker_javascript_syntax: "OK"
-  migration_static_safety: "OK"
-  rollback_present: "OK"
-  runtime_unchanged: "OK"
+  worker_health: "OK"
+  supabase_next4: "OK"
+  duplicate_completion_count: 0
+  config_worker_url: "OK"
+  html_structure: "OK"
+  javascript_syntax: "OK"
+  duplicate_html_ids: "OK"
+  existing_api_references: "OK"
+  pc_session_ui: "OK"
+  ipad_session_ui: "OK"
+  public_pages: "OK"
