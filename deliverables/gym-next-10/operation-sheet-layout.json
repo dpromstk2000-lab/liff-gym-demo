@@ -1,47 +1,42 @@
 {
+  "schema_version": 2,
+  "owner_facing_only": true,
   "page_width_pt": 595.2755905511812,
   "page_height_pt": 841.8897637795277,
   "qr_items": [
     {
       "key": "booking",
       "url": "https://dpromstk2000-lab.github.io/liff-gym-demo/index.html?demo=1",
-      "x_pt": 214.01574803149612,
-      "y_pt": 524.8818897637797,
+      "x_pt": 484.724409448819,
+      "y_pt": 627.3070866141734,
       "size_pt": 65.1968503937008
     },
     {
       "key": "member",
       "url": "https://dpromstk2000-lab.github.io/liff-gym-demo/member.html?demo=1",
-      "x_pt": 490.39370078740166,
-      "y_pt": 524.8818897637797,
+      "x_pt": 484.724409448819,
+      "y_pt": 485.00787401574814,
       "size_pt": 65.1968503937008
     },
     {
       "key": "owner",
       "url": "https://dpromstk2000-lab.github.io/liff-gym-demo/dashboard.html?demo=1",
-      "x_pt": 214.01574803149612,
-      "y_pt": 285.82677165354335,
+      "x_pt": 484.724409448819,
+      "y_pt": 342.70866141732296,
       "size_pt": 65.1968503937008
     },
     {
       "key": "ipad",
       "url": "https://dpromstk2000-lab.github.io/liff-gym-demo/owner-ipad.html?demo=1",
-      "x_pt": 490.39370078740166,
-      "y_pt": 285.82677165354335,
+      "x_pt": 484.724409448819,
+      "y_pt": 200.40944881889772,
       "size_pt": 65.1968503937008
     },
     {
       "key": "staff",
       "url": "https://dpromstk2000-lab.github.io/liff-gym-demo/staff.html?demo=1",
-      "x_pt": 214.01574803149612,
-      "y_pt": 46.77165354330704,
-      "size_pt": 65.1968503937008
-    },
-    {
-      "key": "system-check",
-      "url": "https://dpromstk2000-lab.github.io/liff-gym-demo/system-check.html?demo=1",
-      "x_pt": 490.39370078740166,
-      "y_pt": 46.77165354330704,
+      "x_pt": 484.724409448819,
+      "y_pt": 58.11023622047247,
       "size_pt": 65.1968503937008
     }
   ]

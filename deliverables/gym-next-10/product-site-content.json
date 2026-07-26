@@ -1,32 +1,25 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "system": "DPRO パーソナルジム LINE",
-  "step": "GYM-NEXT-10",
-  "stage": "operation_sheet_published_product_site_pending",
-  "category": "美容・健康",
-  "catalog": {
-    "code": "PG",
-    "title": "パーソナルジム",
-    "status": "DPRO NEXT完成版",
-    "description": "無料体験・入会・回数券・セッション記録・スタッフ受付・会員履歴・前回と同じ予約・継続フォロー。",
-    "preview_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/dashboard.html?demo=1"
-  },
-  "urls": {
+  "step": "GYM-NEXT-11A",
+  "stage": "owner_material_cleanup_complete_product_site_pending",
+  "owner_facing_urls": {
     "booking": "https://dpromstk2000-lab.github.io/liff-gym-demo/index.html?demo=1",
     "member": "https://dpromstk2000-lab.github.io/liff-gym-demo/member.html?demo=1",
     "owner": "https://dpromstk2000-lab.github.io/liff-gym-demo/dashboard.html?demo=1",
     "ipad": "https://dpromstk2000-lab.github.io/liff-gym-demo/owner-ipad.html?demo=1",
-    "staff": "https://dpromstk2000-lab.github.io/liff-gym-demo/staff.html?demo=1",
-    "system-check": "https://dpromstk2000-lab.github.io/liff-gym-demo/system-check.html?demo=1"
+    "staff": "https://dpromstk2000-lab.github.io/liff-gym-demo/staff.html?demo=1"
   },
   "operation_sheet": {
     "pdf": "https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf",
     "png": "https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.png",
-    "qr_count": 6
+    "html": "https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/operation-sheet.html",
+    "screen_count": 5,
+    "qr_count": 5
   },
   "product_site": {
     "repository": "dpromstk2000-lab/dpro-line-systems-site",
     "page": "https://dpromstk2000-lab.github.io/dpro-line-systems-site/systems/gym.html",
-    "next_step": "GYM-NEXT-10B-PRODUCT-SITE"
+    "next_step": "GYM-NEXT-11B-PRODUCT-SITE-CLEANUP"
   }
 }

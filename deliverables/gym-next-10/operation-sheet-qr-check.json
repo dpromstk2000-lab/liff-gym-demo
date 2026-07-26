@@ -1,27 +1,25 @@
 {
   "ok": true,
-  "workflow_revision": "R7",
+  "workflow_revision": "GYM-NEXT-11A",
+  "owner_facing_only": true,
   "qr_physical_size_mm": 23,
   "pdf_render_dpi": 300,
-  "expected_count": 6,
-  "source_qr_decoded_count": 6,
-  "decoded_count": 6,
-  "exact_url_match_count": 6,
-  "rendered_preview_stddev": 78.90516621175706,
+  "expected_count": 5,
+  "source_qr_decoded_count": 5,
+  "decoded_count": 5,
+  "exact_url_match_count": 5,
   "results": [
     {
       "key": "booking",
       "expected_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/index.html?demo=1",
       "decoded_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/index.html?demo=1",
       "ok": true,
-      "decode_method": "original",
       "source_qr_ok": true,
-      "source_decode_method": "original",
       "crop": [
-        855,
-        1013,
-        1199,
-        1356
+        1976,
+        578,
+        2335,
+        938
       ]
     },
     {
@@ -29,14 +27,12 @@
       "expected_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/member.html?demo=1",
       "decoded_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/member.html?demo=1",
       "ok": true,
-      "decode_method": "original",
       "source_qr_ok": true,
-      "source_decode_method": "original",
       "crop": [
-        2007,
-        1013,
-        2351,
-        1356
+        1976,
+        1171,
+        2335,
+        1531
       ]
     },
     {
@@ -44,14 +40,12 @@
       "expected_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/dashboard.html?demo=1",
       "decoded_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/dashboard.html?demo=1",
       "ok": true,
-      "decode_method": "otsu",
       "source_qr_ok": true,
-      "source_decode_method": "original",
       "crop": [
-        855,
-        2009,
-        1199,
-        2353
+        1976,
+        1764,
+        2335,
+        2123
       ]
     },
     {
@@ -59,14 +53,12 @@
       "expected_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/owner-ipad.html?demo=1",
       "decoded_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/owner-ipad.html?demo=1",
       "ok": true,
-      "decode_method": "original",
       "source_qr_ok": true,
-      "source_decode_method": "original",
       "crop": [
-        2007,
-        2009,
-        2351,
-        2353
+        1976,
+        2357,
+        2335,
+        2716
       ]
     },
     {
@@ -74,29 +66,12 @@
       "expected_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/staff.html?demo=1",
       "decoded_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/staff.html?demo=1",
       "ok": true,
-      "decode_method": "original",
       "source_qr_ok": true,
-      "source_decode_method": "original",
       "crop": [
-        855,
-        3005,
-        1199,
-        3349
-      ]
-    },
-    {
-      "key": "system-check",
-      "expected_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/system-check.html?demo=1",
-      "decoded_url": "https://dpromstk2000-lab.github.io/liff-gym-demo/system-check.html?demo=1",
-      "ok": true,
-      "decode_method": "original",
-      "source_qr_ok": true,
-      "source_decode_method": "original",
-      "crop": [
-        2007,
-        3005,
-        2351,
-        3349
+        1976,
+        2950,
+        2335,
+        3309
       ]
     }
   ]

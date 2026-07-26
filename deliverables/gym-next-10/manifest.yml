@@ -1,36 +1,45 @@
-schema_version: 1
-system_name: "DPRO パーソナルジム LINE"
-logical_step: "GYM-NEXT-10"
-stage: "OPERATION_SHEET_COMPLETE_PRODUCT_SITE_PENDING"
-generated_at_jst: "2026-07-26T08:47:16+0900"
-facility_code: "dpro_gym_demo"
-worker_name: "dpro-gym-line-api"
-worker_version: "GYM-NEXT-9-WORKER-R2-20260725"
-public_base: "https://dpromstk2000-lab.github.io/liff-gym-demo"
-product_site_repository: "dpromstk2000-lab/dpro-line-systems-site"
-product_page_url: "https://dpromstk2000-lab.github.io/dpro-line-systems-site/systems/gym.html"
+schema_version: 2
+system_name: DPRO パーソナルジム LINE
+logical_step: GYM-NEXT-11
+completed_step: GYM-NEXT-11A-OWNER-MATERIAL-CLEANUP
+stage: OWNER_MATERIAL_CLEANUP_COMPLETE_PRODUCT_SITE_PENDING
+generated_at_jst: 2026-07-26T12:10:26+0900
+facility_code: dpro_gym_demo
+worker_name: dpro-gym-line-api
+worker_version: GYM-NEXT-9-WORKER-R2-20260725
 files:
-  pdf: "DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf"
-  png: "DPRO_GYM_NEXT_operation_experience_sheet_20260726.png"
-  html: "operation-sheet.html"
-  qr_check: "operation-sheet-qr-check.json"
-  capture_report: "screens/capture-report.json"
-  product_site_content: "product-site-content.json"
-  text_normalization: "text-normalization-report.json"
+  pdf: DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf
+  png: DPRO_GYM_NEXT_operation_experience_sheet_20260726.png
+  html: operation-sheet.html
+  qr_check: operation-sheet-qr-check.json
+  capture_report: screens/capture-report.json
+  product_site_content: product-site-content.json
+  text_normalization: text-normalization-report.json
+owner_facing_scope:
+  screen_count: 5
+  screen_keys:
+  - booking
+  - member
+  - owner
+  - ipad
+  - staff
+  system_check_exposed: false
+maintenance_scope:
+  system_check_html_preserved: true
+  system_check_owner_navigation: false
+  system_check_product_material: false
 validation:
-  actual_screen_capture_count: 6
-  qr_count: 6
-  source_qr_decoded_count: 6
-  qr_decoded_count: 6
-  qr_exact_url_match_count: 6
+  actual_screen_count: 5
+  qr_count: 5
+  source_qr_decoded_count: 5
+  qr_decoded_count: 5
+  qr_exact_url_match_count: 5
   pdf_page_count: 1
   pdf_a4_portrait: true
   qr_physical_size_mm: 23
   pdf_render_dpi: 300
-  worker_health: true
-  integrated_system_check: true
   automatic_line_broadcast: false
 sha256:
-  pdf: "d5b87f30eb95a3bf95401862eca0fc0e15051cea45726b9c6c9ab66f84a35ea6"
-  png: "f18baf929b20752c93ade8e9ae16b3d898345468af2f7cc91224823e7c306694"
-next_step: "GYM-NEXT-10B-PRODUCT-SITE"
+  pdf: 0581ba706fed52de0c508548faaf9b2ab0f65aded36796dd9c0d96949bc0fc8f
+  png: d27b5fd48dec81cf1099c8a37b8d6e59cb5a0eb0bf191727e66feb3120ceb103
+next_step: GYM-NEXT-11B-PRODUCT-SITE-CLEANUP
