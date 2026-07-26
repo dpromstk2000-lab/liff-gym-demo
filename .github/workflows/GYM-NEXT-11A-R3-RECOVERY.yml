@@ -1,0 +1,502 @@
+name: STEP GYM-NEXT-11A-R3 - Recover Workflow History
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/GYM-NEXT-11A-R3-RECOVERY.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gym-next-11a-r3-recovery
+  cancel-in-progress: false
+
+env:
+  WORKFLOW_FILE: .github/workflows/GYM-NEXT-11A-R3-RECOVERY.yml
+  STALE_WORKFLOW_FILE_R1: .github/workflows/GYM-NEXT-11A-OWNER-MATERIAL-CLEANUP.yml
+  STALE_WORKFLOW_FILE_R2: .github/workflows/GYM-NEXT-11A-R2-RECOVERY.yml
+  DELIVERY_DIR: deliverables/gym-next-10
+  LEDGER_FILE: dpro-next/gym/next-ledger.yml
+  STEP_DIR: dpro-next/gym/steps
+  PUBLIC_BASE: https://dpromstk2000-lab.github.io/liff-gym-demo
+  PDF_NAME: DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf
+  PNG_NAME: DPRO_GYM_NEXT_operation_experience_sheet_20260726.png
+  BACKUP_TAG: backup-gym-before-next-11a-20260726
+  EXPECTED_DELIVERY_COMMIT: 548e6f8548db82e13cfdecf6bc952624b3d24926
+  EXPECTED_LEDGER_BLOB: 9783c411e0e1017299098df45a1b63c2d23aeada
+  EXPECTED_OPERATION_HTML_BLOB: c4af1458499109f36ab6bd99c18541e6caf666b4
+  EXPECTED_LAYOUT_BLOB: 479787c340fe7b3b7afe3e64328fff9748fe5d8b
+  EXPECTED_QR_REPORT_BLOB: 82036e9927b41474afde0f6f0edf84ccfed173a3
+  EXPECTED_MANIFEST_BLOB: f9493d8df8d4ad6c7eaa22487c5f7cdb7a9a3d0c
+  EXPECTED_PRODUCT_CONTENT_BLOB: 1e01d826b2d836ee89191d05c13da33c39bd3ca7
+  EXPECTED_CAPTURE_REPORT_BLOB: dde5d6bf6b0452c27736b49d38bea1dd3441a3e2
+  EXPECTED_PDF_BLOB: b273b72bd7685fd8e86968fb687f5b96d0dfe723
+  EXPECTED_PNG_BLOB: 02fcbc702c1153e8e5de191f13d24f09748761e2
+  EXPECTED_SYSTEM_CHECK_BLOB: 8d37b43caec090e42593d8ebc088bd9aff06131a
+  EXPECTED_PDF_SHA256: 0581ba706fed52de0c508548faaf9b2ab0f65aded36796dd9c0d96949bc0fc8f
+  EXPECTED_PNG_SHA256: d27b5fd48dec81cf1099c8a37b8d6e59cb5a0eb0bf191727e66feb3120ceb103
+  EXPECTED_BACKUP_COMMIT: 97d425ecae704efa5b3b157111370c8c0ff50641
+  FAILED_R1_RUN_URL: https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30185721890
+  FAILED_R2_RUN_URL: https://github.com/dpromstk2000-lab/liff-gym-demo/actions/runs/30186179925
+
+jobs:
+  recover-and-complete:
+    name: Verify committed five-screen materials and complete
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+
+    steps:
+      - name: Checkout main with complete history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Configure Git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO NEXT Actions"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Confirm recovery state and safe upload
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          [[ "${GITHUB_REPOSITORY}" == "dpromstk2000-lab/liff-gym-demo" ]] || {
+            echo "::error::This YML must run in dpromstk2000-lab/liff-gym-demo."
+            exit 1
+          }
+
+          test -f "${WORKFLOW_FILE}"
+          test -f "${STALE_WORKFLOW_FILE_R1}"
+          test -f "${STALE_WORKFLOW_FILE_R2}"
+          test -f "${LEDGER_FILE}"
+          test -f system-check.html
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            UPLOAD_PARENT="$(git rev-parse "${GITHUB_SHA}^")"
+            UNEXPECTED="$(
+              git diff --name-only "${UPLOAD_PARENT}" "${GITHUB_SHA}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            [[ -z "${UNEXPECTED}" ]] || {
+              echo "::error::Upload commit must contain only ${WORKFLOW_FILE}."
+              echo "${UNEXPECTED}"
+              exit 1
+            }
+          else
+            UPLOAD_PARENT="$(git rev-parse HEAD)"
+          fi
+
+          APPLICATION_BASE="${UPLOAD_PARENT}"
+          for _ in $(seq 1 20); do
+            CHANGED="$(
+              git diff-tree --no-commit-id --name-only -r \
+                "${APPLICATION_BASE}" |
+                sed '/^$/d' || true
+            )"
+
+            NON_RECOVERY_WORKFLOW="$(
+              printf '%s\n' "${CHANGED}" |
+                grep -v -E '^\.github/workflows/GYM-NEXT-11A-(OWNER-MATERIAL-CLEANUP|R2-RECOVERY|R3-RECOVERY)\.yml$' |
+                sed '/^$/d' || true
+            )"
+
+            RECOVERY_WORKFLOW="$(
+              printf '%s\n' "${CHANGED}" |
+                grep -E '^\.github/workflows/GYM-NEXT-11A-(OWNER-MATERIAL-CLEANUP|R2-RECOVERY|R3-RECOVERY)\.yml$' |
+                sed '/^$/d' || true
+            )"
+
+            if [[ -n "${RECOVERY_WORKFLOW}" && -z "${NON_RECOVERY_WORKFLOW}" ]]; then
+              APPLICATION_BASE="$(
+                git rev-parse "${APPLICATION_BASE}^"
+              )"
+              continue
+            fi
+            break
+          done
+
+          [[ "${APPLICATION_BASE}" == "${EXPECTED_DELIVERY_COMMIT}" ]] || {
+            echo "::error::Could not resolve the committed five-screen delivery state."
+            echo "Expected: ${EXPECTED_DELIVERY_COMMIT}"
+            echo "Actual:   ${APPLICATION_BASE}"
+            exit 1
+          }
+
+          CURRENT_STEP="$(
+            sed -n 's/^current_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          RESULT="$(
+            sed -n 's/^result:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          [[ "${CURRENT_STEP}" == "GYM-NEXT-10A-COMPLETE" ]] || {
+            echo "::error::Expected GYM-NEXT-10A-COMPLETE, got ${CURRENT_STEP}."
+            exit 1
+          }
+          [[ "${RESULT}" == "OK" ]] || {
+            echo "::error::Current ledger result is not OK."
+            exit 1
+          }
+
+          git fetch --tags --force
+          BACKUP_COMMIT="$(git rev-list -n 1 "${BACKUP_TAG}")"
+          [[ "${BACKUP_COMMIT}" == "${EXPECTED_BACKUP_COMMIT}" ]] || {
+            echo "::error::Backup tag points to an unexpected commit."
+            echo "Expected: ${EXPECTED_BACKUP_COMMIT}"
+            echo "Actual:   ${BACKUP_COMMIT}"
+            exit 1
+          }
+
+          echo "UPLOAD_PARENT=${UPLOAD_PARENT}" >> "$GITHUB_ENV"
+          echo "APPLICATION_BASE=${APPLICATION_BASE}" >> "$GITHUB_ENV"
+          echo "DELIVERY_COMMIT_SHA=${EXPECTED_DELIVERY_COMMIT}" >> "$GITHUB_ENV"
+          echo "RUN_URL=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Verify committed five-screen materials
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          check_blob() {
+            local path="$1"
+            local expected="$2"
+            local actual
+            actual="$(git hash-object "${path}")"
+            [[ "${actual}" == "${expected}" ]] || {
+              echo "::error::${path} differs from committed five-screen baseline."
+              echo "Expected: ${expected}"
+              echo "Actual:   ${actual}"
+              exit 1
+            }
+          }
+
+          check_blob "${LEDGER_FILE}" "${EXPECTED_LEDGER_BLOB}"
+          check_blob "${DELIVERY_DIR}/operation-sheet.html" "${EXPECTED_OPERATION_HTML_BLOB}"
+          check_blob "${DELIVERY_DIR}/operation-sheet-layout.json" "${EXPECTED_LAYOUT_BLOB}"
+          check_blob "${DELIVERY_DIR}/operation-sheet-qr-check.json" "${EXPECTED_QR_REPORT_BLOB}"
+          check_blob "${DELIVERY_DIR}/manifest.yml" "${EXPECTED_MANIFEST_BLOB}"
+          check_blob "${DELIVERY_DIR}/product-site-content.json" "${EXPECTED_PRODUCT_CONTENT_BLOB}"
+          check_blob "${DELIVERY_DIR}/screens/capture-report.json" "${EXPECTED_CAPTURE_REPORT_BLOB}"
+          check_blob "${DELIVERY_DIR}/${PDF_NAME}" "${EXPECTED_PDF_BLOB}"
+          check_blob "${DELIVERY_DIR}/${PNG_NAME}" "${EXPECTED_PNG_BLOB}"
+          check_blob system-check.html "${EXPECTED_SYSTEM_CHECK_BLOB}"
+
+          grep -Fq 'data-owner-facing-screen-count="5"' \
+            "${DELIVERY_DIR}/operation-sheet.html"
+          ! grep -Ei 'system-check|system check|営業前.*チェック' \
+            "${DELIVERY_DIR}/operation-sheet.html"
+
+          grep -Fq '"expected_count": 5' \
+            "${DELIVERY_DIR}/operation-sheet-qr-check.json"
+          grep -Fq '"source_qr_decoded_count": 5' \
+            "${DELIVERY_DIR}/operation-sheet-qr-check.json"
+          grep -Fq '"decoded_count": 5' \
+            "${DELIVERY_DIR}/operation-sheet-qr-check.json"
+          grep -Fq '"exact_url_match_count": 5' \
+            "${DELIVERY_DIR}/operation-sheet-qr-check.json"
+
+          grep -Fq 'screen_count: 5' "${DELIVERY_DIR}/manifest.yml"
+          grep -Fq 'system_check_exposed: false' "${DELIVERY_DIR}/manifest.yml"
+          grep -Fq 'system_check_html_preserved: true' "${DELIVERY_DIR}/manifest.yml"
+
+          [[ ! -e "${DELIVERY_DIR}/screens/system-check.png" ]]
+          [[ ! -e "${DELIVERY_DIR}/qr/system-check.png" ]]
+          [[ ! -e "${DELIVERY_DIR}/qr/system-check-rendered-crop.png" ]]
+
+          [[ "$(sha256sum "${DELIVERY_DIR}/${PDF_NAME}" | awk '{print $1}')" == "${EXPECTED_PDF_SHA256}" ]]
+          [[ "$(sha256sum "${DELIVERY_DIR}/${PNG_NAME}" | awk '{print $1}')" == "${EXPECTED_PNG_SHA256}" ]]
+
+      - name: Wait longer for GitHub Pages and verify exact public files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-11a-r2/public
+
+          PUBLIC_HTML="/tmp/gym-next-11a-r2/public/operation-sheet.html"
+          PUBLISHED="false"
+
+          for attempt in $(seq 1 72); do
+            URL="${PUBLIC_BASE}/${DELIVERY_DIR}/operation-sheet.html?v=${DELIVERY_COMMIT_SHA}-${GITHUB_RUN_ID}-${attempt}"
+            HTTP_CODE="$(
+              curl --location --silent --show-error \
+                --connect-timeout 15 \
+                --max-time 30 \
+                --header 'Cache-Control: no-cache' \
+                --header 'Pragma: no-cache' \
+                --output "${PUBLIC_HTML}" \
+                --write-out '%{http_code}' \
+                "${URL}" || true
+            )"
+
+            MARKER="old-or-empty"
+            if [[ -s "${PUBLIC_HTML}" ]] &&
+               grep -Fq 'data-owner-facing-screen-count="5"' "${PUBLIC_HTML}" &&
+               ! grep -Eqi 'system-check|system check|営業前.*チェック' "${PUBLIC_HTML}"; then
+              MARKER="five-screen"
+              PUBLISHED="true"
+            fi
+
+            echo "Attempt ${attempt}/72: HTTP ${HTTP_CODE}, marker=${MARKER}"
+
+            if [[ "${PUBLISHED}" == "true" ]]; then
+              break
+            fi
+
+            if [[ "${attempt}" == "72" ]]; then
+              echo "::error::Five-screen owner-facing sheet did not reach GitHub Pages within 12 minutes."
+              exit 1
+            fi
+            sleep 10
+          done
+
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-delay 3 \
+            --connect-timeout 15 --max-time 60 \
+            --header 'Cache-Control: no-cache' \
+            -o /tmp/gym-next-11a-r2/public/sheet.pdf \
+            "${PUBLIC_BASE}/${DELIVERY_DIR}/${PDF_NAME}?v=${DELIVERY_COMMIT_SHA}-${GITHUB_RUN_ID}"
+
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-delay 3 \
+            --connect-timeout 15 --max-time 60 \
+            --header 'Cache-Control: no-cache' \
+            -o /tmp/gym-next-11a-r2/public/sheet.png \
+            "${PUBLIC_BASE}/${DELIVERY_DIR}/${PNG_NAME}?v=${DELIVERY_COMMIT_SHA}-${GITHUB_RUN_ID}"
+
+          curl --fail --location --silent --show-error \
+            --retry 5 --retry-delay 3 \
+            --connect-timeout 15 --max-time 60 \
+            --header 'Cache-Control: no-cache' \
+            -o /tmp/gym-next-11a-r2/public/qr-report.json \
+            "${PUBLIC_BASE}/${DELIVERY_DIR}/operation-sheet-qr-check.json?v=${DELIVERY_COMMIT_SHA}-${GITHUB_RUN_ID}"
+
+          [[ "$(sha256sum /tmp/gym-next-11a-r2/public/sheet.pdf | awk '{print $1}')" == "${EXPECTED_PDF_SHA256}" ]]
+          [[ "$(sha256sum /tmp/gym-next-11a-r2/public/sheet.png | awk '{print $1}')" == "${EXPECTED_PNG_SHA256}" ]]
+          grep -Fq '"expected_count": 5' /tmp/gym-next-11a-r2/public/qr-report.json
+          grep -Fq '"source_qr_decoded_count": 5' /tmp/gym-next-11a-r2/public/qr-report.json
+          grep -Fq '"decoded_count": 5' /tmp/gym-next-11a-r2/public/qr-report.json
+          grep -Fq '"exact_url_match_count": 5' /tmp/gym-next-11a-r2/public/qr-report.json
+
+      - name: Update ledger record recovery and self-delete
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${STEP_DIR}"
+          COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
+          export COMPLETED_AT
+
+          python3 <<'PY'
+          from pathlib import Path
+          import os
+          import yaml
+
+          path = Path("dpro-next/gym/next-ledger.yml")
+          ledger = yaml.safe_load(path.read_text(encoding="utf-8"))
+
+          ledger.update({
+              "current_step": "GYM-NEXT-11A-COMPLETE",
+              "logical_step": "GYM-NEXT-11",
+              "workflow_revision": "R3",
+              "next_step": "GYM-NEXT-11B-PRODUCT-SITE-CLEANUP",
+              "next_repository": "dpromstk2000-lab/dpro-line-systems-site",
+              "result": "OK",
+              "step_backup_tag": "backup-gym-before-next-11a-20260726",
+              "delivery_commit_sha": os.environ["DELIVERY_COMMIT_SHA"],
+              "pdf_blob": "b273b72bd7685fd8e86968fb687f5b96d0dfe723",
+              "png_blob": "02fcbc702c1153e8e5de191f13d24f09748761e2",
+              "completed_at": os.environ["COMPLETED_AT"],
+              "workflow_run_url": os.environ["RUN_URL"],
+              "runtime_files_changed": False,
+              "worker_deployed": True,
+              "supabase_changed": False,
+              "product_site_changed": False,
+          })
+
+          ledger["operation_sheet"] = {
+              "pdf_url": (
+                  "https://dpromstk2000-lab.github.io/liff-gym-demo/"
+                  "deliverables/gym-next-10/"
+                  "DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf"
+              ),
+              "png_url": (
+                  "https://dpromstk2000-lab.github.io/liff-gym-demo/"
+                  "deliverables/gym-next-10/"
+                  "DPRO_GYM_NEXT_operation_experience_sheet_20260726.png"
+              ),
+              "html_url": (
+                  "https://dpromstk2000-lab.github.io/liff-gym-demo/"
+                  "deliverables/gym-next-10/operation-sheet.html"
+              ),
+              "qr_report_url": (
+                  "https://dpromstk2000-lab.github.io/liff-gym-demo/"
+                  "deliverables/gym-next-10/operation-sheet-qr-check.json"
+              ),
+              "page_count": 1,
+              "orientation": "A4 portrait",
+              "qr_physical_size_mm": 23,
+              "pdf_render_dpi": 300,
+              "owner_facing_screen_count": 5,
+              "owner_facing_qr_count": 5,
+              "source_qr_decoded_count": 5,
+              "qr_decoded_count": 5,
+              "qr_exact_url_match_count": 5,
+              "system_check_exposed": False,
+              "pdf_sha256": (
+                  "0581ba706fed52de0c508548faaf9b2ab"
+                  "0f65aded36796dd9c0d96949bc0fc8f"
+              ),
+              "png_sha256": (
+                  "d27b5fd48dec81cf1099c8a37b8d6e59"
+                  "cb5a0eb0bf191727e66feb3120ceb103"
+              ),
+              "published_exact_match": True,
+          }
+
+          ledger["owner_facing_correction"] = {
+              "reason": "system-checkはDPRO導入・保守担当専用",
+              "system_check_html_preserved": True,
+              "owner_page_link_removed": True,
+              "operation_sheet_removed": True,
+              "product_site_update_pending": True,
+          }
+
+          recovery = ledger.setdefault("recovery", {})
+          failed_revisions = recovery.setdefault(
+              "failed_workflow_revisions", []
+          )
+          for revision in (
+              "GYM-NEXT-11A-R1",
+              "GYM-NEXT-11A-R2",
+          ):
+              if revision not in failed_revisions:
+                  failed_revisions.append(revision)
+
+          failed_urls = recovery.setdefault("failed_run_urls", [])
+          for failed_url in (
+              "https://github.com/dpromstk2000-lab/"
+              "liff-gym-demo/actions/runs/30185721890",
+              "https://github.com/dpromstk2000-lab/"
+              "liff-gym-demo/actions/runs/30186179925",
+          ):
+              if failed_url not in failed_urls:
+                  failed_urls.append(failed_url)
+
+          recovery["failure_reason_gym_next_11a_r1"] = (
+              "5画面版はCommit済みだがGitHub Pagesが"
+              "約4分以内に更新されなかった"
+          )
+          recovery["failure_reason_gym_next_11a_r2"] = (
+              "バックアップタグを5画面版Commitの"
+              "直前Commitと誤比較した"
+          )
+          recovery["gym_next_11a_r3_mode"] = (
+              "R1・R2・R3のYMLだけのCommitを遡り"
+              "5画面版Commitを固定検査"
+          )
+          recovery["workflow_only_history_traversal"] = True
+          recovery["github_pages_wait_limit_minutes"] = 12
+
+          checks = ledger.setdefault("checks", {})
+          checks.update({
+              "owner_facing_system_check_removed": "OK",
+              "maintenance_system_check_preserved": "OK",
+              "owner_material_screen_count": "5",
+              "owner_material_qr_count": "5",
+              "owner_material_source_qr_decode": "5/5",
+              "owner_material_rendered_qr_decode": "5/5",
+              "owner_material_qr_exact_match": "5/5",
+              "public_delivery_files": "OK",
+              "public_pdf_sha_match": "OK",
+              "public_png_sha_match": "OK",
+          })
+
+          path.write_text(
+              yaml.safe_dump(
+                  ledger,
+                  allow_unicode=True,
+                  sort_keys=False,
+              ),
+              encoding="utf-8",
+              newline="\n",
+          )
+          PY
+
+          cat > "${STEP_DIR}/GYM-NEXT-11A-COMPLETE.md" <<EOF
+          # GYM-NEXT-11A COMPLETE
+
+          - 結果: OK
+          - ワークフロー版: R3
+          - オーナー向け操作体験画面: 5画面
+          - オーナー向けQR: 5 / 5
+          - system-checkのオーナー向け掲載: 削除済み
+          - system-check.html本体: DPRO保守用として維持
+          - 公開PDF・PNG SHA一致: OK
+          - Worker変更: なし
+          - Supabase変更: なし
+          - 次STEP: GYM-NEXT-11B-PRODUCT-SITE-CLEANUP
+          - 完了日時: ${COMPLETED_AT}
+          - Actions: ${RUN_URL}
+          EOF
+
+          git add \
+            "${LEDGER_FILE}" \
+            "${STEP_DIR}/GYM-NEXT-11A-COMPLETE.md"
+
+          if [[ -f "${STALE_WORKFLOW_FILE_R1}" ]]; then
+            git rm "${STALE_WORKFLOW_FILE_R1}"
+          fi
+          if [[ -f "${STALE_WORKFLOW_FILE_R2}" ]]; then
+            git rm "${STALE_WORKFLOW_FILE_R2}"
+          fi
+          git rm "${WORKFLOW_FILE}"
+
+          git diff --cached --check
+          git commit -m "Complete gym owner-facing material cleanup recovery"
+          git push origin HEAD:main
+
+      - name: Upload recovery artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GYM-NEXT-11A-R3-complete
+          path: |
+            deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf
+            deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.png
+            deliverables/gym-next-10/operation-sheet.html
+            deliverables/gym-next-10/operation-sheet-qr-check.json
+            deliverables/gym-next-10/manifest.yml
+            dpro-next/gym/next-ledger.yml
+            dpro-next/gym/steps/GYM-NEXT-11A-COMPLETE.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: STEP completion summary
+        shell: bash
+        run: |
+          {
+            echo "## GYM-NEXT-11A-R3 COMPLETE"
+            echo ""
+            echo "- Workflow-only history traversal: verified"
+            echo "- Existing five-screen delivery commit: verified"
+            echo "- Owner-facing screens: 5"
+            echo "- QR source decode: 5 / 5"
+            echo "- QR rendered-PDF decode: 5 / 5"
+            echo "- QR exact URL match: 5 / 5"
+            echo "- Owner-facing system-check: removed"
+            echo "- Maintenance system-check.html: preserved"
+            echo "- Public PDF and PNG SHA: matched"
+            echo "- Worker change: false"
+            echo "- Supabase change: false"
+            echo "- Next STEP: GYM-NEXT-11B-PRODUCT-SITE-CLEANUP"
+          } >> "$GITHUB_STEP_SUMMARY"
