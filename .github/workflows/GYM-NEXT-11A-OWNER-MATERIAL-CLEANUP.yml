@@ -1,0 +1,661 @@
+name: STEP GYM-NEXT-11A - Remove Owner-Facing System Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/GYM-NEXT-11A-OWNER-MATERIAL-CLEANUP.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gym-next-11a-owner-material-cleanup
+  cancel-in-progress: false
+
+env:
+  WORKFLOW_FILE: .github/workflows/GYM-NEXT-11A-OWNER-MATERIAL-CLEANUP.yml
+  DELIVERY_DIR: deliverables/gym-next-10
+  LEDGER_FILE: dpro-next/gym/next-ledger.yml
+  STEP_DIR: dpro-next/gym/steps
+  BACKUP_TAG: backup-gym-before-next-11a-20260726
+  PDF_NAME: DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf
+  PNG_NAME: DPRO_GYM_NEXT_operation_experience_sheet_20260726.png
+  PUBLIC_BASE: https://dpromstk2000-lab.github.io/liff-gym-demo
+  EXPECTED_LEDGER_BLOB: 9783c411e0e1017299098df45a1b63c2d23aeada
+  EXPECTED_OPERATION_HTML_BLOB: 3275282b1f6adfeac24d843f3f7d99764c59887a
+  EXPECTED_LAYOUT_BLOB: 42dc6d1d95747f448661fdcd3c78dc72db2b34a6
+  EXPECTED_QR_REPORT_BLOB: 09f130a9fed4374f0eadd51185228bd29ef8e692
+  EXPECTED_MANIFEST_BLOB: a99fb9dcdcc0ca62cbf99e2d148334bbe1b7f8e9
+  EXPECTED_PRODUCT_CONTENT_BLOB: 022449d52874c9432683b9297c02abcb05d0e311
+  EXPECTED_CAPTURE_REPORT_BLOB: e1b1eb8cca38ac8659e54be641271c1faf2275ab
+  EXPECTED_SYSTEM_CHECK_HTML_BLOB: 8d37b43caec090e42593d8ebc088bd9aff06131a
+  EXPECTED_PDF_BLOB: 7cb60ee6e710d1d9d84fff3a9c08b9b11bbe0e3f
+  EXPECTED_PNG_BLOB: 135783120f7f9b030786ab8c84ef419d73c55efb
+
+jobs:
+  rebuild-owner-facing-materials:
+    name: Rebuild five-screen owner-facing operation sheet
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout main with complete history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure Git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO NEXT Actions"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Confirm completed source and safe upload
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "${WORKFLOW_FILE}"
+          test -f "${LEDGER_FILE}"
+          test -f system-check.html
+          test -f "${DELIVERY_DIR}/${PDF_NAME}"
+          test -f "${DELIVERY_DIR}/${PNG_NAME}"
+          test -f "${DELIVERY_DIR}/screens/system-check.png"
+          test -f "${DELIVERY_DIR}/qr/system-check.png"
+
+          [[ "${GITHUB_REPOSITORY}" == "dpromstk2000-lab/liff-gym-demo" ]] || {
+            echo "::error::This YML must run in dpromstk2000-lab/liff-gym-demo."
+            exit 1
+          }
+
+          if [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            STEP_BASE_SHA="$(git rev-parse "${GITHUB_SHA}^")"
+            UNEXPECTED="$(
+              git diff --name-only "${STEP_BASE_SHA}" "${GITHUB_SHA}" |
+                grep -v -F -x "${WORKFLOW_FILE}" |
+                sed '/^$/d' || true
+            )"
+            [[ -z "${UNEXPECTED}" ]] || {
+              echo "::error::Upload commit must contain only ${WORKFLOW_FILE}."
+              echo "${UNEXPECTED}"
+              exit 1
+            }
+          else
+            STEP_BASE_SHA="$(git rev-parse HEAD)"
+          fi
+
+          CURRENT_STEP="$(
+            sed -n 's/^current_step:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          RESULT="$(
+            sed -n 's/^result:[[:space:]]*//p' "${LEDGER_FILE}" |
+              head -n 1 | tr -d '"\r'
+          )"
+          [[ "${CURRENT_STEP}" == "GYM-NEXT-10A-COMPLETE" ]]
+          [[ "${RESULT}" == "OK" ]]
+
+          echo "STEP_BASE_SHA=${STEP_BASE_SHA}" >> "$GITHUB_ENV"
+          echo "RUN_URL=https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
+      - name: Protect and verify inspected baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          if git show-ref --tags --verify --quiet "refs/tags/${BACKUP_TAG}"; then
+            [[ "$(git rev-list -n 1 "${BACKUP_TAG}")" == "${STEP_BASE_SHA}" ]]
+          else
+            git tag -a "${BACKUP_TAG}" "${STEP_BASE_SHA}" \
+              -m "Before removing owner-facing system-check materials"
+            git push origin "refs/tags/${BACKUP_TAG}"
+          fi
+
+          check_blob() {
+            local path="$1" expected="$2" actual
+            actual="$(git hash-object "${path}")"
+            [[ "${actual}" == "${expected}" ]] || {
+              echo "::error::${path} differs from inspected baseline."
+              echo "Expected: ${expected}"
+              echo "Actual:   ${actual}"
+              exit 1
+            }
+          }
+
+          check_blob "${LEDGER_FILE}" "${EXPECTED_LEDGER_BLOB}"
+          check_blob "${DELIVERY_DIR}/operation-sheet.html" "${EXPECTED_OPERATION_HTML_BLOB}"
+          check_blob "${DELIVERY_DIR}/operation-sheet-layout.json" "${EXPECTED_LAYOUT_BLOB}"
+          check_blob "${DELIVERY_DIR}/operation-sheet-qr-check.json" "${EXPECTED_QR_REPORT_BLOB}"
+          check_blob "${DELIVERY_DIR}/manifest.yml" "${EXPECTED_MANIFEST_BLOB}"
+          check_blob "${DELIVERY_DIR}/product-site-content.json" "${EXPECTED_PRODUCT_CONTENT_BLOB}"
+          check_blob "${DELIVERY_DIR}/screens/capture-report.json" "${EXPECTED_CAPTURE_REPORT_BLOB}"
+          check_blob system-check.html "${EXPECTED_SYSTEM_CHECK_HTML_BLOB}"
+          check_blob "${DELIVERY_DIR}/${PDF_NAME}" "${EXPECTED_PDF_BLOB}"
+          check_blob "${DELIVERY_DIR}/${PNG_NAME}" "${EXPECTED_PNG_BLOB}"
+
+          for key in booking member owner ipad staff; do
+            test -s "${DELIVERY_DIR}/screens/${key}.png"
+            test -s "${DELIVERY_DIR}/qr/${key}.png"
+          done
+
+      - name: Install PDF and QR tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends \
+            poppler-utils fonts-ipafont-gothic file libgl1
+          python -m pip install --disable-pip-version-check \
+            qrcode==8.2 pillow==11.3.0 reportlab==4.4.3 \
+            opencv-python-headless==4.12.0.88 pyyaml==6.0.2
+
+      - name: Generate five-screen owner-facing sheet
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-11a
+
+          cat > /tmp/gym-next-11a/build_sheet.py <<'PY'
+          from __future__ import annotations
+
+          from pathlib import Path
+          import json
+          import textwrap
+
+          import qrcode
+          from PIL import Image, ImageOps
+          from reportlab.lib.colors import HexColor, white
+          from reportlab.lib.pagesizes import A4
+          from reportlab.lib.units import mm
+          from reportlab.pdfbase import pdfmetrics
+          from reportlab.pdfbase.ttfonts import TTFont
+          from reportlab.pdfgen import canvas
+
+          delivery = Path("deliverables/gym-next-10")
+          screens = delivery / "screens"
+          qr_dir = delivery / "qr"
+          qr_dir.mkdir(parents=True, exist_ok=True)
+
+          pdf_path = delivery / "DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf"
+          html_path = delivery / "operation-sheet.html"
+          layout_path = delivery / "operation-sheet-layout.json"
+          product_path = delivery / "product-site-content.json"
+          capture_path = screens / "capture-report.json"
+          base = "https://dpromstk2000-lab.github.io/liff-gym-demo"
+
+          items = [
+              {"key":"booking","number":"01","title":"無料体験・予約","description":"メニュー・担当・空き時間を選び、30分単位で予約。","role":"お客様","url":f"{base}/index.html?demo=1"},
+              {"key":"member","number":"02","title":"会員マイページ","description":"残回数・履歴・振り返り・前回と同じ予約を確認。","role":"会員","url":f"{base}/member.html?demo=1"},
+              {"key":"owner","number":"03","title":"PC管理・継続フォロー","description":"今日やること、体験入会、会員、期限別フォロー。","role":"オーナー","url":f"{base}/dashboard.html?demo=1"},
+              {"key":"ipad","number":"04","title":"iPad受付","description":"来店・開始・完了を更新し、完了時だけ回数を減算。","role":"受付","url":f"{base}/owner-ipad.html?demo=1"},
+              {"key":"staff","number":"05","title":"スタッフ画面","description":"スタッフ権限だけで当日の受付と記録を操作。","role":"スタッフ","url":f"{base}/staff.html?demo=1"},
+          ]
+
+          font_path = Path("/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf")
+          pdfmetrics.registerFont(TTFont("IPAGothic", str(font_path)))
+
+          for item in items:
+              qr = qrcode.QRCode(
+                  error_correction=qrcode.constants.ERROR_CORRECT_M,
+                  box_size=12,
+                  border=5,
+              )
+              qr.add_data(item["url"])
+              qr.make(fit=True)
+              qr_path = qr_dir / f'{item["key"]}.png'
+              qr.make_image(fill_color="black", back_color="white").convert("RGB").save(qr_path)
+              item["qr_path"] = str(qr_path)
+
+          page_w, page_h = A4
+          c = canvas.Canvas(str(pdf_path), pagesize=A4, pageCompression=1)
+          c.setTitle("DPRO パーソナルジム LINE NEXT 操作体験シート")
+          c.setAuthor("DPRO SHOP")
+
+          navy = HexColor("#13213c")
+          blue = HexColor("#2563eb")
+          pink = HexColor("#c4315c")
+          green = HexColor("#087a55")
+          line = HexColor("#d6dfeb")
+          pale = HexColor("#f3f6fa")
+          muted = HexColor("#5f6d82")
+          margin_x = 10 * mm
+
+          c.setFillColor(navy)
+          c.roundRect(margin_x, page_h - 31*mm, page_w - 2*margin_x, 21*mm, 5*mm, fill=1, stroke=0)
+          c.setFillColor(white)
+          c.setFont("IPAGothic", 16)
+          c.drawString(margin_x + 7*mm, page_h - 20*mm, "DPRO パーソナルジム LINE NEXT")
+          c.setFont("IPAGothic", 8.5)
+          c.drawString(margin_x + 7*mm, page_h - 26*mm, "オーナー・会員・スタッフが使う5つの実画面")
+
+          grid_top = page_h - 36*mm
+          grid_bottom = 13*mm
+          gap_y = 3*mm
+          card_w = page_w - 2*margin_x
+          card_h = (grid_top - grid_bottom - 4*gap_y) / 5
+          qr_size = 23*mm
+          qr_layout = []
+
+          for index, item in enumerate(items):
+              x = margin_x
+              y = grid_top - (index + 1)*card_h - index*gap_y
+              c.setFillColor(white)
+              c.setStrokeColor(line)
+              c.roundRect(x, y, card_w, card_h, 3.5*mm, fill=1, stroke=1)
+
+              c.setFillColor(pink)
+              c.setFont("IPAGothic", 7.5)
+              c.drawString(x + 4*mm, y + card_h - 6.5*mm, f'{item["number"]} / OWNER-FACING SCREEN')
+              c.setFillColor(navy)
+              c.setFont("IPAGothic", 11)
+              c.drawString(x + 4*mm, y + card_h - 13*mm, item["title"])
+
+              source = Image.open(screens / f'{item["key"]}.png').convert("RGB")
+              thumb = ImageOps.fit(source, (1200, 580), method=Image.Resampling.LANCZOS, centering=(0.5, 0.10))
+              thumb_path = delivery / f'.thumb-{item["key"]}.jpg'
+              thumb.save(thumb_path, quality=88, optimize=True)
+              c.drawImage(str(thumb_path), x + 4*mm, y + 4*mm, width=84*mm, height=card_h - 21*mm, preserveAspectRatio=False, mask="auto")
+
+              text_x = x + 92*mm
+              text_top = y + card_h - 19*mm
+              c.setFillColor(green)
+              c.setFont("IPAGothic", 7.3)
+              c.drawString(text_x, text_top, f'利用者：{item["role"]}')
+              c.setFillColor(muted)
+              c.setFont("IPAGothic", 8)
+              for line_no, value in enumerate(textwrap.wrap(item["description"], width=18)[:3]):
+                  c.drawString(text_x, text_top - 5*mm - line_no*4*mm, value)
+
+              c.setFillColor(pale)
+              c.roundRect(x + card_w - 31*mm, y + 3.5*mm, 27*mm, card_h - 7*mm, 2.5*mm, fill=1, stroke=0)
+              qr_x = x + card_w - 29*mm
+              qr_y = y + 7.5*mm
+              c.drawImage(item["qr_path"], qr_x, qr_y, width=qr_size, height=qr_size, preserveAspectRatio=True, mask="auto")
+              c.setFillColor(blue)
+              c.setFont("IPAGothic", 6.6)
+              c.drawCentredString(qr_x + qr_size/2, y + 4.5*mm, "QRから実画面を開く")
+              qr_layout.append({"key":item["key"],"url":item["url"],"x_pt":qr_x,"y_pt":qr_y,"size_pt":qr_size})
+              thumb_path.unlink(missing_ok=True)
+
+          c.setFillColor(muted)
+          c.setFont("IPAGothic", 6.7)
+          c.drawCentredString(page_w/2, 7*mm, "管理コード 1234 / スタッフコード 5678 / 自動・一斉LINE送信なし")
+          c.showPage()
+          c.save()
+
+          layout_path.write_text(json.dumps({"schema_version":2,"owner_facing_only":True,"page_width_pt":page_w,"page_height_pt":page_h,"qr_items":qr_layout}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          captures = json.loads(capture_path.read_text(encoding="utf-8"))
+          captures = [item for item in captures if item.get("key") != "system-check"]
+          assert [item["key"] for item in captures] == ["booking","member","owner","ipad","staff"]
+          capture_path.write_text(json.dumps(captures, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          product = {
+              "schema_version":2,
+              "system":"DPRO パーソナルジム LINE",
+              "step":"GYM-NEXT-11A",
+              "stage":"owner_material_cleanup_complete_product_site_pending",
+              "owner_facing_urls":{item["key"]:item["url"] for item in items},
+              "operation_sheet":{
+                  "pdf":f"{base}/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf",
+                  "png":f"{base}/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.png",
+                  "html":f"{base}/deliverables/gym-next-10/operation-sheet.html",
+                  "screen_count":5,
+                  "qr_count":5,
+              },
+              "product_site":{
+                  "repository":"dpromstk2000-lab/dpro-line-systems-site",
+                  "page":"https://dpromstk2000-lab.github.io/dpro-line-systems-site/systems/gym.html",
+                  "next_step":"GYM-NEXT-11B-PRODUCT-SITE-CLEANUP",
+              },
+          }
+          product_path.write_text(json.dumps(product, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+          cards = []
+          for item in items:
+              cards.append(
+                  '<article>'
+                  f'<h2>{item["number"]} {item["title"]}</h2>'
+                  f'<span class="role">利用者：{item["role"]}</span>'
+                  f'<img class="screen" src="screens/{item["key"]}.png" alt="{item["title"]}実画面">'
+                  f'<p>{item["description"]}</p>'
+                  f'<a href="{item["url"]}" target="_blank" rel="noopener">'
+                  f'<img class="qr" src="qr/{item["key"]}.png" alt="{item["title"]}QR">実画面を開く</a>'
+                  '</article>'
+              )
+
+          html = textwrap.dedent(f"""<!doctype html>
+          <html lang="ja">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width,initial-scale=1">
+            <meta name="robots" content="noindex,nofollow">
+            <title>DPRO パーソナルジム LINE NEXT 操作体験</title>
+            <style>
+              *{{box-sizing:border-box}}body{{margin:0;background:#eef2f7;color:#182235;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}}
+              header{{padding:28px 20px;color:#fff;background:#13213c}}header div,main{{width:min(1120px,calc(100% - 32px));margin:auto}}
+              h1{{margin:0;font-size:clamp(26px,5vw,48px)}}header p{{margin:8px 0 0;color:#d9e5fa}}
+              main{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:24px 0 50px}}
+              article{{border:1px solid #d6dfeb;border-radius:18px;padding:16px;background:#fff;box-shadow:0 8px 24px rgba(19,33,60,.07)}}article:last-child{{grid-column:1/-1}}
+              h2{{margin:0 0 8px;color:#13213c;font-size:20px}}.role{{display:inline-flex;margin-bottom:10px;padding:5px 9px;border-radius:999px;background:#e8f8f1;color:#087a55;font-size:12px;font-weight:800}}
+              .screen{{width:100%;aspect-ratio:16/8.5;object-fit:cover;object-position:top;border-radius:12px;border:1px solid #d6dfeb}}p{{color:#617086}}
+              a{{display:flex;align-items:center;gap:12px;color:#174dac;font-weight:800}}.qr{{width:82px;height:82px}}
+              @media(max-width:700px){{main{{grid-template-columns:1fr}}article:last-child{{grid-column:auto}}}}
+            </style>
+          </head>
+          <body data-owner-facing-screen-count="5">
+            <header><div><h1>DPRO パーソナルジム LINE NEXT</h1><p>オーナー・会員・スタッフが使う5つの実画面を体験できます。</p></div></header>
+            <main>{''.join(cards)}</main>
+          </body>
+          </html>
+          """).strip() + "\n"
+          html_path.write_text(html, encoding="utf-8")
+          PY
+
+          python /tmp/gym-next-11a/build_sheet.py
+          rm -f "${DELIVERY_DIR}/screens/system-check.png" "${DELIVERY_DIR}/qr/system-check.png" "${DELIVERY_DIR}/qr/system-check-rendered-crop.png"
+          pdftoppm -png -r 300 -singlefile "${DELIVERY_DIR}/${PDF_NAME}" "${DELIVERY_DIR}/operation-sheet-render"
+          mv "${DELIVERY_DIR}/operation-sheet-render.png" "${DELIVERY_DIR}/${PNG_NAME}"
+
+      - name: Verify five QR codes and create manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cat > /tmp/gym-next-11a/verify.py <<'PY'
+          from pathlib import Path
+          import json
+          import cv2
+
+          delivery = Path("deliverables/gym-next-10")
+          image = cv2.imread(str(delivery / "DPRO_GYM_NEXT_operation_experience_sheet_20260726.png"))
+          layout = json.loads((delivery / "operation-sheet-layout.json").read_text(encoding="utf-8"))
+          page_w = float(layout["page_width_pt"])
+          page_h = float(layout["page_height_pt"])
+          height_px, width_px = image.shape[:2]
+          detector = cv2.QRCodeDetector()
+
+          def decode(source):
+              gray = cv2.cvtColor(source, cv2.COLOR_BGR2GRAY)
+              _, otsu = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+              for candidate in (source, gray, otsu):
+                  for factor in (1, 2, 3):
+                      value = candidate if factor == 1 else cv2.resize(candidate, None, fx=factor, fy=factor, interpolation=cv2.INTER_NEAREST)
+                      value = cv2.copyMakeBorder(value, 48, 48, 48, 48, cv2.BORDER_CONSTANT, value=255)
+                      decoded, _, _ = detector.detectAndDecode(value)
+                      if decoded:
+                          return decoded
+              return ""
+
+          results = []
+          for item in layout["qr_items"]:
+              source = cv2.imread(str(delivery / "qr" / f'{item["key"]}.png'))
+              source_decoded = decode(source)
+              assert source_decoded == item["url"]
+              x, y, size = float(item["x_pt"]), float(item["y_pt"]), float(item["size_pt"])
+              pad = 44
+              left = max(0, int(x / page_w * width_px) - pad)
+              right = min(width_px, int((x + size) / page_w * width_px) + pad)
+              top = max(0, int((page_h - y - size) / page_h * height_px) - pad)
+              bottom = min(height_px, int((page_h - y) / page_h * height_px) + pad)
+              crop = image[top:bottom, left:right]
+              decoded = decode(crop)
+              results.append({"key":item["key"],"expected_url":item["url"],"decoded_url":decoded,"ok":decoded == item["url"],"source_qr_ok":source_decoded == item["url"],"crop":[left,top,right,bottom]})
+              cv2.imwrite(str(delivery / "qr" / f'{item["key"]}-rendered-crop.png'), crop)
+
+          assert len(results) == 5
+          assert [item["key"] for item in results] == ["booking","member","owner","ipad","staff"]
+          assert all(item["ok"] for item in results)
+          report = {"ok":True,"workflow_revision":"GYM-NEXT-11A","owner_facing_only":True,"qr_physical_size_mm":23,"pdf_render_dpi":300,"expected_count":5,"source_qr_decoded_count":5,"decoded_count":5,"exact_url_match_count":5,"results":results}
+          (delivery / "operation-sheet-qr-check.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          python /tmp/gym-next-11a/verify.py
+
+          PDF_SHA="$(sha256sum "${DELIVERY_DIR}/${PDF_NAME}" | awk '{print $1}')"
+          PNG_SHA="$(sha256sum "${DELIVERY_DIR}/${PNG_NAME}" | awk '{print $1}')"
+          PDF_BYTES="$(wc -c < "${DELIVERY_DIR}/${PDF_NAME}" | tr -d ' ')"
+          PNG_BYTES="$(wc -c < "${DELIVERY_DIR}/${PNG_NAME}" | tr -d ' ')"
+          COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
+          export PDF_SHA PNG_SHA PDF_BYTES PNG_BYTES COMPLETED_AT
+
+          python <<'PY'
+          from pathlib import Path
+          import json
+          import os
+          import yaml
+
+          delivery = Path("deliverables/gym-next-10")
+          manifest = {
+              "schema_version":2,
+              "system_name":"DPRO パーソナルジム LINE",
+              "logical_step":"GYM-NEXT-11",
+              "completed_step":"GYM-NEXT-11A-OWNER-MATERIAL-CLEANUP",
+              "stage":"OWNER_MATERIAL_CLEANUP_COMPLETE_PRODUCT_SITE_PENDING",
+              "generated_at_jst":os.environ["COMPLETED_AT"],
+              "facility_code":"dpro_gym_demo",
+              "worker_name":"dpro-gym-line-api",
+              "worker_version":"GYM-NEXT-9-WORKER-R2-20260725",
+              "files":{"pdf":"DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf","png":"DPRO_GYM_NEXT_operation_experience_sheet_20260726.png","html":"operation-sheet.html","qr_check":"operation-sheet-qr-check.json","capture_report":"screens/capture-report.json","product_site_content":"product-site-content.json","text_normalization":"text-normalization-report.json"},
+              "owner_facing_scope":{"screen_count":5,"screen_keys":["booking","member","owner","ipad","staff"],"system_check_exposed":False},
+              "maintenance_scope":{"system_check_html_preserved":True,"system_check_owner_navigation":False,"system_check_product_material":False},
+              "validation":{"actual_screen_count":5,"qr_count":5,"source_qr_decoded_count":5,"qr_decoded_count":5,"qr_exact_url_match_count":5,"pdf_page_count":1,"pdf_a4_portrait":True,"qr_physical_size_mm":23,"pdf_render_dpi":300,"automatic_line_broadcast":False},
+              "sha256":{"pdf":os.environ["PDF_SHA"],"png":os.environ["PNG_SHA"]},
+              "next_step":"GYM-NEXT-11B-PRODUCT-SITE-CLEANUP",
+          }
+          (delivery / "manifest.yml").write_text(yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False), encoding="utf-8")
+
+          extensions = {".html",".json",".yml",".yaml",".txt",".md"}
+          normalized = []
+          for path in sorted(delivery.rglob("*")):
+              if not path.is_file() or path.suffix.lower() not in extensions:
+                  continue
+              lines = path.read_text(encoding="utf-8").replace("\r\n","\n").replace("\r","\n").split("\n")
+              while lines and not lines[-1].strip():
+                  lines.pop()
+              path.write_text("\n".join(line.rstrip(" \t") for line in lines) + "\n", encoding="utf-8")
+              normalized.append(str(path))
+          (delivery / "text-normalization-report.json").write_text(json.dumps({"ok":True,"workflow_revision":"GYM-NEXT-11A","normalized_file_count":len(normalized),"normalized_files":normalized,"trailing_whitespace_count":0,"extra_blank_eof_count":0}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
+          pdftotext "${DELIVERY_DIR}/${PDF_NAME}" /tmp/gym-next-11a/sheet.txt
+          for file in "${DELIVERY_DIR}/operation-sheet.html" "${DELIVERY_DIR}/product-site-content.json" /tmp/gym-next-11a/sheet.txt; do
+            if grep -Ei 'system-check|system check|営業前.*チェック' "${file}"; then
+              echo "::error::Owner-facing material still exposes system-check: ${file}"
+              exit 1
+            fi
+          done
+
+          grep -Fq 'data-owner-facing-screen-count="5"' "${DELIVERY_DIR}/operation-sheet.html"
+          grep -Fq '"expected_count": 5' "${DELIVERY_DIR}/operation-sheet-qr-check.json"
+          grep -Fq '"exact_url_match_count": 5' "${DELIVERY_DIR}/operation-sheet-qr-check.json"
+          grep -Fq 'screen_count: 5' "${DELIVERY_DIR}/manifest.yml"
+          grep -Fq 'system_check_exposed: false' "${DELIVERY_DIR}/manifest.yml"
+          [[ ! -e "${DELIVERY_DIR}/screens/system-check.png" ]]
+          [[ ! -e "${DELIVERY_DIR}/qr/system-check.png" ]]
+          [[ ! -e "${DELIVERY_DIR}/qr/system-check-rendered-crop.png" ]]
+          [[ "$(git hash-object system-check.html)" == "${EXPECTED_SYSTEM_CHECK_HTML_BLOB}" ]]
+          [[ "$(head -c 4 "${DELIVERY_DIR}/${PDF_NAME}")" == "%PDF" ]]
+          [[ "$(od -An -t x1 -N8 "${DELIVERY_DIR}/${PNG_NAME}" | tr -d ' \n')" == "89504e470d0a1a0a" ]]
+          [[ "$(pdfinfo "${DELIVERY_DIR}/${PDF_NAME}" | awk '/^Pages:/ {print $2}')" == "1" ]]
+          [[ "${PDF_BYTES}" -gt 100000 && "${PDF_BYTES}" -lt 6000000 ]]
+          [[ "${PNG_BYTES}" -gt 200000 && "${PNG_BYTES}" -lt 12000000 ]]
+
+          echo "PDF_SHA=${PDF_SHA}" >> "$GITHUB_ENV"
+          echo "PNG_SHA=${PNG_SHA}" >> "$GITHUB_ENV"
+          echo "PDF_BYTES=${PDF_BYTES}" >> "$GITHUB_ENV"
+          echo "PNG_BYTES=${PNG_BYTES}" >> "$GITHUB_ENV"
+
+      - name: Commit revised materials
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHANGED="$(git status --short | awk '{print $2}' | sort)"
+          [[ -n "${CHANGED}" ]]
+          while IFS= read -r path; do
+            case "${path}" in
+              deliverables/gym-next-10/*) ;;
+              *) echo "::error::Unexpected changed file: ${path}"; exit 1 ;;
+            esac
+          done <<< "${CHANGED}"
+          [[ "$(git hash-object system-check.html)" == "${EXPECTED_SYSTEM_CHECK_HTML_BLOB}" ]]
+
+          git add "${DELIVERY_DIR}"
+          mapfile -t TEXT_FILES < <(find "${DELIVERY_DIR}" -type f \( -name '*.html' -o -name '*.json' -o -name '*.yml' -o -name '*.yaml' -o -name '*.txt' -o -name '*.md' \) -print | sort)
+          git diff --cached --check -- "${TEXT_FILES[@]}"
+          git commit -m "Remove system-check from owner-facing gym materials"
+          echo "DELIVERY_COMMIT_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+          echo "PDF_BLOB=$(git hash-object "${DELIVERY_DIR}/${PDF_NAME}")" >> "$GITHUB_ENV"
+          echo "PNG_BLOB=$(git hash-object "${DELIVERY_DIR}/${PNG_NAME}")" >> "$GITHUB_ENV"
+          git push origin HEAD:main
+
+      - name: Verify revised files on GitHub Pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-next-11a/public
+          for attempt in $(seq 1 24); do
+            curl --fail --location --silent --show-error --max-time 30 \
+              -o /tmp/gym-next-11a/public/operation-sheet.html \
+              "${PUBLIC_BASE}/${DELIVERY_DIR}/operation-sheet.html?publish=${GITHUB_RUN_ID}-${attempt}" || true
+            if [[ -s /tmp/gym-next-11a/public/operation-sheet.html ]] && grep -Fq 'data-owner-facing-screen-count="5"' /tmp/gym-next-11a/public/operation-sheet.html; then
+              break
+            fi
+            [[ "${attempt}" != "24" ]] || { echo "::error::Revised owner-facing sheet did not publish."; exit 1; }
+            sleep 10
+          done
+
+          curl --fail --location --silent --show-error --retry 3 --retry-delay 2 --max-time 30 -o /tmp/gym-next-11a/public/sheet.pdf "${PUBLIC_BASE}/${DELIVERY_DIR}/${PDF_NAME}?publish=${GITHUB_RUN_ID}"
+          curl --fail --location --silent --show-error --retry 3 --retry-delay 2 --max-time 30 -o /tmp/gym-next-11a/public/sheet.png "${PUBLIC_BASE}/${DELIVERY_DIR}/${PNG_NAME}?publish=${GITHUB_RUN_ID}"
+          curl --fail --location --silent --show-error --retry 3 --retry-delay 2 --max-time 30 -o /tmp/gym-next-11a/public/qr-report.json "${PUBLIC_BASE}/${DELIVERY_DIR}/operation-sheet-qr-check.json?publish=${GITHUB_RUN_ID}"
+          [[ "$(sha256sum /tmp/gym-next-11a/public/sheet.pdf | awk '{print $1}')" == "${PDF_SHA}" ]]
+          [[ "$(sha256sum /tmp/gym-next-11a/public/sheet.png | awk '{print $1}')" == "${PNG_SHA}" ]]
+          grep -Fq '"expected_count": 5' /tmp/gym-next-11a/public/qr-report.json
+          grep -Fq '"exact_url_match_count": 5' /tmp/gym-next-11a/public/qr-report.json
+          ! grep -Ei 'system-check|system check|営業前.*チェック' /tmp/gym-next-11a/public/operation-sheet.html
+
+      - name: Update ledger and self-delete
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${STEP_DIR}"
+          COMPLETED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
+          export COMPLETED_AT
+
+          python <<'PY'
+          from pathlib import Path
+          import os
+          import yaml
+
+          path = Path("dpro-next/gym/next-ledger.yml")
+          ledger = yaml.safe_load(path.read_text(encoding="utf-8"))
+          ledger.update({
+              "current_step":"GYM-NEXT-11A-COMPLETE",
+              "logical_step":"GYM-NEXT-11",
+              "workflow_revision":"R1",
+              "next_step":"GYM-NEXT-11B-PRODUCT-SITE-CLEANUP",
+              "next_repository":"dpromstk2000-lab/dpro-line-systems-site",
+              "result":"OK",
+              "step_backup_tag":"backup-gym-before-next-11a-20260726",
+              "step_backup_sha":os.environ["STEP_BASE_SHA"],
+              "delivery_commit_sha":os.environ["DELIVERY_COMMIT_SHA"],
+              "pdf_blob":os.environ["PDF_BLOB"],
+              "png_blob":os.environ["PNG_BLOB"],
+              "completed_at":os.environ["COMPLETED_AT"],
+              "workflow_run_url":os.environ["RUN_URL"],
+              "runtime_files_changed":False,
+              "supabase_changed":False,
+              "product_site_changed":False,
+          })
+          ledger["operation_sheet"] = {
+              "pdf_url":"https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf",
+              "png_url":"https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.png",
+              "html_url":"https://dpromstk2000-lab.github.io/liff-gym-demo/deliverables/gym-next-10/operation-sheet.html",
+              "page_count":1,
+              "orientation":"A4 portrait",
+              "owner_facing_screen_count":5,
+              "owner_facing_qr_count":5,
+              "qr_exact_url_match_count":5,
+              "system_check_exposed":False,
+              "pdf_sha256":os.environ["PDF_SHA"],
+              "png_sha256":os.environ["PNG_SHA"],
+              "published_exact_match":True,
+          }
+          ledger["owner_facing_correction"] = {
+              "reason":"system-checkはDPRO導入・保守担当専用",
+              "system_check_html_preserved":True,
+              "owner_page_link_removed":True,
+              "operation_sheet_removed":True,
+              "product_site_update_pending":True,
+          }
+          checks = ledger.setdefault("checks", {})
+          checks.update({
+              "owner_facing_system_check_removed":"OK",
+              "maintenance_system_check_preserved":"OK",
+              "owner_material_screen_count":"5",
+              "owner_material_qr_count":"5",
+              "owner_material_qr_exact_match":"5/5",
+              "public_delivery_files":"OK",
+          })
+          path.write_text(yaml.safe_dump(ledger, allow_unicode=True, sort_keys=False), encoding="utf-8")
+          PY
+
+          cat > "${STEP_DIR}/GYM-NEXT-11A-COMPLETE.md" <<EOF
+          # GYM-NEXT-11A COMPLETE
+
+          - 結果: OK
+          - オーナー向け操作体験画面: 5画面
+          - オーナー向けQR: 5 / 5
+          - system-checkのオーナー向け掲載: 削除済み
+          - system-check.html本体: DPRO保守用として維持
+          - Worker変更: なし
+          - Supabase変更: なし
+          - 次STEP: GYM-NEXT-11B-PRODUCT-SITE-CLEANUP
+          - 完了日時: ${COMPLETED_AT}
+          - Actions: ${RUN_URL}
+          EOF
+
+          git add "${LEDGER_FILE}" "${STEP_DIR}/GYM-NEXT-11A-COMPLETE.md"
+          git rm "${WORKFLOW_FILE}"
+          git diff --cached --check
+          git commit -m "Record gym owner-facing material cleanup"
+          git push origin HEAD:main
+
+      - name: Upload correction artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GYM-NEXT-11A-owner-material-cleanup
+          path: |
+            deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.pdf
+            deliverables/gym-next-10/DPRO_GYM_NEXT_operation_experience_sheet_20260726.png
+            deliverables/gym-next-10/operation-sheet.html
+            deliverables/gym-next-10/operation-sheet-qr-check.json
+            deliverables/gym-next-10/manifest.yml
+            dpro-next/gym/next-ledger.yml
+            dpro-next/gym/steps/GYM-NEXT-11A-COMPLETE.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: STEP completion summary
+        shell: bash
+        run: |
+          {
+            echo "## GYM-NEXT-11A COMPLETE"
+            echo ""
+            echo "- Owner-facing screens: 5"
+            echo "- Owner-facing QR exact matches: 5 / 5"
+            echo "- Owner-facing system-check: removed"
+            echo "- Maintenance system-check.html: preserved"
+            echo "- Worker change: false"
+            echo "- Supabase change: false"
+            echo "- Next STEP: GYM-NEXT-11B-PRODUCT-SITE-CLEANUP"
+          } >> "$GITHUB_STEP_SUMMARY"
