@@ -2,7 +2,7 @@ package_version: "GYM-NEXT-9-PREP-R2-20260725"
 system_name: "DPRO パーソナルジム LINE"
 phase: "PREPARED"
 worker_name: "dpro-gym-line-api"
-worker_expected_version: "GYM-NEXT-9-WORKER-R2-20260725"
+worker_expected_version: "GYM-NEXT-9-WORKER-R2-PR1-20260822"
 supabase_changed: false
 runtime_changed: false
 security:
@@ -39,3 +39,12 @@ r2_correction:
   activity_log_column: "action"
   optional_probes_isolated: true
   failed_verify_workflow_removed: true
+
+product_ready_adapter:
+  version: "DPRO-CONTROL-ADAPTER-1.0"
+  worker_version: "GYM-NEXT-9-WORKER-R2-PR1-20260822"
+  base_worker_version: "GYM-NEXT-9-WORKER-R2-20260725"
+  database_version: "GYM-DB-NEXT5-20260725-SQL-27e871d1"
+  frontend_version: "GYM-NEXT-6-CONFIG-ROLE-SEPARATION-20260725"
+  central_decision_date: "2026-08-22"
+  feature_profile: "GYM-PRODUCT-READY-FEATURE-PROFILE-V1.0"

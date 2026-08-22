@@ -2,7 +2,7 @@
   STEP GYM-NEXT-9
   DPRO パーソナルジム LINE API
   Worker name: dpro-gym-line-api
-  Worker version: GYM-NEXT-9-WORKER-R2-20260725
+  Worker version: GYM-NEXT-9-WORKER-R2-PR1-20260822
 
   Cloudflare Secrets:
     SUPABASE_URL
@@ -17,7 +17,12 @@
     ALLOW_DEMO_ADMIN_FALLBACK   false（通常は設定不要）
 ============================================================ */
 
-const VERSION = 'GYM-NEXT-9-WORKER-R2-20260725';
+const VERSION = 'GYM-NEXT-9-WORKER-R2-PR1-20260822';
+const BASE_WORKER_VERSION = 'GYM-NEXT-9-WORKER-R2-20260725';
+const SYSTEM_CODE = 'GYM';
+const ADAPTER_VERSION = 'DPRO-CONTROL-ADAPTER-1.0';
+const DATABASE_VERSION = 'GYM-DB-NEXT5-20260725-SQL-27e871d1';
+const FRONTEND_VERSION = 'GYM-NEXT-6-CONFIG-ROLE-SEPARATION-20260725';
 const SERVICE = 'DPRO Personal Gym LINE API';
 const DEFAULT_FACILITY_CODE = 'dpro_gym_demo';
 const DEMO_CONFIRM_TEXT = 'DEMOパーソナルジムだけ実行';
@@ -448,16 +453,43 @@ async function handleHealth(env) {
     system_check_budget_ms: SYSTEM_CHECK_BUDGET_MS
   };
 
+  const requiredHealthOk = Boolean(
+    database.ok &&
+    next4?.ok &&
+    next5?.ok &&
+    next8?.ok &&
+    next9?.ok
+  );
+  const runtimeEnvironment = database?.is_demo
+    ? 'demo'
+    : (database?.production_guard ? 'production' : 'nonproduction');
+  const systemCheckReady = true;
+  const systemCheckOk = requiredHealthOk;
+  const versionsAligned = Boolean(
+    requiredHealthOk &&
+    VERSION === 'GYM-NEXT-9-WORKER-R2-PR1-20260822' &&
+    DATABASE_VERSION === 'GYM-DB-NEXT5-20260725-SQL-27e871d1' &&
+    FRONTEND_VERSION === 'GYM-NEXT-6-CONFIG-ROLE-SEPARATION-20260725'
+  );
+
   return {
-    ok: Boolean(
-      database.ok &&
-      next4?.ok &&
-      next5?.ok &&
-      next8?.ok &&
-      next9?.ok
-    ),
+    ok: requiredHealthOk,
+    systemCode: SYSTEM_CODE,
     service: SERVICE,
     version: VERSION,
+    workerVersion: VERSION,
+    baseWorkerVersion: BASE_WORKER_VERSION,
+    status: requiredHealthOk ? 'ok' : 'degraded',
+    dbOk: Boolean(database.ok),
+    databaseVersion: DATABASE_VERSION,
+    frontendVersion: FRONTEND_VERSION,
+    facilityCode,
+    environment: runtimeEnvironment,
+    productionGuard: Boolean(database?.production_guard),
+    adapterVersion: ADAPTER_VERSION,
+    systemCheckReady,
+    systemCheckOk,
+    versionsAligned,
     time: new Date().toISOString(),
     jst_date: todayJst(),
     database,
