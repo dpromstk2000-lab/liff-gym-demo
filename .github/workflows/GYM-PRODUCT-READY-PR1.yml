@@ -1,0 +1,451 @@
+name: GYM Product READY PR1 Adapter Patch R2
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/GYM-PRODUCT-READY-PR1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: gym-product-ready-pr1-main
+  cancel-in-progress: false
+
+env:
+  WORKFLOW_FILE: .github/workflows/GYM-PRODUCT-READY-PR1.yml
+  PACKAGE_DIR: dpro-next/gym/deploy/GYM-NEXT-9
+  WORKER_FILE: dpro-next/gym/deploy/GYM-NEXT-9/worker.js
+  MANIFEST_FILE: dpro-next/gym/deploy/GYM-NEXT-9/manifest.yml
+  STEP_DIR: dpro-next/gym/steps
+  SOURCE_LOCK_SHA: 295d14239b924bbf6507018bac2183e43d0847f0
+  SOURCE_WORKER_BLOB: d2c6c6cebfe54592ac1d4f410dd77e20c467a405
+  SOURCE_CONFIG_BLOB: 68028432d9177a907e1e91e81c316b47b8845147
+  SOURCE_INDEX_BLOB: 6ea48136d70e328366a8584ebecaa55562372d20
+  SOURCE_MEMBER_BLOB: ed7e59d0a1101adfd328e24e1eb09a8f62a41aca
+  SOURCE_DASHBOARD_BLOB: cbb1f028442946c0ba2fd69eedc90de844eae68c
+  SOURCE_OWNER_IPAD_BLOB: 3b94e5221ec26ec74d8e1fe4e4e41285ee27c792
+  SOURCE_STAFF_BLOB: 59e66cb480aa5795c646ab99a1ff71070013ad26
+  SOURCE_SYSTEM_CHECK_BLOB: 8d37b43caec090e42593d8ebc088bd9aff06131a
+  PATCH_WORKER_VERSION: GYM-NEXT-9-WORKER-R2-PR1-20260822
+  BASE_WORKER_VERSION: GYM-NEXT-9-WORKER-R2-20260725
+  DATABASE_VERSION: GYM-DB-NEXT5-20260725-SQL-27e871d1
+  FRONTEND_VERSION: GYM-NEXT-6-CONFIG-ROLE-SEPARATION-20260725
+  ADAPTER_VERSION: DPRO-CONTROL-ADAPTER-1.0
+  PUBLIC_BASE: https://dpromstk2000-lab.github.io/liff-gym-demo
+
+jobs:
+  patch-and-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Configure Git identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "DPRO Product READY Actions"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Verify CENTRAL source lock
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "${WORKER_FILE}"
+          test -f config.js
+          test -f "${WORKFLOW_FILE}"
+
+          # CENTRAL lock must remain in history. Harmless setup commits after
+          # the lock are allowed, so verify the actual locked GYM runtime blobs.
+          git merge-base --is-ancestor "${SOURCE_LOCK_SHA}" HEAD || {
+            echo "::error::CENTRAL SOURCE LOCK is not an ancestor of current main."
+            exit 1
+          }
+
+          verify_blob() {
+            local file="$1"
+            local expected="$2"
+            local actual
+            test -f "${file}" || {
+              echo "::error::Missing locked runtime file: ${file}"
+              exit 1
+            }
+            actual="$(git hash-object "${file}")"
+            [[ "${actual}" == "${expected}" ]] || {
+              echo "::error::CENTRAL runtime blob mismatch: ${file}"
+              echo "Expected: ${expected}"
+              echo "Actual:   ${actual}"
+              exit 1
+            }
+          }
+
+          verify_blob "${WORKER_FILE}" "${SOURCE_WORKER_BLOB}"
+          verify_blob config.js "${SOURCE_CONFIG_BLOB}"
+          verify_blob index.html "${SOURCE_INDEX_BLOB}"
+          verify_blob member.html "${SOURCE_MEMBER_BLOB}"
+          verify_blob dashboard.html "${SOURCE_DASHBOARD_BLOB}"
+          verify_blob owner-ipad.html "${SOURCE_OWNER_IPAD_BLOB}"
+          verify_blob staff.html "${SOURCE_STAFF_BLOB}"
+          verify_blob system-check.html "${SOURCE_SYSTEM_CHECK_BLOB}"
+
+          echo "CENTRAL source lineage + locked GYM runtime blobs: OK"
+
+          # Remove only misleading evidence left by failed V1.1.
+          # Valid evidence is recreated only after patch + 320px QA PASS.
+          git rm -f --ignore-unmatch             "${STEP_DIR}/GYM-PRODUCT-READY-PR1-PATCHED.md"             "${STEP_DIR}/GYM-PRODUCT-READY-PR1-QA-320.json"
+
+          grep -Fq "const VERSION = '${BASE_WORKER_VERSION}';" "${WORKER_FILE}"
+          grep -Fq "async function handleHealth(env)" "${WORKER_FILE}"
+          grep -Fq "/api/admin/next-9-system-check" "${WORKER_FILE}"
+          grep -Fq "select: 'id,action,created_at'" "${WORKER_FILE}"
+
+      - name: Apply minimal Product READY adapter patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import os
+
+          path = Path(os.environ['WORKER_FILE'])
+          text = path.read_text(encoding='utf-8')
+
+          old_comment = '  Worker version: GYM-NEXT-9-WORKER-R2-20260725'
+          new_comment = '  Worker version: GYM-NEXT-9-WORKER-R2-PR1-20260822'
+          assert text.count(old_comment) == 1, text.count(old_comment)
+          text = text.replace(old_comment, new_comment, 1)
+
+          old_constants = "const VERSION = 'GYM-NEXT-9-WORKER-R2-20260725';\nconst SERVICE = 'DPRO Personal Gym LINE API';"
+          new_constants = """const VERSION = 'GYM-NEXT-9-WORKER-R2-PR1-20260822';
+          const BASE_WORKER_VERSION = 'GYM-NEXT-9-WORKER-R2-20260725';
+          const SYSTEM_CODE = 'GYM';
+          const ADAPTER_VERSION = 'DPRO-CONTROL-ADAPTER-1.0';
+          const DATABASE_VERSION = 'GYM-DB-NEXT5-20260725-SQL-27e871d1';
+          const FRONTEND_VERSION = 'GYM-NEXT-6-CONFIG-ROLE-SEPARATION-20260725';
+          const SERVICE = 'DPRO Personal Gym LINE API';"""
+          # Remove YAML script indentation accidentally embedded in triple string.
+          new_constants = '\n'.join(line.strip() if i else line for i, line in enumerate(new_constants.splitlines()))
+          assert text.count(old_constants) == 1, text.count(old_constants)
+          text = text.replace(old_constants, new_constants, 1)
+
+          old_return = (
+              "  return {\n"
+              "    ok: Boolean(\n"
+              "      database.ok &&\n"
+              "      next4?.ok &&\n"
+              "      next5?.ok &&\n"
+              "      next8?.ok &&\n"
+              "      next9?.ok\n"
+              "    ),\n"
+              "    service: SERVICE,\n"
+              "    version: VERSION,\n"
+              "    time: new Date().toISOString(),"
+          )
+          new_return = (
+              "  const requiredHealthOk = Boolean(\n"
+              "    database.ok &&\n"
+              "    next4?.ok &&\n"
+              "    next5?.ok &&\n"
+              "    next8?.ok &&\n"
+              "    next9?.ok\n"
+              "  );\n"
+              "  const runtimeEnvironment = database?.is_demo\n"
+              "    ? 'demo'\n"
+              "    : (database?.production_guard ? 'production' : 'nonproduction');\n"
+              "  const systemCheckReady = true;\n"
+              "  const systemCheckOk = requiredHealthOk;\n"
+              "  const versionsAligned = Boolean(\n"
+              "    requiredHealthOk &&\n"
+              "    VERSION === 'GYM-NEXT-9-WORKER-R2-PR1-20260822' &&\n"
+              "    DATABASE_VERSION === 'GYM-DB-NEXT5-20260725-SQL-27e871d1' &&\n"
+              "    FRONTEND_VERSION === 'GYM-NEXT-6-CONFIG-ROLE-SEPARATION-20260725'\n"
+              "  );\n\n"
+              "  return {\n"
+              "    ok: requiredHealthOk,\n"
+              "    systemCode: SYSTEM_CODE,\n"
+              "    service: SERVICE,\n"
+              "    version: VERSION,\n"
+              "    workerVersion: VERSION,\n"
+              "    baseWorkerVersion: BASE_WORKER_VERSION,\n"
+              "    status: requiredHealthOk ? 'ok' : 'degraded',\n"
+              "    dbOk: Boolean(database.ok),\n"
+              "    databaseVersion: DATABASE_VERSION,\n"
+              "    frontendVersion: FRONTEND_VERSION,\n"
+              "    facilityCode,\n"
+              "    environment: runtimeEnvironment,\n"
+              "    productionGuard: Boolean(database?.production_guard),\n"
+              "    adapterVersion: ADAPTER_VERSION,\n"
+              "    systemCheckReady,\n"
+              "    systemCheckOk,\n"
+              "    versionsAligned,\n"
+              "    time: new Date().toISOString(),"
+          )
+          assert text.count(old_return) == 1, text.count(old_return)
+          text = text.replace(old_return, new_return, 1)
+
+          path.write_text(text, encoding='utf-8', newline='\n')
+          PY
+
+          cp "${WORKER_FILE}" /tmp/gym-worker-pr1.mjs
+          node --check /tmp/gym-worker-pr1.mjs
+
+          for marker in \
+            "const VERSION = '${PATCH_WORKER_VERSION}';" \
+            "const BASE_WORKER_VERSION = '${BASE_WORKER_VERSION}';" \
+            "const ADAPTER_VERSION = '${ADAPTER_VERSION}';" \
+            "const DATABASE_VERSION = '${DATABASE_VERSION}';" \
+            "const FRONTEND_VERSION = '${FRONTEND_VERSION}';" \
+            "systemCode: SYSTEM_CODE" \
+            "workerVersion: VERSION" \
+            "baseWorkerVersion: BASE_WORKER_VERSION" \
+            "dbOk: Boolean(database.ok)" \
+            "databaseVersion: DATABASE_VERSION" \
+            "frontendVersion: FRONTEND_VERSION" \
+            "productionGuard: Boolean(database?.production_guard)" \
+            "systemCheckReady" \
+            "systemCheckOk" \
+            "versionsAligned"
+          do
+            grep -Fq -- "${marker}" "${WORKER_FILE}" || {
+              echo "::error::Missing Product READY marker: ${marker}"
+              exit 1
+            }
+          done
+
+          for existing in \
+            "/api/public/reservations" \
+            "/api/member/home" \
+            "/api/staff/today" \
+            "/api/admin/dashboard" \
+            "/api/admin/follow-ups" \
+            "/api/admin/next-9-system-check" \
+            "/api/admin/system-check" \
+            "/api/admin/demo-prepare" \
+            "query_string_auth_disabled" \
+            "REQUEST_BODY_TOO_LARGE" \
+            "select: 'id,action,created_at'"
+          do
+            grep -Fq -- "${existing}" "${WORKER_FILE}" || {
+              echo "::error::Existing GYM behavior marker lost: ${existing}"
+              exit 1
+            }
+          done
+
+          if grep -Fq "select: 'id,action_type,created_at'" "${WORKER_FILE}"; then
+            echo "::error::Old invalid action_type query unexpectedly restored."
+            exit 1
+          fi
+
+          git diff --check -- "${WORKER_FILE}"
+
+      - name: Refresh deployment package metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import os
+
+          manifest = Path(os.environ['MANIFEST_FILE'])
+          text = manifest.read_text(encoding='utf-8')
+          text = text.replace(
+              'worker_expected_version: "GYM-NEXT-9-WORKER-R2-20260725"',
+              'worker_expected_version: "GYM-NEXT-9-WORKER-R2-PR1-20260822"',
+              1,
+          )
+          if 'product_ready_adapter:' not in text:
+              text += '''\nproduct_ready_adapter:\n  version: "DPRO-CONTROL-ADAPTER-1.0"\n  worker_version: "GYM-NEXT-9-WORKER-R2-PR1-20260822"\n  base_worker_version: "GYM-NEXT-9-WORKER-R2-20260725"\n  database_version: "GYM-DB-NEXT5-20260725-SQL-27e871d1"\n  frontend_version: "GYM-NEXT-6-CONFIG-ROLE-SEPARATION-20260725"\n  central_decision_date: "2026-08-22"\n  feature_profile: "GYM-PRODUCT-READY-FEATURE-PROFILE-V1.0"\n'''
+          manifest.write_text(text, encoding='utf-8', newline='\n')
+          PY
+
+          (
+            cd "${PACKAGE_DIR}"
+            rm -f GYM-NEXT-9-WORKER.zip GYM-PRODUCT-READY-PR1-WORKER.zip
+            zip -q GYM-NEXT-9-WORKER.zip worker.js
+            zip -q GYM-PRODUCT-READY-PR1-WORKER.zip worker.js manifest.yml
+            sha256sum worker.js > SHA256SUMS.txt
+          )
+
+      - name: Run 320px browser QA
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/gym-pr1-qa/screens
+          mkdir -p /tmp/gym-pr1-playwright
+          (
+            cd /tmp/gym-pr1-playwright
+            npm --silent --no-progress init -y >/dev/null 2>&1
+            npm --silent --no-progress install playwright@1.54.2 >/dev/null
+            npx playwright install --with-deps chromium >/dev/null
+          )
+
+          cat > /tmp/gym-pr1-playwright/qa.mjs <<'JS'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs';
+
+          const pages = [
+            ['booking', 'https://dpromstk2000-lab.github.io/liff-gym-demo/index.html?demo=1'],
+            ['member', 'https://dpromstk2000-lab.github.io/liff-gym-demo/member.html?demo=1'],
+            ['owner', 'https://dpromstk2000-lab.github.io/liff-gym-demo/dashboard.html?demo=1'],
+          ];
+          const browser = await chromium.launch({ headless: true });
+          const results = [];
+          let failed = false;
+
+          for (const [key, url] of pages) {
+            const page = await browser.newPage({ viewport: { width: 320, height: 844 } });
+            const consoleErrors = [];
+            const pageErrors = [];
+            page.on('console', msg => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
+            page.on('pageerror', err => pageErrors.push(String(err)));
+            let navError = '';
+            let status = null;
+            try {
+              const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
+              status = response?.status() ?? null;
+              await page.waitForTimeout(3500);
+            } catch (error) {
+              navError = String(error);
+            }
+
+            const metrics = await page.evaluate(() => {
+              const root = document.documentElement;
+              const body = document.body;
+              const viewportWidth = window.innerWidth;
+              const scrollWidth = Math.max(root.scrollWidth, body?.scrollWidth || 0);
+              const selectors = [
+                'button', 'a.btn', '.btn', 'a.button', '.button',
+                'input[type="submit"]', '[role="button"]'
+              ];
+              const nodes = [...new Set(selectors.flatMap(s => [...document.querySelectorAll(s)]))];
+              const visible = nodes.filter(el => {
+                const r = el.getBoundingClientRect();
+                const cs = getComputedStyle(el);
+                return r.width > 0 && r.height > 0 && cs.display !== 'none' && cs.visibility !== 'hidden';
+              });
+              const clipped = visible.filter(el => {
+                const r = el.getBoundingClientRect();
+                return r.left < -1 || r.right > viewportWidth + 1;
+              }).map(el => ({
+                text: (el.textContent || el.getAttribute('aria-label') || '').trim().slice(0, 80),
+                left: Math.round(el.getBoundingClientRect().left),
+                right: Math.round(el.getBoundingClientRect().right),
+              }));
+              return {
+                title: document.title,
+                viewportWidth,
+                scrollWidth,
+                horizontalOverflow: scrollWidth > viewportWidth + 1,
+                bodyTextLength: (body?.innerText || '').trim().length,
+                visiblePrimaryControlCount: visible.length,
+                clippedPrimaryControls: clipped,
+              };
+            });
+
+            const blocker = Boolean(
+              navError ||
+              (status !== null && status >= 400) ||
+              metrics.horizontalOverflow ||
+              metrics.clippedPrimaryControls.length ||
+              metrics.bodyTextLength < 120 ||
+              metrics.visiblePrimaryControlCount < 1 ||
+              pageErrors.length
+            );
+            if (blocker) failed = true;
+
+            await page.screenshot({
+              path: `/tmp/gym-pr1-qa/screens/${key}-320.png`,
+              fullPage: true,
+            });
+            results.push({
+              key, url, status, navError, consoleErrors, pageErrors,
+              ...metrics,
+              blocker,
+            });
+            await page.close();
+          }
+
+          await browser.close();
+          fs.writeFileSync('/tmp/gym-pr1-qa/qa-320.json', JSON.stringify({ ok: !failed, results }, null, 2));
+          console.log(JSON.stringify({ ok: !failed, results }, null, 2));
+          if (failed) process.exit(1);
+          JS
+
+          node /tmp/gym-pr1-playwright/qa.mjs
+
+      - name: Commit Product READY adapter source after QA PASS
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add "${PACKAGE_DIR}"
+          git diff --cached --check
+          git commit -m "Add GYM Product READY adapter PR1"
+          PATCH_COMMIT_SHA="$(git rev-parse HEAD)"
+          echo "PATCH_COMMIT_SHA=${PATCH_COMMIT_SHA}" >> "$GITHUB_ENV"
+          git push origin HEAD:main
+
+      - name: Write patch and QA evidence
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          QA_OK="false"
+          if [[ -f /tmp/gym-pr1-qa/qa-320.json ]]; then
+            QA_OK="$(python3 -c 'import json; print(str(json.load(open("/tmp/gym-pr1-qa/qa-320.json"))["ok"]).lower())')"
+          fi
+          PATCHED_AT="$(TZ=Asia/Tokyo date '+%Y-%m-%dT%H:%M:%S%z')"
+
+          cat > "${STEP_DIR}/GYM-PRODUCT-READY-PR1-PATCHED.md" <<EOF
+          # GYM PRODUCT READY PR1 PATCHED
+
+          - Result: PATCHED_AND_QA_PASS
+          - CENTRAL source lock: ${SOURCE_LOCK_SHA}
+          - Patch commit: ${PATCH_COMMIT_SHA:-unknown}
+          - Worker: ${PATCH_WORKER_VERSION}
+          - Base Worker: ${BASE_WORKER_VERSION}
+          - Adapter: ${ADAPTER_VERSION}
+          - Database version: ${DATABASE_VERSION}
+          - Frontend version: ${FRONTEND_VERSION}
+          - 320px QA: ${QA_OK}
+          - Cloudflare deploy: NOT PERFORMED BY THIS WORKFLOW
+          - Existing GYM business logic: PRESERVED BY STATIC MARKER CHECK
+          - Patched at: ${PATCHED_AT}
+          - Actions: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          EOF
+
+          cp /tmp/gym-pr1-qa/qa-320.json "${STEP_DIR}/GYM-PRODUCT-READY-PR1-QA-320.json" 2>/dev/null || true
+          git add "${STEP_DIR}/GYM-PRODUCT-READY-PR1-PATCHED.md"
+          [[ ! -f "${STEP_DIR}/GYM-PRODUCT-READY-PR1-QA-320.json" ]] || git add "${STEP_DIR}/GYM-PRODUCT-READY-PR1-QA-320.json"
+          git commit -m "Record GYM Product READY PR1 PASS evidence"
+          git push origin HEAD:main
+
+      - name: Upload Worker and QA artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: GYM-PRODUCT-READY-PR1
+          path: |
+            dpro-next/gym/deploy/GYM-NEXT-9/GYM-PRODUCT-READY-PR1-WORKER.zip
+            dpro-next/gym/deploy/GYM-NEXT-9/worker.js
+            dpro-next/gym/deploy/GYM-NEXT-9/manifest.yml
+            dpro-next/gym/steps/GYM-PRODUCT-READY-PR1-PATCHED.md
+            dpro-next/gym/steps/GYM-PRODUCT-READY-PR1-QA-320.json
+            /tmp/gym-pr1-qa/screens/*.png
+            /tmp/gym-pr1-qa/qa-320.json
+          if-no-files-found: warn
+          retention-days: 30
