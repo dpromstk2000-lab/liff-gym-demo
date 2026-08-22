@@ -1,4 +1,4 @@
-name: GYM Product READY PR1 Adapter Patch R3
+name: GYM Product READY PR1 Adapter Patch R4
 
 on:
   push:
@@ -267,35 +267,35 @@ jobs:
           assert text.count(marker) == 1, text.count(marker)
 
           mobile_css = """
-    /* PRODUCT READY PR1: 320px owner-PC fallback.
-       Keep tablet/desktop behavior unchanged; only prevent the mobile nav
-       from creating a page-wide horizontal overflow. */
-    @media (max-width:420px) {
-      body { overflow-x:hidden; }
-      .layout { width:100%; max-width:100%; grid-template-columns:minmax(0,1fr); }
-      .side {
-        width:100%;
-        max-width:100%;
-        min-width:0;
-        display:grid;
-        grid-template-columns:repeat(2,minmax(0,1fr));
-        overflow:visible;
-        gap:6px;
-      }
-      .nav-btn {
-        width:100%;
-        min-width:0;
-        min-height:46px;
-        margin:0;
-        white-space:normal;
-        overflow-wrap:anywhere;
-      }
-      .nav-count { float:none; margin-left:4px; }
-      .header-inner,.content,.view,.page-head,.page-actions,.card { min-width:0; max-width:100%; }
-      .page-actions > * { max-width:100%; }
-      .modal-card,.modal-card.wide { width:100%; max-width:100%; }
-    }
-"""
+              /* PRODUCT READY PR1: 320px owner-PC fallback.
+                 Keep tablet/desktop behavior unchanged; only prevent the mobile nav
+                 from creating a page-wide horizontal overflow. */
+              @media (max-width:420px) {
+                body { overflow-x:hidden; }
+                .layout { width:100%; max-width:100%; grid-template-columns:minmax(0,1fr); }
+                .side {
+                  width:100%;
+                  max-width:100%;
+                  min-width:0;
+                  display:grid;
+                  grid-template-columns:repeat(2,minmax(0,1fr));
+                  overflow:visible;
+                  gap:6px;
+                }
+                .nav-btn {
+                  width:100%;
+                  min-width:0;
+                  min-height:46px;
+                  margin:0;
+                  white-space:normal;
+                  overflow-wrap:anywhere;
+                }
+                .nav-count { float:none; margin-left:4px; }
+                .header-inner,.content,.view,.page-head,.page-actions,.card { min-width:0; max-width:100%; }
+                .page-actions > * { max-width:100%; }
+                .modal-card,.modal-card.wide { width:100%; max-width:100%; }
+              }
+          """
           text = text.replace(marker, mobile_css + "\n" + marker, 1)
           path.write_text(text, encoding="utf-8", newline="\n")
           PY
@@ -570,7 +570,7 @@ jobs:
           - Worker: ${PATCH_WORKER_VERSION}
           - Base Worker: ${BASE_WORKER_VERSION}
           - Adapter: ${ADAPTER_VERSION}
-- Dashboard 320px responsive fix: PASS
+          - Dashboard 320px responsive fix: PASS
           - Database version: ${DATABASE_VERSION}
           - Frontend version: ${FRONTEND_VERSION}
           - 320px QA: ${QA_OK}
