@@ -1,4 +1,4 @@
-name: GYM Product READY PR1 Adapter Patch R4
+name: GYM Product READY PR1 Adapter Patch R5
 
 on:
   push:
@@ -267,40 +267,91 @@ jobs:
           assert text.count(marker) == 1, text.count(marker)
 
           mobile_css = """
-              /* PRODUCT READY PR1: 320px owner-PC fallback.
-                 Keep tablet/desktop behavior unchanged; only prevent the mobile nav
-                 from creating a page-wide horizontal overflow. */
+              /* PRODUCT READY PR1 R5: 320px owner-PC fallback.
+                 Tablet/desktop behavior stays unchanged. */
               @media (max-width:420px) {
-                body { overflow-x:hidden; }
-                .layout { width:100%; max-width:100%; grid-template-columns:minmax(0,1fr); }
-                .side {
+                html, body {
                   width:100%;
                   max-width:100%;
-                  min-width:0;
-                  display:grid;
-                  grid-template-columns:repeat(2,minmax(0,1fr));
-                  overflow:visible;
-                  gap:6px;
+                  overflow-x:clip;
                 }
-                .nav-btn {
-                  width:100%;
-                  min-width:0;
-                  min-height:46px;
-                  margin:0;
-                  white-space:normal;
+                body * {
+                  min-width:0 !important;
                   overflow-wrap:anywhere;
                 }
-                .nav-count { float:none; margin-left:4px; }
-                .header-inner,.content,.view,.page-head,.page-actions,.card { min-width:0; max-width:100%; }
-                .page-actions > * { max-width:100%; }
-                .modal-card,.modal-card.wide { width:100%; max-width:100%; }
+                .app,.header,.header-inner,.layout,.side,.content,.view,
+                .page-head,.page-actions,.card,.stats,.quick-actions,.today-board,
+                .support-column,.settings-shell,.settings-menu,.settings-content,
+                .filters,.search-row,.form-grid,.history-columns,.trial-layout,
+                .trial-stats,.follow-stats,.follow-filters,.follow-board,.follow-column,
+                .item,.item-top,.item-actions,.modal-card,.modal-card.wide {
+                  width:100% !important;
+                  max-width:100% !important;
+                  min-width:0 !important;
+                }
+                .layout {
+                  grid-template-columns:minmax(0,1fr) !important;
+                }
+                .side {
+                  position:static !important;
+                  display:grid !important;
+                  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+                  overflow:visible !important;
+                  gap:6px !important;
+                }
+                .nav-btn {
+                  flex:none !important;
+                  width:100% !important;
+                  min-width:0 !important;
+                  min-height:46px;
+                  margin:0 !important;
+                  white-space:normal !important;
+                  overflow-wrap:anywhere;
+                }
+                .nav-count {
+                  float:none;
+                  margin-left:4px;
+                }
+                .stats,.quick-actions,.today-board,.settings-shell,.grid-2,
+                .settings-grid,.form-grid,.filters,.search-row,.history-columns,
+                .trial-layout,.trial-stats,.follow-stats,.follow-filters,.follow-board {
+                  grid-template-columns:minmax(0,1fr) !important;
+                }
+                .settings-menu {
+                  display:grid !important;
+                  grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+                  overflow:visible !important;
+                }
+                .settings-menu-btn {
+                  width:100% !important;
+                  white-space:normal !important;
+                }
+                .header-actions,.page-actions,.item-actions,.modal-actions,
+                .checkbox-row,.follow-reasons {
+                  max-width:100% !important;
+                  flex-wrap:wrap !important;
+                }
+                .header-actions > *,.page-actions > *,.item-actions > *,
+                .modal-actions > *,.filters > *,.search-row > * {
+                  min-width:0 !important;
+                  max-width:100% !important;
+                }
+                img,svg,canvas,video {
+                  max-width:100% !important;
+                  height:auto;
+                }
+                pre,code,.sub,.item-name,.item-meta,.notice,.message-text {
+                  white-space:pre-wrap;
+                  overflow-wrap:anywhere;
+                  word-break:break-word;
+                }
               }
           """
           text = text.replace(marker, mobile_css + "\n" + marker, 1)
           path.write_text(text, encoding="utf-8", newline="\n")
           PY
 
-          grep -Fq "PRODUCT READY PR1: 320px owner-PC fallback" dashboard.html
+          grep -Fq "PRODUCT READY PR1 R5: 320px owner-PC fallback" dashboard.html
           grep -Fq "grid-template-columns:repeat(2,minmax(0,1fr))" dashboard.html
           git diff --check -- dashboard.html
 
@@ -416,12 +467,36 @@ jobs:
                 };
               }).filter(x => x.left < -1 || x.right > vw + 1);
 
+              const visibleElements = [...document.querySelectorAll('body *')]
+                .filter(el => {
+                  const s = getComputedStyle(el);
+                  const r = el.getBoundingClientRect();
+                  return s.display !== 'none' && s.visibility !== 'hidden' &&
+                    r.width > 0 && r.height > 0;
+                })
+                .map(el => {
+                  const r = el.getBoundingClientRect();
+                  return {
+                    tag: el.tagName.toLowerCase(),
+                    id: el.id || '',
+                    className: typeof el.className === 'string' ? el.className.slice(0,120) : '',
+                    left: Math.round(r.left),
+                    right: Math.round(r.right),
+                    width: Math.round(r.width),
+                    clientWidth: el.clientWidth,
+                    scrollWidth: el.scrollWidth
+                  };
+                })
+                .filter(x => x.right > vw + 1 || x.left < -1 || x.scrollWidth > vw + 1)
+                .sort((a,b) => Math.max(b.right,b.scrollWidth) - Math.max(a.right,a.scrollWidth))
+                .slice(0,20);
               return {
                 viewportWidth: vw,
                 scrollWidth: sw,
                 horizontalOverflow: sw > vw + 1,
                 visiblePrimaryControlCount: controls.length,
                 clippedPrimaryControls: clipped,
+                widestVisibleElements: visibleElements,
               };
             });
 
@@ -486,12 +561,36 @@ jobs:
                     right: Math.round(r.right),
                   };
                 }).filter(x => x.left < -1 || x.right > vw + 1);
+                const visibleElements = [...document.querySelectorAll('body *')]
+                  .filter(el => {
+                    const s = getComputedStyle(el);
+                    const r = el.getBoundingClientRect();
+                    return s.display !== 'none' && s.visibility !== 'hidden' &&
+                      r.width > 0 && r.height > 0;
+                  })
+                  .map(el => {
+                    const r = el.getBoundingClientRect();
+                    return {
+                      tag: el.tagName.toLowerCase(),
+                      id: el.id || '',
+                      className: typeof el.className === 'string' ? el.className.slice(0,120) : '',
+                      left: Math.round(r.left),
+                      right: Math.round(r.right),
+                      width: Math.round(r.width),
+                      clientWidth: el.clientWidth,
+                      scrollWidth: el.scrollWidth
+                    };
+                  })
+                  .filter(x => x.right > vw + 1 || x.left < -1 || x.scrollWidth > vw + 1)
+                  .sort((a,b) => Math.max(b.right,b.scrollWidth) - Math.max(a.right,a.scrollWidth))
+                  .slice(0,20);
                 return {
                   viewportWidth: vw,
                   scrollWidth: sw,
                   horizontalOverflow: sw > vw + 1,
                   visiblePrimaryControlCount: controls.length,
                   clippedPrimaryControls: clipped,
+                  widestVisibleElements: visibleElements,
                 };
               });
 
