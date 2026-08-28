@@ -1,0 +1,34 @@
+name: GYM Tutorial R5 LIVE Capture
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - 'gym-r5-capture.mjs'
+      - '.github/workflows/GYM-TUTORIAL-R5-CAPTURE.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  r5-live-capture:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Capture current public LIVE screenshots
+        run: node gym-r5-capture.mjs
+      - name: Upload R5 LIVE evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gym-r5-live-capture
+          path: r5-live/
+          if-no-files-found: error
