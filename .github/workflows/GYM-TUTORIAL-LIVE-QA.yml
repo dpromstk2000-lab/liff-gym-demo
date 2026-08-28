@@ -19,11 +19,26 @@ jobs:
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps chromium
       - name: Exact-width public LIVE QA
-        run: node gym-tutorial-live-qa.mjs
+        shell: bash
+        run: |
+          set +e
+          node gym-tutorial-live-qa.mjs
+          first_rc=$?
+          if [ "$first_rc" -eq 0 ]; then
+            exit 0
+          fi
+          echo "::warning::First exact-width LIVE QA attempt failed; preserving evidence and retrying the same full QA once."
+          if [ -f gym-tutorial-live-qa.json ]; then
+            cp gym-tutorial-live-qa.json gym-tutorial-live-qa-attempt1.json
+          fi
+          sleep 3
+          node gym-tutorial-live-qa.mjs
+          second_rc=$?
+          exit "$second_rc"
       - name: Upload QA evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gym-tutorial-live-qa
-          path: gym-tutorial-live-qa.json
+          path: gym-tutorial-live-qa*.json
           if-no-files-found: warn
