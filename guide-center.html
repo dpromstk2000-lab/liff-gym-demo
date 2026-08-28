@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ja" data-guide-version="GYM-R4-V1.0-20260828">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>DPRO GYM｜Guide Center</title>
+<script src="tutorial-data.js?v=20260828"></script>
+<style>
+:root{--navy:#13213c;--blue:#2563eb;--soft:#edf4ff;--bg:#f2f5f9;--card:#fff;--ink:#182235;--muted:#617086;--line:#d6dfeb;--green:#087a55}
+*{box-sizing:border-box}
+html{background:var(--bg)}
+body{margin:0;color:var(--ink);background:linear-gradient(180deg,#fff,var(--bg));font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;line-height:1.65}
+button,a{font:inherit}
+a{color:inherit}
+.wrap{width:min(1040px,calc(100% - 24px));margin:auto;padding:18px 0 48px}
+.hero{padding:28px;border-radius:24px;color:#fff;background:linear-gradient(135deg,var(--navy),var(--blue));box-shadow:0 18px 46px rgba(19,33,60,.17)}
+.kicker{font-size:11px;font-weight:950;letter-spacing:.12em;opacity:.88}
+h1{margin:7px 0 0;font-size:clamp(27px,5vw,44px);line-height:1.25}
+.hero p{max-width:780px;margin:10px 0 0;font-size:14px;opacity:.94}
+.status{margin-top:14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.13);font-weight:850;font-size:13px}
+.controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:15px}
+.control{min-height:48px;display:flex;align-items:center;justify-content:center;border:0;border-radius:13px;padding:10px 12px;text-decoration:none;font-size:13px;font-weight:950;cursor:pointer}
+.start{color:var(--navy);background:#fff}.resume{color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35)}.replay{color:#fff;background:rgba(8,122,85,.82)}
+.control:focus-visible,.guide-link:focus-visible{outline:4px solid #f5c244;outline-offset:3px}
+.section-head{margin:30px 0 13px}.section-head small{color:var(--blue);font-size:10px;font-weight:950;letter-spacing:.1em}.section-head h2{margin:4px 0 0;font-size:clamp(22px,4vw,32px)}.section-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
+.first10{display:grid;gap:10px}
+.step-card{min-width:0;padding:16px;border:1px solid var(--line);border-radius:17px;background:var(--card);box-shadow:0 7px 20px rgba(19,33,60,.06)}
+.step-top{display:flex;gap:10px;align-items:flex-start}
+.num{flex:0 0 38px;height:38px;display:grid;place-items:center;border-radius:12px;color:#fff;background:var(--blue);font-size:12px;font-weight:950}
+.step-body{min-width:0}.step-body h3{margin:0;font-size:17px;line-height:1.4}.step-body p{margin:5px 0 0;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+.route{margin-top:9px;padding:7px 9px;border-radius:10px;background:var(--soft);color:var(--navy);font:800 11px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}
+.safety{margin-top:7px;color:var(--green);font-size:11px;font-weight:800}
+.more{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.guide-link{display:block;min-width:0;padding:15px;border:1px solid var(--line);border-radius:16px;background:#fff;text-decoration:none}
+.guide-link b{display:block;font-size:14px}.guide-link span{display:block;margin-top:4px;color:var(--muted);font-size:11px}
+.note{margin-top:15px;padding:13px;border-radius:14px;background:#fff5d9;color:#765200;font-size:12px;font-weight:750}
+.footer{margin-top:25px;color:var(--muted);font-size:10px;text-align:center}
+@media(max-width:620px){.hero{padding:22px 17px}.controls{grid-template-columns:1fr}.more{grid-template-columns:1fr}.wrap{width:min(100% - 16px,1040px)}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<section class="hero">
+<div class="kicker">DPRO TUTORIAL / GUIDE CENTER / STANDARD V1.1</div>
+<h1 id="guideTitle" tabindex="-1">パーソナルジム Guide Center</h1>
+<p>First10の正しい順序、再開位置、関連画面をここから確認できます。Tutorialは業務データを変更しません。</p>
+<div id="progressStatus" class="status" aria-live="polite">Tutorial状態を確認しています…</div>
+<nav class="controls" aria-label="Tutorial操作">
+<a id="startTutorial" class="control start" href="tutorial.html?mode=start">Start</a>
+<a id="resumeTutorial" class="control resume" href="tutorial.html?mode=resume">Resume</a>
+<a id="replayTutorial" class="control replay" href="tutorial.html?mode=replay">Replay</a>
+</nav>
+</section>
+
+<div class="section-head"><small>CANONICAL FIRST10</small><h2>First10 — 正式な10ステップ</h2><p>R3 Tutorialと同じデータ定義から生成しています。順序・タイトル・説明を別管理しません。</p></div>
+<section id="first10List" class="first10" aria-label="First10一覧"></section>
+
+<div class="section-head"><small>OTHER GUIDES</small><h2>First10以外の確認先</h2><p>補助的な画面確認です。First10の10件には含めません。</p></div>
+<section class="more" aria-label="補助ガイド">
+<a class="guide-link" data-non-first10 href="demo-guide.html"><b>公開操作デモ・画面一覧</b><span>各公開画面へ直接移動したい場合の入口。</span></a>
+<a class="guide-link" data-non-first10 href="member.html?demo=1"><b>会員マイページ</b><span>回数券・次回予約・振り返りを個別に確認。</span></a>
+<a class="guide-link" data-non-first10 href="staff.html?demo=1"><b>スタッフ画面</b><span>担当セッションと会員確認の画面。</span></a>
+<a class="guide-link" data-non-first10 href="dashboard.html?demo=1"><b>オーナーPC</b><span>体験・入会・継続フォロー管理。</span></a>
+<a class="guide-link" data-non-first10 href="system-check.html"><b>DPRO保守用 System Check</b><span>オーナー向け操作ガイドではありません。保守確認専用です。</span></a>
+</section>
+<div class="note">公開デモでは実在する氏名・電話番号・目標・体調・相談内容を入力しないでください。First10では予約送信、変更・取消、受付状態変更、記録保存・完了、入会処理、回数券調整、設定保存、DEMO準備を実行しません。</div>
+<div class="footer">DPRO PERSONAL GYM LINE / Guide Center R4</div>
+</main>
+<script>
+(() => {
+'use strict';
+const DATA=window.DPRO_GYM_TUTORIAL_DATA,STORAGE=DATA.storageKey,list=document.getElementById('first10List');
+function state(){try{const v=JSON.parse(localStorage.getItem(STORAGE)||'null');return v&&v.system==='GYM'&&v.standard==='V1.1'?v:null}catch(_){return null}}
+function updateStatus(){const s=state(),el=document.getElementById('progressStatus');if(!s){el.textContent='未開始 — StartでStep 1から開始できます。';return}if(s.completed){el.textContent=`完了済み — ReplayでStep 1から再確認できます。`;return}el.textContent=`進行中 — ${Math.max(1,Math.min(10,Number(s.step)||1))} / 10 からResumeできます。`}
+for(const s of DATA.steps){const article=document.createElement('article');article.className='step-card';article.dataset.first10Step=String(s.step);article.dataset.route=s.route;article.dataset.title=s.title;article.innerHTML=`<div class="step-top"><div class="num">${String(s.step).padStart(2,'0')}</div><div class="step-body"><h3>${s.title}</h3><p>${s.guidance}</p><div class="route">${s.route}</div><div class="safety">安全条件：${s.safety}</div></div></div>`;list.appendChild(article)}
+document.getElementById('startTutorial').addEventListener('click',()=>localStorage.removeItem(STORAGE));
+document.getElementById('replayTutorial').addEventListener('click',()=>localStorage.removeItem(STORAGE));
+updateStatus();
+document.getElementById('guideTitle').focus({preventScroll:true});
+window.DPRO_GYM_GUIDE_CENTER={data:DATA,state,updateStatus};
+})();
+</script>
+</body>
+</html>
